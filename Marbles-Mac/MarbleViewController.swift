@@ -20,6 +20,8 @@ class MarbleViewController: NSViewController {
     let width: CGFloat = 10.0
     lazy var halfWidth: CGFloat = width / 2.0
 
+    var segmentCount = 1
+
     let scene = SCNScene()
     var terrainNode: SCNNode?
 
@@ -47,12 +49,12 @@ class MarbleViewController: NSViewController {
         lightNode.light = light
         lightNode.look(at: SCNVector3())
         lightNode.position = SCNVector3(x: 0, y: 20, z: 20)
-        lightNode.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: 60)))
+//        lightNode.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: 60)))
         scene.rootNode.addChildNode(lightNode)
 
         let ambientLight = SCNLight()
         ambientLight.type = .ambient
-        ambientLight.color = NSColor(calibratedWhite: 0.1, alpha: 1.0)
+        ambientLight.color = NSColor(calibratedWhite: 0.8, alpha: 1.0)
         let ambientLightNode = SCNNode()
         ambientLightNode.light = ambientLight
         scene.rootNode.addChildNode(ambientLightNode)
@@ -75,17 +77,58 @@ class MarbleViewController: NSViewController {
     private func updateTerrain() {
         let terrain = generateDiamondSquareTerrain()
         let geometry = generateMesh(fromTerrain: terrain)
+//        let geometry = generateSphere(segmentCount: segmentCount)
+        printVertices(for: geometry)
+        geometry.firstMaterial?.fillMode = .lines
         geometry.wantsAdaptiveSubdivision = subdivision > 0 ? true : false
         geometry.subdivisionLevel = subdivision
         terrainNode?.removeFromParentNode()
         let mesh = SCNNode(geometry: geometry)
-//        mesh.runAction(.repeatForever(.rotateBy(x: 0, y: 2, z: 0, duration: 1)))
         scene.rootNode.addChildNode(mesh)
         terrainNode = mesh
     }
 
+    private func printVertices(for geometry: SCNGeometry) {
+        let vertices = geometry.vertices()
+        for vertex in vertices! {
+            print(vertex)
+        }
+        print(vertices!.count)
+    }
+
+    private func generateSphere(segmentCount: Int) -> SCNGeometry {
+        let geometry = SCNSphere(radius: 3.0)
+        geometry.segmentCount = segmentCount
+        geometry.isGeodesic = true
+        return geometry
+    }
+
+    /*
+    private func extractVertices(from geometry: SCNGeometry) -> [SCNVector3] {
+        let planeSources = geometry.sources(for: .vertex)
+        if let planeSource = planeSources.first {
+            let stride = planeSource.dataStride
+            let offset = planeSource.dataOffset
+            let componentsPerVector = planeSource.componentsPerVector
+            let bytesPerVector = componentsPerVector * planeSource.bytesPerComponent
+
+            let vectors = [SCNVector3](repeating: SCNVector3Zero, count: planeSource.vectorCount)
+            let vertices = vectors.enumerated().map({
+                (index: Int, element: SCNVector3) -> SCNVector3 in
+                var vectorData = [Float](repeating: 0, count: componentsPerVector)
+                let byteRange = NSMakeRange(index * stride + offset, bytesPerVector)
+                planeSource.copyBytes.getBytes(&vectorData, range: byteRange)
+                return SCNVector3Make(CGFloat(vectorData[0]), vectorData[1], vectorData[2])
+            })
+
+            // You have your vertices, now what?
+        }
+    }
+*/
+
     @objc
     func handleClick(_ gestureRecognizer: NSGestureRecognizer) {
+        segmentCount += 1
         self.updateTerrain()
     }
 
@@ -174,7 +217,7 @@ class MarbleViewController: NSViewController {
 
     private func generateMesh(fromTerrain terrain: [CGFloat]) -> SCNGeometry {
 
-        let interval: CGFloat = width / CGFloat(ticks)
+        let interval: CGFloat = width / CGFloat(ticks-1)
 
         let pos = { i, j, height in SCNVector3(i * interval - self.halfWidth,
                                                height,
@@ -200,5 +243,37 @@ class MarbleViewController: NSViewController {
         let element = SCNGeometryElement(indices: indices, primitiveType: .triangles)
         let geometry = SCNGeometry(sources: [source], elements: [element])
         return geometry
+    }
+}
+
+extension  SCNGeometry{
+
+    /**
+     Get the vertices (3d points coordinates) of the geometry.
+
+     - returns: An array of SCNVector3 containing the vertices of the geometry.
+     */
+    func vertices() -> [SCNVector3]? {
+
+        let sources = self.sources(for: .vertex)
+
+        guard let source  = sources.first else{return nil}
+
+        let stride = source.dataStride / source.bytesPerComponent
+        let offset = source.dataOffset / source.bytesPerComponent
+        let vectorCount = source.vectorCount
+
+        return source.data.withUnsafeBytes { (buffer : UnsafePointer<Float>) -> [SCNVector3] in
+
+            var result = Array<SCNVector3>()
+            for i in 0...vectorCount - 1 {
+                let start = i * stride + offset
+                let x = buffer[start]
+                let y = buffer[start + 1]
+                let z = buffer[start + 2]
+                result.append(SCNVector3(x, y, z))
+            }
+            return result
+        }
     }
 }
