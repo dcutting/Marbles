@@ -14,13 +14,13 @@ class MarbleViewController: NSViewController {
 
     let edgeness: CGFloat = 10.0
     let smoothness: CGFloat = 2.0
-    let subdivision = 1
-    let n: UInt32 = 8
+    let subdivision = 0
+    let n: UInt32 = 1
     lazy var ticks: UInt32 = power(2, n) + 1
     let width: CGFloat = 10.0
     lazy var halfWidth: CGFloat = width / 2.0
 
-    var segmentCount = 1
+    var segmentCount = 3
 
     let scene = SCNScene()
     var terrainNode: SCNNode?
@@ -35,6 +35,8 @@ class MarbleViewController: NSViewController {
         scene.fogColor = NSColor.black
         scene.fogStartDistance = width*2.0
         scene.fogEndDistance = width*5.0
+
+        SCNTransaction.animationDuration = 1.0
 
         let cameraNode = SCNNode()
         let camera = SCNCamera()
@@ -75,9 +77,9 @@ class MarbleViewController: NSViewController {
     }
 
     private func updateTerrain() {
-        let terrain = generateDiamondSquareTerrain()
-        let geometry = generateMesh(fromTerrain: terrain)
-//        let geometry = generateSphere(segmentCount: segmentCount)
+//        let terrain = generateDiamondSquareTerrain()
+//        let geometry = generateMesh(fromTerrain: terrain)
+        let geometry = generateSphere(segmentCount: segmentCount)
         printVertices(for: geometry)
         geometry.firstMaterial?.fillMode = .lines
         geometry.wantsAdaptiveSubdivision = subdivision > 0 ? true : false
@@ -257,7 +259,7 @@ extension  SCNGeometry{
 
         let sources = self.sources(for: .vertex)
 
-        guard let source  = sources.first else{return nil}
+        guard let source  = sources.first else { return nil }
 
         let stride = source.dataStride / source.bytesPerComponent
         let offset = source.dataOffset / source.bytesPerComponent
@@ -266,7 +268,7 @@ extension  SCNGeometry{
         return source.data.withUnsafeBytes { (buffer : UnsafePointer<Float>) -> [SCNVector3] in
 
             var result = Array<SCNVector3>()
-            for i in 0...vectorCount - 1 {
+            for i in 0..<vectorCount {
                 let start = i * stride + offset
                 let x = buffer[start]
                 let y = buffer[start + 1]
