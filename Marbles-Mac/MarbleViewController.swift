@@ -73,14 +73,15 @@ class MarbleViewController: NSViewController {
         let clickGesture = NSClickGestureRecognizer(target: self, action: #selector(handleClick(_:)))
         var gestureRecognizers = scnView.gestureRecognizers
         gestureRecognizers.insert(clickGesture, at: 0)
-        scnView.gestureRecognizers = gestureRecognizers
+//        scnView.gestureRecognizers = gestureRecognizers
     }
 
     private func updateTerrain() {
 //        let terrain = generateDiamondSquareTerrain()
 //        let geometry = generateMesh(fromTerrain: terrain)
-        let geometry = generateSphere(segmentCount: segmentCount)
-        printVertices(for: geometry)
+//        let geometry = generateSphere(segmentCount: segmentCount)
+        let geometry = generateTriangle()
+//        printVertices(for: geometry)
         geometry.firstMaterial?.fillMode = .lines
         geometry.wantsAdaptiveSubdivision = subdivision > 0 ? true : false
         geometry.subdivisionLevel = subdivision
@@ -88,6 +89,14 @@ class MarbleViewController: NSViewController {
         let mesh = SCNNode(geometry: geometry)
         scene.rootNode.addChildNode(mesh)
         terrainNode = mesh
+    }
+
+    private func generateTriangle() -> SCNGeometry {
+        let terrain = generateTriangularTerrain(maxDivisions: 4, corners: [
+                1.0, 0.0, 0.0
+            ])
+        print(terrain)
+        return makeMesh(fromTriangularTerrain: terrain)
     }
 
     private func printVertices(for geometry: SCNGeometry) {
@@ -104,29 +113,6 @@ class MarbleViewController: NSViewController {
         geometry.isGeodesic = true
         return geometry
     }
-
-    /*
-    private func extractVertices(from geometry: SCNGeometry) -> [SCNVector3] {
-        let planeSources = geometry.sources(for: .vertex)
-        if let planeSource = planeSources.first {
-            let stride = planeSource.dataStride
-            let offset = planeSource.dataOffset
-            let componentsPerVector = planeSource.componentsPerVector
-            let bytesPerVector = componentsPerVector * planeSource.bytesPerComponent
-
-            let vectors = [SCNVector3](repeating: SCNVector3Zero, count: planeSource.vectorCount)
-            let vertices = vectors.enumerated().map({
-                (index: Int, element: SCNVector3) -> SCNVector3 in
-                var vectorData = [Float](repeating: 0, count: componentsPerVector)
-                let byteRange = NSMakeRange(index * stride + offset, bytesPerVector)
-                planeSource.copyBytes.getBytes(&vectorData, range: byteRange)
-                return SCNVector3Make(CGFloat(vectorData[0]), vectorData[1], vectorData[2])
-            })
-
-            // You have your vertices, now what?
-        }
-    }
-*/
 
     @objc
     func handleClick(_ gestureRecognizer: NSGestureRecognizer) {
@@ -245,6 +231,64 @@ class MarbleViewController: NSViewController {
         let element = SCNGeometryElement(indices: indices, primitiveType: .triangles)
         let geometry = SCNGeometry(sources: [source], elements: [element])
         return geometry
+    }
+
+    private func makeMesh(fromTriangularTerrain: [CGFloat]) -> SCNGeometry {
+        var vertices = [SCNVector3]()
+        let source = SCNGeometrySource(vertices: vertices)
+        var indices = [UInt32]()
+        let element = SCNGeometryElement(indices: indices, primitiveType: .triangles)
+        let geometry = SCNGeometry(sources: [source], elements: [element])
+        return geometry
+    }
+
+    private func generateTriangularTerrain(maxDivisions: Int, corners: [CGFloat]) -> [CGFloat] {
+        var result = corners
+        result.append(contentsOf: generateTriangularTerrain(division: 1, maxDivisions: maxDivisions, corners: corners))
+        return result
+    }
+
+    private func generateTriangularTerrain(division: Int, maxDivisions: Int, corners: [CGFloat]) -> [CGFloat] {
+
+        //            0
+        //          6   8
+        //        3   7   5
+        //      9   11  12  14
+        //    1   10  4   13   2
+
+        var heights = corners
+
+        if division == maxDivisions {
+            return []
+        }
+
+        let delta = width/CGFloat(division)/smoothness
+        let heightA = displacedMidpoint(a: corners[0], b: corners[1], delta: delta)
+        let heightB = displacedMidpoint(a: corners[1], b: corners[2], delta: delta)
+        let heightC = displacedMidpoint(a: corners[2], b: corners[0], delta: delta)
+
+        heights.append(contentsOf: [heightA, heightB, heightC])
+
+        heights.append(contentsOf: generateTriangularTerrain(division: division+1,
+                                                             maxDivisions: maxDivisions,
+                                                             corners: [ corners[0], heightA, heightC ]))
+
+        heights.append(contentsOf: generateTriangularTerrain(division: division+1,
+                                                             maxDivisions: maxDivisions,
+                                                             corners: [ heightA, corners[1], heightB ]))
+
+        heights.append(contentsOf: generateTriangularTerrain(division: division+1,
+                                                             maxDivisions: maxDivisions,
+                                                             corners: [ heightC, heightB, corners[2] ]))
+
+        return heights
+    }
+
+    private func displacedMidpoint(a: CGFloat, b: CGFloat, delta: CGFloat) -> CGFloat {
+        let mean = (a + b) / 2.0
+        let random = CGFloat.random(in: -delta...delta)
+        let height = mean// + random
+        return height
     }
 }
 
