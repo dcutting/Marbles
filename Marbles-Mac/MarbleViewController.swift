@@ -15,7 +15,7 @@ class MarbleViewController: NSViewController {
     let edgeness: CGFloat = 10.0
     let smoothness: CGFloat = 2.0
     let subdivision = 0
-    let n: UInt32 = 1
+    let n: UInt32 = 8
     lazy var ticks: UInt32 = power(2, n) + 1
     let width: CGFloat = 10.0
     lazy var halfWidth: CGFloat = width / 2.0
@@ -24,6 +24,9 @@ class MarbleViewController: NSViewController {
 
     let scene = SCNScene()
     var terrainNode: SCNNode?
+
+    let perlinGranularity = 10
+    lazy var perlin = PerlinMesh(n: perlinGranularity, seed: 1780680306855649768)
 
     func conv(_ i: UInt32, _ j: UInt32) -> UInt32 {
         return j * self.ticks + i
@@ -56,7 +59,7 @@ class MarbleViewController: NSViewController {
 
         let ambientLight = SCNLight()
         ambientLight.type = .ambient
-        ambientLight.color = NSColor(calibratedWhite: 0.8, alpha: 1.0)
+        ambientLight.color = NSColor(calibratedWhite: 0.1, alpha: 1.0)
         let ambientLightNode = SCNNode()
         ambientLightNode.light = ambientLight
         scene.rootNode.addChildNode(ambientLightNode)
@@ -78,11 +81,14 @@ class MarbleViewController: NSViewController {
 
     private func updateTerrain() {
 //        let terrain = generateDiamondSquareTerrain()
-//        let geometry = generateMesh(fromTerrain: terrain)
+        let terrain = generateFlatTerrain()
+        let geometry = generateMesh(fromTerrain: terrain)
 //        let geometry = generateSphere(segmentCount: segmentCount)
-        let geometry = generateTriangle()
+
+//        let geometry = generateTriangle()
 //        printVertices(for: geometry)
-        geometry.firstMaterial?.fillMode = .lines
+//        geometry.firstMaterial?.fillMode = .lines
+        geometry.firstMaterial?.fillMode = .fill
         geometry.wantsAdaptiveSubdivision = subdivision > 0 ? true : false
         geometry.subdivisionLevel = subdivision
         terrainNode?.removeFromParentNode()
@@ -125,6 +131,28 @@ class MarbleViewController: NSViewController {
         for _ in 0..<ticks*ticks {
             let height = CGFloat.random(in: -0.1...0.5)
             terrain.append(height)
+        }
+        return terrain
+    }
+
+    private func generateFlatTerrain() -> [CGFloat] {
+        var terrain: [CGFloat] = Array(repeating: 0.0, count: Int(ticks*ticks))
+        let n = UInt32(ticks)
+        let blah = Float(width)/Float(ticks)
+        let noise1 = GradientNoise2D(amplitude: 1.0, frequency: 0.2, seed: 313910)
+        let noise2 = GradientNoise2D(amplitude: 0.2, frequency: 1.0, seed: 31390)
+        let noise3 = GradientNoise2D(amplitude: 0.005, frequency: 10.0, seed: 3110)
+        for j in 0..<n {
+            for i in 0..<n {
+                let x = (blah * Float(i)) / Float(width) * Float(perlinGranularity-1)
+                let y = (blah * Float(j)) / Float(width) * Float(perlinGranularity-1)
+//                let noise = perlin.noise(x: x, y: y)
+                let noise = noise1.evaluate(Double(x), Double(y))//r +
+                    //noise2.evaluate(Double(x), Double(y)) +
+                    ////noise3.evaluate(Double(x), Double(y))
+//                print(i, j, x, y, noise)
+                terrain[Int(conv(j, i))] = CGFloat(noise)
+            }
         }
         return terrain
     }
@@ -302,7 +330,7 @@ class MarbleViewController: NSViewController {
     private func displacedMidpoint(a: CGFloat, b: CGFloat, delta: CGFloat) -> CGFloat {
         let mean = (a + b) / 2.0
         let random = CGFloat.random(in: -delta...delta)
-        let height = mean// + random
+        let height = mean + random
         return height
     }
 }

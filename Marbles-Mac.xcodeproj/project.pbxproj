@@ -11,6 +11,14 @@
 		C80E460D216177440029A3A0 /* MarbleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80E460C216177440029A3A0 /* MarbleViewController.swift */; };
 		C80E4611216177440029A3A0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C80E4610216177440029A3A0 /* Assets.xcassets */; };
 		C80E4614216177440029A3A0 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C80E4612216177440029A3A0 /* Main.storyboard */; };
+		C85EB5822168EC7E00B670B2 /* PerlinMesh.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB5812168EC7E00B670B2 /* PerlinMesh.swift */; };
+		C85EB58D2168F62D00B670B2 /* cell_meta.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB5852168F62D00B670B2 /* cell_meta.swift */; };
+		C85EB58E2168F62D00B670B2 /* compounds.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB5872168F62D00B670B2 /* compounds.swift */; };
+		C85EB58F2168F62D00B670B2 /* disk.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB5882168F62D00B670B2 /* disk.swift */; };
+		C85EB5902168F62D00B670B2 /* hash.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB5892168F62D00B670B2 /* hash.swift */; };
+		C85EB5912168F62D00B670B2 /* cell.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB58A2168F62D00B670B2 /* cell.swift */; };
+		C85EB5922168F62D00B670B2 /* noise.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB58B2168F62D00B670B2 /* noise.swift */; };
+		C85EB5932168F62D00B670B2 /* gradient.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB58C2168F62D00B670B2 /* gradient.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -21,6 +29,14 @@
 		C80E4613216177440029A3A0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		C80E4615216177440029A3A0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C80E4616216177440029A3A0 /* Marbles_Mac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Marbles_Mac.entitlements; sourceTree = "<group>"; };
+		C85EB5812168EC7E00B670B2 /* PerlinMesh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PerlinMesh.swift; sourceTree = "<group>"; };
+		C85EB5852168F62D00B670B2 /* cell_meta.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = cell_meta.swift; sourceTree = "<group>"; };
+		C85EB5872168F62D00B670B2 /* compounds.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = compounds.swift; sourceTree = "<group>"; };
+		C85EB5882168F62D00B670B2 /* disk.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = disk.swift; sourceTree = "<group>"; };
+		C85EB5892168F62D00B670B2 /* hash.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = hash.swift; sourceTree = "<group>"; };
+		C85EB58A2168F62D00B670B2 /* cell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = cell.swift; sourceTree = "<group>"; };
+		C85EB58B2168F62D00B670B2 /* noise.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = noise.swift; sourceTree = "<group>"; };
+		C85EB58C2168F62D00B670B2 /* gradient.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = gradient.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -53,14 +69,46 @@
 		C80E4609216177440029A3A0 /* Marbles-Mac */ = {
 			isa = PBXGroup;
 			children = (
+				C85EB5832168F62D00B670B2 /* sources */,
 				C80E460A216177440029A3A0 /* AppDelegate.swift */,
 				C80E460C216177440029A3A0 /* MarbleViewController.swift */,
 				C80E4610216177440029A3A0 /* Assets.xcassets */,
 				C80E4612216177440029A3A0 /* Main.storyboard */,
 				C80E4615216177440029A3A0 /* Info.plist */,
 				C80E4616216177440029A3A0 /* Marbles_Mac.entitlements */,
+				C85EB5812168EC7E00B670B2 /* PerlinMesh.swift */,
 			);
 			path = "Marbles-Mac";
+			sourceTree = "<group>";
+		};
+		C85EB5832168F62D00B670B2 /* sources */ = {
+			isa = PBXGroup;
+			children = (
+				C85EB5842168F62D00B670B2 /* meta */,
+				C85EB5862168F62D00B670B2 /* noise */,
+			);
+			path = sources;
+			sourceTree = "<group>";
+		};
+		C85EB5842168F62D00B670B2 /* meta */ = {
+			isa = PBXGroup;
+			children = (
+				C85EB5852168F62D00B670B2 /* cell_meta.swift */,
+			);
+			path = meta;
+			sourceTree = "<group>";
+		};
+		C85EB5862168F62D00B670B2 /* noise */ = {
+			isa = PBXGroup;
+			children = (
+				C85EB5872168F62D00B670B2 /* compounds.swift */,
+				C85EB5882168F62D00B670B2 /* disk.swift */,
+				C85EB5892168F62D00B670B2 /* hash.swift */,
+				C85EB58A2168F62D00B670B2 /* cell.swift */,
+				C85EB58B2168F62D00B670B2 /* noise.swift */,
+				C85EB58C2168F62D00B670B2 /* gradient.swift */,
+			);
+			path = noise;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -133,6 +181,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C85EB58E2168F62D00B670B2 /* compounds.swift in Sources */,
+				C85EB5822168EC7E00B670B2 /* PerlinMesh.swift in Sources */,
+				C85EB58F2168F62D00B670B2 /* disk.swift in Sources */,
+				C85EB58D2168F62D00B670B2 /* cell_meta.swift in Sources */,
+				C85EB5922168F62D00B670B2 /* noise.swift in Sources */,
+				C85EB5932168F62D00B670B2 /* gradient.swift in Sources */,
+				C85EB5902168F62D00B670B2 /* hash.swift in Sources */,
+				C85EB5912168F62D00B670B2 /* cell.swift in Sources */,
 				C80E460D216177440029A3A0 /* MarbleViewController.swift in Sources */,
 				C80E460B216177440029A3A0 /* AppDelegate.swift in Sources */,
 			);
