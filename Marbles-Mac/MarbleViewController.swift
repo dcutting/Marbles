@@ -15,7 +15,7 @@ class MarbleViewController: NSViewController {
     let edgeness: CGFloat = 10.0
     let smoothness: CGFloat = 2.0
     let subdivision = 0
-    let n: UInt32 = 8
+    let n: UInt32 = 9
     lazy var ticks: UInt32 = power(2, n) + 1
     let width: CGFloat = 10.0
     lazy var halfWidth: CGFloat = width / 2.0
@@ -54,7 +54,7 @@ class MarbleViewController: NSViewController {
         lightNode.light = light
         lightNode.look(at: SCNVector3())
         lightNode.position = SCNVector3(x: 0, y: 20, z: 20)
-//        lightNode.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: 60)))
+        lightNode.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: 10)))
         scene.rootNode.addChildNode(lightNode)
 
         let ambientLight = SCNLight()
@@ -139,18 +139,18 @@ class MarbleViewController: NSViewController {
         var terrain: [CGFloat] = Array(repeating: 0.0, count: Int(ticks*ticks))
         let n = UInt32(ticks)
         let blah = Float(width)/Float(ticks)
-        let noise1 = GradientNoise2D(amplitude: 1.0, frequency: 0.2, seed: 313910)
-        let noise2 = GradientNoise2D(amplitude: 0.2, frequency: 1.0, seed: 31390)
-        let noise3 = GradientNoise2D(amplitude: 0.005, frequency: 10.0, seed: 3110)
+        let noise1 = GradientNoise2D(amplitude: 4.0, frequency: 0.1, seed: 313910)
+        let noise2 = GradientNoise2D(amplitude: 1.3, frequency: 0.3, seed: 31390)
+        let noise3 = GradientNoise2D(amplitude: 0.09, frequency: 1.1, seed: 3110)
+        let noise4 = GradientNoise2D(amplitude: 0.005, frequency: 100.0, seed: 310)
         for j in 0..<n {
             for i in 0..<n {
                 let x = (blah * Float(i)) / Float(width) * Float(perlinGranularity-1)
                 let y = (blah * Float(j)) / Float(width) * Float(perlinGranularity-1)
-//                let noise = perlin.noise(x: x, y: y)
-                let noise = noise1.evaluate(Double(x), Double(y))//r +
-                    //noise2.evaluate(Double(x), Double(y)) +
-                    ////noise3.evaluate(Double(x), Double(y))
-//                print(i, j, x, y, noise)
+                let noise = noise1.evaluate(Double(x), Double(y)) +
+                    noise2.evaluate(Double(x), Double(y)) +
+                    noise3.evaluate(Double(x), Double(y)) +
+                    noise4.evaluate(Double(x), Double(y))
                 terrain[Int(conv(j, i))] = CGFloat(noise)
             }
         }
