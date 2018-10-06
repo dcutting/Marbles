@@ -92,11 +92,11 @@ class MarbleViewController: NSViewController {
     }
 
     private func generateTriangle() -> SCNGeometry {
-        let terrain = generateTriangularTerrain(maxDivisions: 4, corners: [
-                1.0, 0.0, 0.0
-            ])
-        print(terrain)
-        return makeMesh(fromTriangularTerrain: terrain)
+//        let terrain = generateTriangularTerrain(maxDivisions: 4, corners: [
+//                1.0, 0.0, 0.0
+//            ])
+//        print(terrain)
+        return makeTriMesh(corners: [0.0, 0.0, 0.0], depth: 1, radius: width/2.0)
     }
 
     private func printVertices(for geometry: SCNGeometry) {
@@ -233,13 +233,28 @@ class MarbleViewController: NSViewController {
         return geometry
     }
 
-    private func makeMesh(fromTriangularTerrain: [CGFloat]) -> SCNGeometry {
+    private func makeTriMesh(corners: [CGFloat], depth: Int, radius: CGFloat) -> SCNGeometry {
         var vertices = [SCNVector3]()
-        let source = SCNGeometrySource(vertices: vertices)
         var indices = [UInt32]()
+
+        vertices.append(contentsOf: [
+            SCNVector3(x: 0.0, y: corners[0], z: -radius),
+            SCNVector3(x: -radius*cos(CGFloat.pi/6.0), y: corners[1], z: radius/2.0),
+            SCNVector3(x: radius*cos(CGFloat.pi/6.0), y: corners[2], z: radius/2.0)
+        ])
+
+        divide(vertices: &vertices, indices: &indices, depth: depth-1, radius: radius)
+
+        indices.append(contentsOf: [0, 1, 2])
+
+        let source = SCNGeometrySource(vertices: vertices)
         let element = SCNGeometryElement(indices: indices, primitiveType: .triangles)
         let geometry = SCNGeometry(sources: [source], elements: [element])
         return geometry
+    }
+
+    private func divide(vertices: inout [SCNVector3], indices: inout [UInt32], depth: Int, radius: CGFloat) {
+        vertices.append(contentsOf: [])
     }
 
     private func generateTriangularTerrain(maxDivisions: Int, corners: [CGFloat]) -> [CGFloat] {
