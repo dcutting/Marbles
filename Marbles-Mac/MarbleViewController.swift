@@ -139,10 +139,10 @@ class MarbleViewController: NSViewController {
         var terrain: [CGFloat] = Array(repeating: 0.0, count: Int(ticks*ticks))
         let n = UInt32(ticks)
         let blah = Float(width)/Float(ticks)
-        let noise1 = GradientNoise2D(amplitude: 4.0, frequency: 0.1, seed: 313910)
-        let noise2 = GradientNoise2D(amplitude: 1.3, frequency: 0.3, seed: 31390)
-        let noise3 = GradientNoise2D(amplitude: 0.09, frequency: 1.1, seed: 3110)
-        let noise4 = GradientNoise2D(amplitude: 0.005, frequency: 100.0, seed: 310)
+        let noise1 = GradientNoise2D(amplitude: 3.0, frequency: 0.1, seed: 313910)
+        let noise2 = GradientNoise2D(amplitude: 0.8, frequency: 0.3, seed: 31390)
+        let noise3 = GradientNoise2D(amplitude: 0.01, frequency: 2.0, seed: 3110)
+        let noise4 = GradientNoise2D(amplitude: 0.002, frequency: 10.0, seed: 310)
         for j in 0..<n {
             for i in 0..<n {
                 let x = (blah * Float(i)) / Float(width) * Float(perlinGranularity-1)
