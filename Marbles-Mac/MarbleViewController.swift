@@ -1,6 +1,8 @@
 import AppKit
 import QuartzCore
 import SceneKit
+import SceneKit.ModelIO
+import ModelIO
 
 class MarbleViewController: NSViewController {
 
@@ -17,7 +19,7 @@ class MarbleViewController: NSViewController {
     let subdivision = 0
     let n: UInt32 = 9
     lazy var ticks: UInt32 = power(2, n) + 1
-    let width: CGFloat = 10.0
+    let width: CGFloat = 20.0
     lazy var halfWidth: CGFloat = width / 2.0
 
     var segmentCount = 3
@@ -44,22 +46,31 @@ class MarbleViewController: NSViewController {
         let cameraNode = SCNNode()
         let camera = SCNCamera()
         cameraNode.camera = camera
-        cameraNode.position = SCNVector3(x: 0, y: halfWidth, z: halfWidth)
+        cameraNode.position = SCNVector3(x: 0, y: width * 1.1, z: 0.0)
         cameraNode.look(at: SCNVector3())
         scene.rootNode.addChildNode(cameraNode)
 
         let light = SCNLight()
-        light.type = .directional
+        light.type = .omni
         let lightNode = SCNNode()
         lightNode.light = light
         lightNode.look(at: SCNVector3())
-        lightNode.position = SCNVector3(x: 0, y: 20, z: 20)
-        lightNode.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: 10)))
+        lightNode.position = SCNVector3(x: 0, y: width, z: width)
+        //        lightNode.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: 10)))
         scene.rootNode.addChildNode(lightNode)
+
+        let light2 = SCNLight()
+        light2.type = .omni
+        let lightNode2 = SCNNode()
+        lightNode2.light = light2
+        lightNode2.look(at: SCNVector3())
+        lightNode2.position = SCNVector3(x: 0, y: -width, z: -width)
+        //        lightNode.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: 10)))
+        scene.rootNode.addChildNode(lightNode2)
 
         let ambientLight = SCNLight()
         ambientLight.type = .ambient
-        ambientLight.color = NSColor(calibratedWhite: 0.1, alpha: 1.0)
+        ambientLight.color = NSColor(calibratedWhite: 0.3, alpha: 1.0)
         let ambientLightNode = SCNNode()
         ambientLightNode.light = ambientLight
         scene.rootNode.addChildNode(ambientLightNode)
@@ -76,17 +87,93 @@ class MarbleViewController: NSViewController {
         let clickGesture = NSClickGestureRecognizer(target: self, action: #selector(handleClick(_:)))
         var gestureRecognizers = scnView.gestureRecognizers
         gestureRecognizers.insert(clickGesture, at: 0)
-//        scnView.gestureRecognizers = gestureRecognizers
+        scnView.gestureRecognizers = gestureRecognizers
     }
 
     private func updateTerrain() {
 //        let terrain = generateDiamondSquareTerrain()
-        let terrain = generateFlatTerrain()
-        let geometry = generateMesh(fromTerrain: terrain)
+
+//        let terrain = generateFlatTerrain()
+//        let geometry = generateMesh(fromTerrain: terrain)
+
 //        let geometry = generateSphere(segmentCount: segmentCount)
+
+        var icosa = MDLMesh.newIcosahedron(withRadius: Float(halfWidth), inwardNormals: false, allocator: nil)
+        var ico = MDLMesh.newSubdividedMesh(icosa, submeshIndex: 0, subdivisionLevels: 8)!
+
+        var shape = ico
+
+//        print(icosa)
+//        print(icosa.submeshes as Any)
+//        print(icosa.vertexBuffers)
+//        print(icosa.vertexDescriptor)
+//        print(ico)
+//        print(ico.submeshes as Any)
+//        print(ico.vertexBuffers)
+//        print(ico.vertexDescriptor)
+
+        let vertices = shape.vertexAttributeData(forAttributeNamed: "position", as: MDLVertexFormat.float3)!
+        let numVertices = shape.vertexCount
+        print(numVertices, vertices)
+        print(vertices.bufferSize, vertices.dataStart, vertices.format.rawValue, vertices.stride, vertices.map)
+
+//        let vertices = shape.vertexBuffers.filter { $0.type == .vertex }.first!
+        let bytes = vertices.map.bytes
+        let stride = vertices.stride
+//        print(vertices, bytes)
+
+//        let descriptor = shape.vertexDescriptor
+//        let stride = (descriptor.layouts.firstObject as! MDLVertexBufferLayout).stride
+
+        let descriptorOffset = 0
+//        let numVertices = vertices.length/stride
+//        print(vertices.length, stride, numVertices)
+
+        let noise1 = GradientNoise3D(amplitude: 3.0, frequency: 0.4, seed: 313910)
+        let noise2 = GradientNoise3D(amplitude: 1.0, frequency: 1.0, seed: 31390)
+        let noise3 = GradientNoise3D(amplitude: 0.5, frequency: 2.0, seed: 3110)
+        let noise4 = GradientNoise3D(amplitude: 0.05, frequency: 20.0, seed: 310)
+
+        for vertexNumber in 0..<numVertices {
+            let index = vertexNumber * stride + descriptorOffset
+//            print(vertexNumber, index)
+
+            let x = vertices.dataStart.load(fromByteOffset: index, as: Float.self)
+            let y = vertices.dataStart.load(fromByteOffset: index+4, as: Float.self)
+            let z = vertices.dataStart.load(fromByteOffset: index+8, as: Float.self)
+
+//            let x = (blah * Float(i)) / Float(width) * Float(perlinGranularity-1)
+//            let y = (blah * Float(j)) / Float(width) * Float(perlinGranularity-1)
+//            let z = (blah * Float(j)) / Float(width) * Float(perlinGranularity-1)
+            let noise = noise1.evaluate(Double(x), Double(y), Double(z))
+                + noise2.evaluate(Double(x), Double(y), Double(z))
+                + noise3.evaluate(Double(x), Double(y), Double(z))
+                + noise4.evaluate(Double(x), Double(y), Double(z))
+            //            let delta: CGFloat = CGFloat(arc4random()) / CGFloat(UINT32_MAX) * (width/50.0)
+
+            var delta: CGFloat = CGFloat(noise) * width/100.0
+
+            let v = SCNVector3([x, y, z])
+            let deform = v.normalized() * delta
+            let dv = v + deform
+            let point: float3 = [Float(dv.x), Float(dv.y), Float(dv.z)]
+            // convert point to bytes, then store them in the right place
+            bytes.storeBytes(of: point.x, toByteOffset: index, as: Float.self)
+            bytes.storeBytes(of: point.y, toByteOffset: index+4, as: Float.self)
+            bytes.storeBytes(of: point.z, toByteOffset: index+8, as: Float.self)
+        }
+//        let data = Data(bytes: bytes, count: vertices.bufferSize)
+//        vertices.fill(data, offset: 0)
+//
+//        let defo = MDLMesh(vertexBuffers: [vertices], vertexCount: numVertices, descriptor: descriptor, submeshes: shape.submeshes as! [MDLSubmesh])
+
+//        let sphere = MDLMesh(sphereWithExtent: [3.0, 3.0, 3.0], segments: [10, 10], inwardNormals: false, geometryType: .lines, allocator: nil)
+
+        let geometry = SCNGeometry(mdlMesh: shape)// defo)
 
 //        let geometry = generateTriangle()
 //        printVertices(for: geometry)
+//        deformVertices(for: geometry)
 //        geometry.firstMaterial?.fillMode = .lines
         geometry.firstMaterial?.fillMode = .fill
         geometry.wantsAdaptiveSubdivision = subdivision > 0 ? true : false
@@ -95,6 +182,14 @@ class MarbleViewController: NSViewController {
         let mesh = SCNNode(geometry: geometry)
         scene.rootNode.addChildNode(mesh)
         terrainNode = mesh
+    }
+
+    func fromByteArray<T>(_ value: [UInt8], _: T.Type) -> T {
+        return value.withUnsafeBufferPointer {
+            $0.baseAddress!.withMemoryRebound(to: T.self, capacity: 1) {
+                $0.pointee
+            }
+        }
     }
 
     private func generateTriangle() -> SCNGeometry {
@@ -113,10 +208,23 @@ class MarbleViewController: NSViewController {
         print(vertices!.count)
     }
 
+    private func deformVertices(for geometry: SCNGeometry) {
+        let vertices = geometry.vertices()
+        for vertex in vertices! {
+            deform(vertex: vertex)
+        }
+        print(vertices!.count)
+    }
+
+    private func deform(vertex: SCNVector3) {
+
+    }
+
     private func generateSphere(segmentCount: Int) -> SCNGeometry {
         let geometry = SCNSphere(radius: 3.0)
         geometry.segmentCount = segmentCount
         geometry.isGeodesic = true
+        SCNTransaction.flush()
         return geometry
     }
 
