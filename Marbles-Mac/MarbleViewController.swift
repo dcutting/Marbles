@@ -51,7 +51,7 @@ class MarbleViewController: NSViewController {
 
         let ambientLight = SCNLight()
         ambientLight.type = .ambient
-        ambientLight.color = NSColor(calibratedWhite: 0.2, alpha: 1.0)
+        ambientLight.color = NSColor(calibratedWhite: 0.3, alpha: 1.0)
         let ambientLightNode = SCNNode()
         ambientLightNode.light = ambientLight
         scene.rootNode.addChildNode(ambientLightNode)
@@ -84,11 +84,7 @@ class MarbleViewController: NSViewController {
             GradientNoise3D(amplitude: 0.25, frequency: 2.0, seed: 3110),
             GradientNoise3D(amplitude: 0.125, frequency: 4.0, seed: 310),
         ]
-        let land = makeIcosphere(noises: noises, detail: 7, levels: 0, smoothing: 0, offset: 0.0)
-        let landMaterial = SCNMaterial()
-        landMaterial.diffuse.contents = NSColor.green
-        landMaterial.locksAmbientWithDiffuse = true
-        land.materials = [landMaterial]
+        let land = makeIcosphere(noises: noises, detail: 7, levels: 0, smoothing: 0, offset: 0.0, assignColours: true)
         terrainNode?.removeFromParentNode()
         let mesh = SCNNode(geometry: land)
         scene.rootNode.addChildNode(mesh)
@@ -97,9 +93,9 @@ class MarbleViewController: NSViewController {
 
     private func makeWater() {
         let noises = [
-            GradientNoise3D(amplitude: 0.03, frequency: 5.0, seed: 31390),
+            GradientNoise3D(amplitude: 0.03, frequency: 50.0, seed: 31390),
         ]
-        let water = makeIcosphere(noises: noises, detail: 3, levels: 0, smoothing: 1, offset: 0.01)
+        let water = makeIcosphere(noises: noises, detail: 6, levels: 0, smoothing: 0, offset: 0.01, assignColours: false)
         let waterMaterial = SCNMaterial()
         waterMaterial.diffuse.contents = NSColor.blue
         waterMaterial.specular.contents = NSColor.white
@@ -110,7 +106,7 @@ class MarbleViewController: NSViewController {
         scene.rootNode.addChildNode(waterNode)
     }
 
-    private func makeIcosphere(noises: [GradientNoise3D], detail: Int, levels: Int, smoothing: Int, offset: CGFloat) -> SCNGeometry {
+    private func makeIcosphere(noises: [GradientNoise3D], detail: Int, levels: Int, smoothing: Int, offset: CGFloat, assignColours: Bool) -> SCNGeometry {
 
         let icosa = MDLMesh.newIcosahedron(withRadius: Float(halfWidth), inwardNormals: false, allocator: nil)
         let shape = MDLMesh.newSubdividedMesh(icosa, submeshIndex: 0, subdivisionLevels: detail)!
@@ -121,6 +117,7 @@ class MarbleViewController: NSViewController {
         let stride = vertices.stride
         let descriptorOffset = 0
 
+        var colors = [float3]()
         for vertexNumber in 0..<numVertices {
             let index = vertexNumber * stride + descriptorOffset
             let x = Double(vertices.dataStart.load(fromByteOffset: index, as: Float.self))
@@ -141,10 +138,26 @@ class MarbleViewController: NSViewController {
             bytes.storeBytes(of: point.x, toByteOffset: index, as: Float.self)
             bytes.storeBytes(of: point.y, toByteOffset: index+4, as: Float.self)
             bytes.storeBytes(of: point.z, toByteOffset: index+8, as: Float.self)
+            if delta > 0.5 {
+                colors.append([1.0, 1.0, 1.0])
+            } else {
+                colors.append([0.0, 3.0*Float(delta)/4.0, 0.0])
+            }
         }
+
+        let colourData = NSData(bytes: colors, length: MemoryLayout<float3>.size * colors.count)
+        let colourSource = SCNGeometrySource(data: colourData as Data, semantic: .color, vectorCount: colors.count, usesFloatComponents: true, componentsPerVector: 3, bytesPerComponent: MemoryLayout<Float>.size, dataOffset: 0, dataStride: MemoryLayout<float3>.size)
+
         let geometry = SCNGeometry(mdlMesh: shape)
-        geometry.wantsAdaptiveSubdivision = smoothing > 0 ? true : false
-        geometry.subdivisionLevel = smoothing
-        return geometry
+        let vertexSource = geometry.sources(for: .vertex).first!
+        let indexElement = geometry.element(at: 0)
+        var sources = [vertexSource]
+        if assignColours {
+            sources.append(colourSource)
+        }
+        let finalGeometry = SCNGeometry(sources: sources, elements: [indexElement])
+        finalGeometry.wantsAdaptiveSubdivision = smoothing > 0 ? true : false
+        finalGeometry.subdivisionLevel = smoothing
+        return finalGeometry
     }
 }
