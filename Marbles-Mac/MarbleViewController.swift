@@ -54,16 +54,6 @@ class MarbleViewController: NSViewController {
         ambientLightNode.light = ambientLight
         scene.rootNode.addChildNode(ambientLightNode)
 
-        let water = SCNSphere(radius: halfWidth-2.5)
-        let waterMaterial = SCNMaterial()
-        waterMaterial.diffuse.contents = NSColor.blue
-        waterMaterial.locksAmbientWithDiffuse = true
-        water.materials = [waterMaterial]
-        let waterNode = SCNNode(geometry: water)
-        scene.rootNode.addChildNode(waterNode)
-
-        updateTerrain()
-
         let scnView = self.view as! SCNView
         scnView.scene = scene
         scnView.allowsCameraControl = true
@@ -74,12 +64,51 @@ class MarbleViewController: NSViewController {
         var gestureRecognizers = scnView.gestureRecognizers
         gestureRecognizers.insert(clickGesture, at: 0)
         scnView.gestureRecognizers = gestureRecognizers
+
+        makeWater()
+        updateTerrain()
+    }
+
+    @objc func handleClick(_ gestureRecognizer: NSGestureRecognizer) {
+        self.updateTerrain()
     }
 
     private func updateTerrain() {
+        let noises = [
+            GradientNoise3D(amplitude: 1.0, frequency: 0.4, seed: 313910),
+            GradientNoise3D(amplitude: 1.0, frequency: 0.1, seed: 3139102),
+            GradientNoise3D(amplitude: 0.7, frequency: 1.0, seed: 31390),
+            GradientNoise3D(amplitude: 0.2, frequency: 2.0, seed: 3110),
+            GradientNoise3D(amplitude: 0.05, frequency: 20.0, seed: 310),
+        ]
+        let land = makeIcosphere(noises: noises, detail: 7, smoothing: 1)
+        let landMaterial = SCNMaterial()
+        landMaterial.diffuse.contents = NSColor.green
+        landMaterial.locksAmbientWithDiffuse = true
+        land.materials = [landMaterial]
+        terrainNode?.removeFromParentNode()
+        let mesh = SCNNode(geometry: land)
+        scene.rootNode.addChildNode(mesh)
+        terrainNode = mesh
+    }
+
+    private func makeWater() {
+        let noises = [
+            GradientNoise3D(amplitude: 0.3, frequency: 5.0, seed: 31390),
+        ]
+        let water = makeIcosphere(noises: noises, detail: 4, smoothing: 1)
+        let waterMaterial = SCNMaterial()
+        waterMaterial.diffuse.contents = NSColor.blue
+        waterMaterial.locksAmbientWithDiffuse = true
+        water.materials = [waterMaterial]
+        let waterNode = SCNNode(geometry: water)
+        scene.rootNode.addChildNode(waterNode)
+    }
+
+    private func makeIcosphere(noises: [GradientNoise3D], detail: Int, smoothing: Int) -> SCNGeometry {
 
         let icosa = MDLMesh.newIcosahedron(withRadius: Float(halfWidth), inwardNormals: false, allocator: nil)
-        let shape = MDLMesh.newSubdividedMesh(icosa, submeshIndex: 0, subdivisionLevels: 6)!
+        let shape = MDLMesh.newSubdividedMesh(icosa, submeshIndex: 0, subdivisionLevels: detail)!
 
         let vertices = shape.vertexAttributeData(forAttributeNamed: "position", as: MDLVertexFormat.float3)!
         let numVertices = shape.vertexCount
@@ -88,24 +117,14 @@ class MarbleViewController: NSViewController {
         let stride = vertices.stride
         let descriptorOffset = 0
 
-//        let perlin = PerlinMesh(n: Int(width), seed: 138103)
-
-        let noise1 = GradientNoise3D(amplitude: 3.0, frequency: 0.4, seed: 313910)
-        let noise2 = GradientNoise3D(amplitude: 1.0, frequency: 1.0, seed: 31390)
-        let noise3 = GradientNoise3D(amplitude: 0.5, frequency: 2.0, seed: 3110)
-        let noise4 = GradientNoise3D(amplitude: 0.05, frequency: 20.0, seed: 310)
-
         for vertexNumber in 0..<numVertices {
             let index = vertexNumber * stride + descriptorOffset
-            let x = vertices.dataStart.load(fromByteOffset: index, as: Float.self)
-            let y = vertices.dataStart.load(fromByteOffset: index+4, as: Float.self)
-            let z = vertices.dataStart.load(fromByteOffset: index+8, as: Float.self)
-            let noise = noise1.evaluate(Double(x), Double(y), Double(z))
-                + noise2.evaluate(Double(x), Double(y), Double(z))
-                + noise3.evaluate(Double(x), Double(y), Double(z))
-                + noise4.evaluate(Double(x), Double(y), Double(z))
-
+            let x = Double(vertices.dataStart.load(fromByteOffset: index, as: Float.self))
+            let y = Double(vertices.dataStart.load(fromByteOffset: index+4, as: Float.self))
+            let z = Double(vertices.dataStart.load(fromByteOffset: index+8, as: Float.self))
+            let noise = noises.reduce(0.0) { a, n in a + n.evaluate(x, y, z) }
             let delta: CGFloat = CGFloat(noise) * width/100.0
+//            print(noise, delta)
 
             let v = SCNVector3([x, y, z])
             let deform = v.normalized() * delta
@@ -117,21 +136,8 @@ class MarbleViewController: NSViewController {
             bytes.storeBytes(of: point.z, toByteOffset: index+8, as: Float.self)
         }
         let geometry = SCNGeometry(mdlMesh: shape)
-
-        let landMaterial = SCNMaterial()
-        landMaterial.diffuse.contents = NSColor.green
-        landMaterial.locksAmbientWithDiffuse = true
-        geometry.materials = [landMaterial]
-        geometry.wantsAdaptiveSubdivision = subdivision > 0 ? true : false
-        geometry.subdivisionLevel = subdivision
-        terrainNode?.removeFromParentNode()
-        let mesh = SCNNode(geometry: geometry)
-        scene.rootNode.addChildNode(mesh)
-        terrainNode = mesh
-    }
-
-    @objc
-    func handleClick(_ gestureRecognizer: NSGestureRecognizer) {
-        self.updateTerrain()
+        geometry.wantsAdaptiveSubdivision = smoothing > 0 ? true : false
+        geometry.subdivisionLevel = smoothing
+        return geometry
     }
 }
