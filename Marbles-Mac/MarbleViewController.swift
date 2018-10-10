@@ -88,6 +88,8 @@ class MarbleViewController: NSViewController {
         let stride = vertices.stride
         let descriptorOffset = 0
 
+//        let perlin = PerlinMesh(n: Int(width), seed: 138103)
+
         let noise1 = GradientNoise3D(amplitude: 3.0, frequency: 0.4, seed: 313910)
         let noise2 = GradientNoise3D(amplitude: 1.0, frequency: 1.0, seed: 31390)
         let noise3 = GradientNoise3D(amplitude: 0.5, frequency: 2.0, seed: 3110)

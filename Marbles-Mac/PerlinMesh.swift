@@ -2,10 +2,13 @@ import GameKit
 
 class PerlinMesh {
 
+    private let n: Int
+
     // Precomputed (or otherwise) gradient vectors at each grid node
     private let gradient: [[[Float]]]
 
     init(n: Int, seed: UInt64) {
+        self.n = n
         var gradient = [[[Float]]](repeating: [[Float]](repeating: [Float](repeating: 0.0, count: 2), count: n), count: n)
 
         let rs = GKMersenneTwisterRandomSource()
@@ -46,9 +49,9 @@ class PerlinMesh {
     func noise(x: Float, y: Float) -> Float {
 
         // Determine grid cell coordinates
-        let x0 = Int(x)
+        let x0 = Int(x) % n
         let x1 = x0 + 1
-        let y0 = Int(y)
+        let y0 = Int(y) % n
         let y1 = y0 + 1
 
 //        print(x, y, x0, x1, y0, y1)
