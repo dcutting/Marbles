@@ -16,7 +16,7 @@ class MarbleViewController: NSViewController {
 
     let edgeness: CGFloat = 10.0
     let smoothness: CGFloat = 2.0
-    let subdivision = 0
+    let subdivision = 1
     let n: UInt32 = 9
     lazy var ticks: UInt32 = power(2, n) + 1
     let width: CGFloat = 20.0
@@ -51,16 +51,16 @@ class MarbleViewController: NSViewController {
         scene.rootNode.addChildNode(cameraNode)
 
         let light = SCNLight()
-        light.type = .omni
+        light.type = .directional
         let lightNode = SCNNode()
         lightNode.light = light
         lightNode.look(at: SCNVector3())
         lightNode.position = SCNVector3(x: 0, y: width, z: width)
-        //        lightNode.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: 10)))
+//        lightNode.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: 10)))
         scene.rootNode.addChildNode(lightNode)
 
         let light2 = SCNLight()
-        light2.type = .omni
+        light2.type = .directional
         let lightNode2 = SCNNode()
         lightNode2.light = light2
         lightNode2.look(at: SCNVector3())
@@ -70,10 +70,18 @@ class MarbleViewController: NSViewController {
 
         let ambientLight = SCNLight()
         ambientLight.type = .ambient
-        ambientLight.color = NSColor(calibratedWhite: 0.3, alpha: 1.0)
+        ambientLight.color = NSColor(calibratedWhite: 0.2, alpha: 1.0)
         let ambientLightNode = SCNNode()
         ambientLightNode.light = ambientLight
         scene.rootNode.addChildNode(ambientLightNode)
+
+        let water = SCNSphere(radius: halfWidth-2.5)
+        let waterMaterial = SCNMaterial()
+        waterMaterial.diffuse.contents = NSColor.blue
+        waterMaterial.locksAmbientWithDiffuse = true
+        water.materials = [waterMaterial]
+        let waterNode = SCNNode(geometry: water)
+        scene.rootNode.addChildNode(waterNode)
 
         updateTerrain()
 
@@ -99,7 +107,7 @@ class MarbleViewController: NSViewController {
 //        let geometry = generateSphere(segmentCount: segmentCount)
 
         var icosa = MDLMesh.newIcosahedron(withRadius: Float(halfWidth), inwardNormals: false, allocator: nil)
-        var ico = MDLMesh.newSubdividedMesh(icosa, submeshIndex: 0, subdivisionLevels: 8)!
+        var ico = MDLMesh.newSubdividedMesh(icosa, submeshIndex: 0, subdivisionLevels: 7)!
 
         var shape = ico
 
@@ -175,7 +183,11 @@ class MarbleViewController: NSViewController {
 //        printVertices(for: geometry)
 //        deformVertices(for: geometry)
 //        geometry.firstMaterial?.fillMode = .lines
-        geometry.firstMaterial?.fillMode = .fill
+        let landMaterial = SCNMaterial()
+        landMaterial.diffuse.contents = NSColor.green
+        landMaterial.locksAmbientWithDiffuse = true
+        geometry.materials = [landMaterial]
+//        geometry.firstMaterial?.fillMode = .fill
         geometry.wantsAdaptiveSubdivision = subdivision > 0 ? true : false
         geometry.subdivisionLevel = subdivision
         terrainNode?.removeFromParentNode()
