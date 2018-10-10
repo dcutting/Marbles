@@ -21,6 +21,7 @@
 		C85EB5932168F62D00B670B2 /* gradient.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB58C2168F62D00B670B2 /* gradient.swift */; };
 		C85EB59E216ABC7C00B670B2 /* ModelIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C85EB59D216ABC7C00B670B2 /* ModelIO.framework */; };
 		C8757C71216BB88C00CDEC74 /* Vector.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB59A216AB39D00B670B2 /* Vector.swift */; };
+		C8757C73216E13CF00CDEC74 /* DiamondSquare.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8757C72216E13CF00CDEC74 /* DiamondSquare.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -44,6 +45,7 @@
 		C85EB598216AB27300B670B2 /* Geometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Geometry.swift; sourceTree = "<group>"; };
 		C85EB59A216AB39D00B670B2 /* Vector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vector.swift; sourceTree = "<group>"; };
 		C85EB59D216ABC7C00B670B2 /* ModelIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ModelIO.framework; path = System/Library/Frameworks/ModelIO.framework; sourceTree = SDKROOT; };
+		C8757C72216E13CF00CDEC74 /* DiamondSquare.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiamondSquare.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -90,6 +92,7 @@
 				C85EB598216AB27300B670B2 /* Geometry.swift */,
 				C85EB59A216AB39D00B670B2 /* Vector.swift */,
 				C85EB594216AB1BA00B670B2 /* IcoSphere.swift */,
+				C8757C72216E13CF00CDEC74 /* DiamondSquare.swift */,
 			);
 			path = "Marbles-Mac";
 			sourceTree = "<group>";
@@ -209,6 +212,7 @@
 				C85EB58D2168F62D00B670B2 /* cell_meta.swift in Sources */,
 				C85EB5922168F62D00B670B2 /* noise.swift in Sources */,
 				C85EB5932168F62D00B670B2 /* gradient.swift in Sources */,
+				C8757C73216E13CF00CDEC74 /* DiamondSquare.swift in Sources */,
 				C85EB5902168F62D00B670B2 /* hash.swift in Sources */,
 				C85EB5912168F62D00B670B2 /* cell.swift in Sources */,
 				C80E460D216177440029A3A0 /* MarbleViewController.swift in Sources */,
