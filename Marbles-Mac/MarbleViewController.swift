@@ -18,7 +18,8 @@ class MarbleViewController: NSViewController {
 
         scene.fogColor = NSColor.black
         scene.fogStartDistance = width*2.0
-        scene.fogEndDistance = width*5.0
+        scene.fogEndDistance = width*10.0
+        scene.background.contents = NSImage(named: "tycho")!
 
         SCNTransaction.animationDuration = 1.0
 
@@ -141,7 +142,7 @@ class MarbleViewController: NSViewController {
             if delta > 0.5 {
                 colors.append([1.0, 1.0, 1.0])
             } else {
-                colors.append([0.0, 3.0*Float(delta)/4.0, 0.0])
+                colors.append([0.0, 9.0*Float(delta)/10.0, 0.0])
             }
         }
 
