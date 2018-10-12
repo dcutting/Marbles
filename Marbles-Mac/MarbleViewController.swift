@@ -3,6 +3,7 @@ import QuartzCore
 import SceneKit
 import SceneKit.ModelIO
 import ModelIO
+import MetalKit
 
 class MarbleViewController: NSViewController {
 
@@ -12,6 +13,15 @@ class MarbleViewController: NSViewController {
 
     let scene = SCNScene()
     var terrainNode: SCNNode?
+
+    let terrainNoises = [
+        GradientNoise3D(amplitude: 4.0, frequency: 0.125, seed: 310567),
+        GradientNoise3D(amplitude: 2.0, frequency: 0.25, seed: 313902),
+        GradientNoise3D(amplitude: 1.0, frequency: 0.5, seed: 313910),
+        GradientNoise3D(amplitude: 0.5, frequency: 1.0, seed: 31390),
+        GradientNoise3D(amplitude: 0.25, frequency: 2.0, seed: 3110),
+        GradientNoise3D(amplitude: 0.125, frequency: 4.0, seed: 310),
+    ]
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -68,8 +78,10 @@ class MarbleViewController: NSViewController {
         gestureRecognizers.insert(clickGesture, at: 0)
         scnView.gestureRecognizers = gestureRecognizers
 
-        makeWater()
-        updateTerrain()
+//        makeWater()
+//        updateTerrain()
+//        makeDetailedTerrain()
+        makePatch()
     }
 
     @objc func handleClick(_ gestureRecognizer: NSGestureRecognizer) {
@@ -77,43 +89,157 @@ class MarbleViewController: NSViewController {
     }
 
     private func updateTerrain() {
-        let noises = [
-            GradientNoise3D(amplitude: 4.0, frequency: 0.125, seed: 310567),
-            GradientNoise3D(amplitude: 2.0, frequency: 0.25, seed: 313902),
-            GradientNoise3D(amplitude: 1.0, frequency: 0.5, seed: 313910),
-            GradientNoise3D(amplitude: 0.5, frequency: 1.0, seed: 31390),
-            GradientNoise3D(amplitude: 0.25, frequency: 2.0, seed: 3110),
-            GradientNoise3D(amplitude: 0.125, frequency: 4.0, seed: 310),
-        ]
-        let land = makeIcosphere(noises: noises, detail: 7, levels: 0, smoothing: 0, offset: 0.0, assignColours: true)
+        let icosa = MDLMesh.newIcosahedron(withRadius: Float(halfWidth), inwardNormals: false, allocator: nil)
+        let shape = MDLMesh.newSubdividedMesh(icosa, submeshIndex: 0, subdivisionLevels: 3)!
+        let land = makeCrinkly(mdlMesh: shape, noises: terrainNoises, levels: 0, smoothing: 0, offset: 0.0, assignColours: true)
         terrainNode?.removeFromParentNode()
         let mesh = SCNNode(geometry: land)
         scene.rootNode.addChildNode(mesh)
         terrainNode = mesh
     }
 
-    private func makeWater() {
-        let noises = [
-            GradientNoise3D(amplitude: 0.03, frequency: 50.0, seed: 31390),
+    private func makePatch() {
+
+        let h = Float(halfWidth)
+
+        let positions: [float3] = [
+            [0.000000, 0.0, -h],
+            [-0.866*h, 0.0, 0.5*h],
+            [0.866*h, 0.0, 0.5*h],
         ]
-        let water = makeIcosphere(noises: noises, detail: 6, levels: 0, smoothing: 0, offset: 0.01, assignColours: false)
-        let waterMaterial = SCNMaterial()
-        waterMaterial.diffuse.contents = NSColor.blue
-        waterMaterial.specular.contents = NSColor.white
-        waterMaterial.shininess = 0.5
-        waterMaterial.locksAmbientWithDiffuse = true
-        water.materials = [waterMaterial]
-        let waterNode = SCNNode(geometry: water)
-        scene.rootNode.addChildNode(waterNode)
+
+        let normals: [float3] = [
+            [0.0, 1.0, 0.0],
+            [0.0, 1.0, 0.0],
+            [0.0, 1.0, 0.0],
+        ]
+
+        let numVertices = 3
+
+        let positionBufferLength: Int = MemoryLayout<float3>.size * positions.count
+        let normalBufferLength: Int = MemoryLayout<float3>.size * normals.count
+
+        let allocator = MDLMeshBufferDataAllocator()
+        let positionBuffer = allocator.newBuffer(positionBufferLength, type: .vertex)
+        let normalBuffer = allocator.newBuffer(normalBufferLength, type: .vertex)
+
+        let positionData = NSData(bytes: positions, length: positionBufferLength) as Data
+        let normalData = NSData(bytes: normals, length: normalBufferLength) as Data
+
+        positionBuffer.fill(positionData, offset: 0)
+        normalBuffer.fill(normalData, offset: 0)
+
+        let meshBuffers = [positionBuffer, normalBuffer]
+
+        let indices: [UInt16] = [ 0, 1, 2 ]
+
+        let numIndices = indices.count
+
+        let indicesBufferLength = MemoryLayout<UInt16>.size * indices.count
+
+        let indicesBuffer = allocator.newBuffer(indicesBufferLength, type: .index)
+
+        let indicesData = NSData(bytes: indices, length: indicesBufferLength) as Data
+
+        indicesBuffer.fill(indicesData, offset: 0)
+
+        let submesh = MDLSubmesh(indexBuffer: indicesBuffer, indexCount: numIndices, indexType: .uInt16, geometryType: .triangles, material: nil)
+        let submeshes = [submesh]
+
+        let vertexDescriptor = MDLVertexDescriptor()
+        let positionAttribute = MDLVertexAttribute(name: MDLVertexAttributePosition, format: .float3, offset: 0, bufferIndex: 0)
+        vertexDescriptor.addOrReplaceAttribute(positionAttribute)
+        let normalAttribute = MDLVertexAttribute(name: MDLVertexAttributeNormal, format: .float3, offset: 0, bufferIndex: 1)
+        vertexDescriptor.addOrReplaceAttribute(normalAttribute)
+        let positionLayout = MDLVertexBufferLayout(stride: MemoryLayout<float3>.size)
+        let normalLayout = MDLVertexBufferLayout(stride: MemoryLayout<float3>.size)
+        vertexDescriptor.layouts = [positionLayout, normalLayout]
+
+        let mesh = MDLMesh(vertexBuffers: meshBuffers, vertexCount: numVertices, descriptor: vertexDescriptor, submeshes: submeshes)
+
+        // subdivide mesh
+        // crinkle mesh
+        // convert mesh to geometry
+        let geometry = SCNGeometry(mdlMesh: mesh)
+        let material = SCNMaterial()
+        material.diffuse.contents = NSColor.green
+        material.specular.contents = NSColor.white
+        material.shininess = 0.5
+        material.locksAmbientWithDiffuse = true
+        material.fillMode = .lines
+        geometry.materials = [material]
+
+        // add geometry to scene
+        let node = SCNNode(geometry: geometry)
+        scene.rootNode.addChildNode(node)
     }
 
-    private func makeIcosphere(noises: [GradientNoise3D], detail: Int, levels: Int, smoothing: Int, offset: CGFloat, assignColours: Bool) -> SCNGeometry {
-
+    private func makeDetailedTerrain() {
         let icosa = MDLMesh.newIcosahedron(withRadius: Float(halfWidth), inwardNormals: false, allocator: nil)
-        let shape = MDLMesh.newSubdividedMesh(icosa, submeshIndex: 0, subdivisionLevels: detail)!
+        let subicosa = MDLMesh.newSubdividedMesh(icosa, submeshIndex: 0, subdivisionLevels: 2)!
 
-        let vertices = shape.vertexAttributeData(forAttributeNamed: "position", as: MDLVertexFormat.float3)!
-        let numVertices = shape.vertexCount
+        let vertices = subicosa.vertexAttributeData(forAttributeNamed: "position", as: MDLVertexFormat.float3)!
+        let numVertices = subicosa.vertexCount
+        let bytes = vertices.map.bytes
+        let stride = vertices.stride
+        let descriptorOffset = 0
+        var rawVertices = [SCNVector3]()
+        var filteredVertices = [SCNVector3]()
+        for vertexNumber in 0..<numVertices {
+            let index = vertexNumber * stride + descriptorOffset
+            let x = Double(vertices.dataStart.load(fromByteOffset: index, as: Float.self))
+            let y = Double(vertices.dataStart.load(fromByteOffset: index+4, as: Float.self))
+            let z = Double(vertices.dataStart.load(fromByteOffset: index+8, as: Float.self))
+            if x >= 0 && y >= 0 && z >= 0 {
+                filteredVertices.append(SCNVector3(x, y, z))
+            } else {
+                filteredVertices.append(SCNVector3(0, 0, 0))
+            }
+            rawVertices.append(SCNVector3(x, y, z))
+        }
+        let submesh: MDLSubmesh = subicosa.submeshes!.firstObject as! MDLSubmesh
+        print(rawVertices)
+        print(filteredVertices)
+        print(submesh.geometryType.rawValue)
+
+        let vertexData = NSData(bytes: vertices.map.bytes, length: MemoryLayout<float3>.size * rawVertices.count) as Data
+        let meshBuffer = MDLMeshBufferDataAllocator().newBuffer(with: vertexData, type: .vertex)
+
+        let patch = MDLMesh(vertexBuffers: [meshBuffer], vertexCount: rawVertices.count, descriptor: subicosa.vertexDescriptor, submeshes: subicosa.submeshes as! [MDLSubmesh])
+        let land = SCNGeometry(mdlMesh: patch)
+
+//        let shape = MDLMesh.newSubdividedMesh(patch, submeshIndex: 0, subdivisionLevels: 3)!
+//        let land = makeCrinkly(mdlMesh: shape, noises: terrainNoises, levels: 0, smoothing: 0, offset: 0.0, assignColours: false)
+//        let material = SCNMaterial()
+//        material.diffuse.contents = NSColor.green
+//        material.specular.contents = NSColor.white
+//        material.shininess = 0.5
+//        material.locksAmbientWithDiffuse = true
+//        land.materials = [material]
+        let landNode = SCNNode(geometry: land)
+        scene.rootNode.addChildNode(landNode)
+    }
+
+    private func makeWater() {
+//        let noises = [
+//            GradientNoise3D(amplitude: 0.03, frequency: 50.0, seed: 31390),
+//        ]
+//        let icosa = MDLMesh.newIcosahedron(withRadius: Float(halfWidth), inwardNormals: false, allocator: nil)
+//        let water = makeCrinkly(mdlMesh: icosa, noises: noises, detail: 3, levels: 0, smoothing: 0, offset: 0.01, assignColours: false)
+//        let waterMaterial = SCNMaterial()
+//        waterMaterial.diffuse.contents = NSColor.blue
+//        waterMaterial.specular.contents = NSColor.white
+//        waterMaterial.shininess = 0.5
+//        waterMaterial.locksAmbientWithDiffuse = true
+//        water.materials = [waterMaterial]
+//        let waterNode = SCNNode(geometry: water)
+//        scene.rootNode.addChildNode(waterNode)
+    }
+
+    private func makeCrinkly(mdlMesh: MDLMesh, noises: [GradientNoise3D], levels: Int, smoothing: Int, offset: CGFloat, assignColours: Bool) -> SCNGeometry {
+
+        let vertices = mdlMesh.vertexAttributeData(forAttributeNamed: "position", as: MDLVertexFormat.float3)!
+        let numVertices = mdlMesh.vertexCount
         let bytes = vertices.map.bytes
         let stride = vertices.stride
         let descriptorOffset = 0
@@ -149,7 +275,7 @@ class MarbleViewController: NSViewController {
         let colourData = NSData(bytes: colors, length: MemoryLayout<float3>.size * colors.count)
         let colourSource = SCNGeometrySource(data: colourData as Data, semantic: .color, vectorCount: colors.count, usesFloatComponents: true, componentsPerVector: 3, bytesPerComponent: MemoryLayout<Float>.size, dataOffset: 0, dataStride: MemoryLayout<float3>.size)
 
-        let geometry = SCNGeometry(mdlMesh: shape)
+        let geometry = SCNGeometry(mdlMesh: mdlMesh)
         let vertexSource = geometry.sources(for: .vertex).first!
         let indexElement = geometry.element(at: 0)
         var sources = [vertexSource]
