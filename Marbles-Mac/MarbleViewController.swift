@@ -89,7 +89,7 @@ class MarbleViewController: NSViewController {
             GradientNoise3D(amplitude: 0.08, frequency: 100.0, seed: 31390),
         ]
         let icosa = MDLMesh.newIcosahedron(withRadius: Float(halfWidth), inwardNormals: false, allocator: nil)
-        let shape = MDLMesh.newSubdividedMesh(icosa, submeshIndex: 0, subdivisionLevels: 7)!
+        let shape = MDLMesh.newSubdividedMesh(icosa, submeshIndex: 0, subdivisionLevels: 5)!
         let water = makeCrinkly(mdlMesh: shape, noises: noises, levels: 0, smoothing: 1, offset: 0.01, assignColours: false)
         let waterMaterial = SCNMaterial()
         waterMaterial.diffuse.contents = NSColor.blue
@@ -106,7 +106,7 @@ class MarbleViewController: NSViewController {
 
     private func makeTerrain() {
         let icosa = MDLMesh.newIcosahedron(withRadius: Float(halfWidth), inwardNormals: false, allocator: nil)
-        let shape = MDLMesh.newSubdividedMesh(icosa, submeshIndex: 0, subdivisionLevels: 9)!
+        let shape = MDLMesh.newSubdividedMesh(icosa, submeshIndex: 0, subdivisionLevels: 6)!
         let land = makeCrinkly(mdlMesh: shape, noises: terrainNoises, levels: 0, smoothing: 0, offset: 0.0, assignColours: useGradientColours)
         if !useGradientColours {
             let material = SCNMaterial()
