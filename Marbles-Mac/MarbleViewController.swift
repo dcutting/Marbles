@@ -15,17 +15,17 @@ class MarbleViewController: NSViewController {
     var terrainNode: SCNNode?
 
     let terrainNoises = [
-        GradientNoise3D(amplitude: 4.0, frequency: 0.125, seed: 310567),
-        GradientNoise3D(amplitude: 2.0, frequency: 0.25, seed: 313902),
-        GradientNoise3D(amplitude: 1.0, frequency: 0.5, seed: 313910),
-        GradientNoise3D(amplitude: 0.5, frequency: 1.0, seed: 31390),
+        GradientNoise3D(amplitude: 4.0, frequency: 0.0625, seed: 3105637),
+        GradientNoise3D(amplitude: 2.0, frequency: 0.125, seed: 313902),
+        GradientNoise3D(amplitude: 1.0, frequency: 0.25, seed: 313910),
+        GradientNoise3D(amplitude: 0.5, frequency: 0.5, seed: 31390),
         GradientNoise3D(amplitude: 0.25, frequency: 2.0, seed: 3110),
         GradientNoise3D(amplitude: 0.125, frequency: 4.0, seed: 310),
-        GradientNoise3D(amplitude: 0.0625, frequency: 8.0, seed: 310321),
+        GradientNoise3D(amplitude: 0.0625, frequency: 8.0, seed: 31029321),
         GradientNoise3D(amplitude: 0.03125, frequency: 16.0, seed: 310321),
-        GradientNoise3D(amplitude: 0.015625, frequency: 32.0, seed: 310321),
-        GradientNoise3D(amplitude: 0.0078125, frequency: 64.0, seed: 310321),
-        GradientNoise3D(amplitude: 0.00390625, frequency: 128.0, seed: 310321),
+        GradientNoise3D(amplitude: 0.015625, frequency: 32.0, seed: 3121),
+        GradientNoise3D(amplitude: 0.0078125, frequency: 64.0, seed: 31303321),
+        GradientNoise3D(amplitude: 0.00390625, frequency: 128.0, seed: 310315321),
     ]
 
     override func viewDidLoad() {
@@ -95,7 +95,7 @@ class MarbleViewController: NSViewController {
 
     private func updateTerrain() {
         let icosa = MDLMesh.newIcosahedron(withRadius: Float(halfWidth), inwardNormals: false, allocator: nil)
-        let shape = MDLMesh.newSubdividedMesh(icosa, submeshIndex: 0, subdivisionLevels: 5)!
+        let shape = MDLMesh.newSubdividedMesh(icosa, submeshIndex: 0, subdivisionLevels: 6)!
         let land = makeCrinkly(mdlMesh: shape, noises: terrainNoises, levels: 0, smoothing: 0, offset: 0.0, assignColours: true)
         terrainNode?.removeFromParentNode()
         let material = SCNMaterial()
@@ -112,13 +112,13 @@ class MarbleViewController: NSViewController {
 
     private func makePatch() {
 
-        let h = Float(width/4)
+        let h = Float(width)
         let o: Float = Float(halfWidth)
 
         let positions: [float3] = [
-            [0.000000, h+o, -h],
-            [-0.866*h, h+o, 0.5*h],
-            [0.866*h, h+o, 0.5*h],
+            [0.000000+o, h+o, -h],
+            [-0.866*h+o, h+o, 0.5*h],
+            [0.866*h+o, h+o, 0.5*h],
         ]
 
         let numVertices = 3
