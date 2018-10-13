@@ -77,13 +77,14 @@ class MarbleViewController: NSViewController {
         scnView.scene = scene
         scnView.allowsCameraControl = true
         scnView.backgroundColor = .black
+        scnView.showsStatistics = true
 
         let clickGesture = NSClickGestureRecognizer(target: self, action: #selector(handleClick(_:)))
         var gestureRecognizers = scnView.gestureRecognizers
         gestureRecognizers.insert(clickGesture, at: 0)
         scnView.gestureRecognizers = gestureRecognizers
 
-//        makeWater()
+        makeWater()
 //        makeTerrain()
         makeRoot()
     }
@@ -95,7 +96,7 @@ class MarbleViewController: NSViewController {
         let noise = GradientNoise3D(amplitude: 0.08, frequency: 100.0, seed: 31390)
         let icosa = MDLMesh.newIcosahedron(withRadius: Float(halfWidth), inwardNormals: false, allocator: nil)
         let shape = MDLMesh.newSubdividedMesh(icosa, submeshIndex: 0, subdivisionLevels: 5)!
-        let water = makeCrinkly(mdlMesh: shape, noises: [noise], levels: 0, smoothing: 1, offset: 0.01, assignColours: false)
+        let water = makeCrinkly(mdlMesh: shape, noises: [noise], levels: 0, smoothing: 1, offset: 0.05, assignColours: false)
         let waterMaterial = SCNMaterial()
         waterMaterial.diffuse.contents = NSColor.blue
         waterMaterial.specular.contents = NSColor.white
@@ -156,7 +157,7 @@ class MarbleViewController: NSViewController {
             [-phi, 0, -1]
         ]
 
-        let faces: [[UInt16]] = [
+        let faces: [[UInt32]] = [
             [4, 5, 8],
             [4, 9, 5],
             [4, 8, 0],
@@ -179,25 +180,38 @@ class MarbleViewController: NSViewController {
             [2, 3, 7],
         ]
 
-        for face in faces {
-            let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
-            let geometry = makePatch(positions: vertices)
-            let node = SCNNode(geometry: geometry)
-            scene.rootNode.addChildNode(node)
+        var faceNodes = [SCNNode?](repeating: nil, count: faces.count)
+
+        DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 1) {
+            DispatchQueue.concurrentPerform(iterations: 9) { depth in
+                DispatchQueue.concurrentPerform(iterations: faces.count) { faceIndex in
+                    print(faceIndex, depth)
+                    let face = faces[faceIndex]
+                    let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
+                    let geometry = self.makePatch(positions: vertices, depth: UInt32(depth))
+                    let node = SCNNode(geometry: geometry)
+                    DispatchQueue.main.async {
+                        let previousNode = faceNodes[faceIndex]
+                        previousNode?.removeFromParentNode()
+                        faceNodes[faceIndex] = node
+                        self.scene.rootNode.addChildNode(node)
+                    }
+                }
+            }
         }
     }
 
-    private func makePatch(positions: [float3]/*, indices: [UInt16]*/) -> SCNGeometry {
+    private func makePatch(positions: [float3], depth: UInt32) -> SCNGeometry {
 //        let mesh = makeMesh(positions: positions, indices: indices)
 //        let (subpositions, subindices) = subdivideTriangle(vertices: [
 //            [0.0, 1.0, 0.0],
 //            [-0.866, -0.5, 0.0],
 //            [0.866, -0.5, 0.0]
 //        ], subdivisionLevels: 4)
-        let (subpositions, subindices) = subdivideTriangle(vertices: positions, subdivisionLevels: 5)
+        let (subpositions, subindices) = subdivideTriangle(vertices: positions, subdivisionLevels: depth)
 //        let detailMesh = MDLMesh.newSubdividedMesh(mesh, submeshIndex: 0, subdivisionLevels: 5)!
         let detailMesh = makeMesh(positions: subpositions, indices: Array(subindices.joined()))
-        let geometry = makeCrinkly(mdlMesh: detailMesh, noises: terrainNoises, levels: 0, smoothing: 0, offset: 0.0, assignColours: useGradientColours)
+        let geometry = makeCrinkly(mdlMesh: detailMesh, noises: terrainNoises, levels: 0, smoothing: 1, offset: 0.0, assignColours: useGradientColours)
 //        let geometry = SCNGeometry(mdlMesh: detailMesh)
         if !useGradientColours {
             let material = SCNMaterial()
@@ -213,7 +227,7 @@ class MarbleViewController: NSViewController {
         return geometry
     }
 
-    private func makeMesh(positions: [float3], indices: [UInt16]) -> MDLMesh {
+    private func makeMesh(positions: [float3], indices: [UInt32]) -> MDLMesh {
 
         let numVertices = positions.count
         let numIndices = indices.count
@@ -225,12 +239,12 @@ class MarbleViewController: NSViewController {
         let positionData = NSData(bytes: positions, length: positionBufferLength) as Data
         positionBuffer.fill(positionData, offset: 0)
 
-        let indicesBufferLength = MemoryLayout<UInt16>.size * indices.count
+        let indicesBufferLength = MemoryLayout<UInt32>.size * indices.count
         let indicesBuffer = allocator.newBuffer(indicesBufferLength, type: .index)
         let indicesData = NSData(bytes: indices, length: indicesBufferLength) as Data
         indicesBuffer.fill(indicesData, offset: 0)
 
-        let submesh = MDLSubmesh(indexBuffer: indicesBuffer, indexCount: numIndices, indexType: .uInt16, geometryType: .triangles, material: nil)
+        let submesh = MDLSubmesh(indexBuffer: indicesBuffer, indexCount: numIndices, indexType: .uInt32, geometryType: .triangles, material: nil)
 
         let vertexDescriptor = MDLVertexDescriptor()
         let positionAttribute = MDLVertexAttribute(name: MDLVertexAttributePosition, format: .float3, offset: 0, bufferIndex: 0)
@@ -243,13 +257,13 @@ class MarbleViewController: NSViewController {
         return mesh
     }
 
-    private func pow(_ base: UInt16, _ power: UInt16) -> UInt16 {
-        var answer: UInt16 = 1
+    private func pow(_ base: UInt32, _ power: UInt32) -> UInt32 {
+        var answer: UInt32 = 1
         for _ in 0..<power { answer *= base }
         return answer
     }
 
-    private func subdivideTriangle(vertices: [float3], subdivisionLevels: UInt16) -> ([float3], [[UInt16]]) {
+    private func subdivideTriangle(vertices: [float3], subdivisionLevels: UInt32) -> ([float3], [[UInt32]]) {
 
         let a = vertices[0]
         let b = vertices[1]
@@ -267,8 +281,8 @@ class MarbleViewController: NSViewController {
         let slbc = lbc / Float(segments)
         let vbc = dbc.normalized() * slbc
 
-        var next: UInt16 = 0
-        var faces = [[UInt16]]()
+        var next: UInt32 = 0
+        var faces = [[UInt32]]()
         var points = [float3]()
         points.append(a)
         for j in 1...segments {
