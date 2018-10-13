@@ -14,12 +14,13 @@ class MarbleViewController: NSViewController {
     let wireframe = false
     let useGradientColours = true
 
-    let maxAmplitude: Float = 4.0
-    lazy var halfMaxAmplitude: Float = maxAmplitude / 2.0
+    let maxAmplitude: Double = 4.0
+    lazy var halfMaxAmplitude: Double = maxAmplitude / 2.0
 
-//    let sourceNoise = GradientNoise3D(amplitude: 4.0, frequency: 0.0625, seed: 3105637)
-//    lazy var terrainNoise = FBM(sourceNoise, octaves: 10, persistence: 0.5, lacunarity: 5.0)
-    let terrainNoises = [
+    lazy var sourceNoise = GradientNoise3D(amplitude: maxAmplitude, frequency: 0.1, seed: 3105637)
+    lazy var terrainNoise = FBM(sourceNoise, octaves: 10, persistence: 0.6, lacunarity: 6.0)
+    lazy var terrainNoises = [
+//        terrainNoise
         GradientNoise3D(amplitude: 4.0, frequency: 0.0625, seed: 3105637),
         GradientNoise3D(amplitude: 2.0, frequency: 0.125, seed: 313902),
         GradientNoise3D(amplitude: 1.0, frequency: 0.25, seed: 313910),
@@ -82,7 +83,7 @@ class MarbleViewController: NSViewController {
         gestureRecognizers.insert(clickGesture, at: 0)
         scnView.gestureRecognizers = gestureRecognizers
 
-        makeWater()
+//        makeWater()
 //        makeTerrain()
         makeRoot()
     }
@@ -181,7 +182,6 @@ class MarbleViewController: NSViewController {
         for face in faces {
             let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
             let geometry = makePatch(positions: vertices)
-//            let geometry = makePatch(positions: positions, indices: face)
             let node = SCNNode(geometry: geometry)
             scene.rootNode.addChildNode(node)
         }
@@ -194,7 +194,7 @@ class MarbleViewController: NSViewController {
 //            [-0.866, -0.5, 0.0],
 //            [0.866, -0.5, 0.0]
 //        ], subdivisionLevels: 4)
-        let (subpositions, subindices) = subdivideTriangle(vertices: positions, subdivisionLevels: 7)
+        let (subpositions, subindices) = subdivideTriangle(vertices: positions, subdivisionLevels: 5)
 //        let detailMesh = MDLMesh.newSubdividedMesh(mesh, submeshIndex: 0, subdivisionLevels: 5)!
         let detailMesh = makeMesh(positions: subpositions, indices: Array(subindices.joined()))
         let geometry = makeCrinkly(mdlMesh: detailMesh, noises: terrainNoises, levels: 0, smoothing: 0, offset: 0.0, assignColours: useGradientColours)
@@ -323,7 +323,7 @@ class MarbleViewController: NSViewController {
             if delta > 0.5 {
                 colors.append([1.0, 1.0, 1.0])
             } else {
-                let colour = (Float(delta) + halfMaxAmplitude) / maxAmplitude
+                let colour = (Double(delta) + halfMaxAmplitude) / maxAmplitude
                 colors.append([0.0, Float(colour), 0.0])
             }
         }
