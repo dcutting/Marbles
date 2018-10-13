@@ -67,3 +67,14 @@ extension SCNVector3 {
 //        return "\(x), \(y), \(z)"
 //    }
 }
+
+extension float3 {
+    func normalized() -> float3 {
+        let l = length(self)
+        if l > 0 {
+            return [x / l, y / l, z / l]
+        } else {
+            return [0.0, 0.0, 0.0]
+        }
+    }
+}

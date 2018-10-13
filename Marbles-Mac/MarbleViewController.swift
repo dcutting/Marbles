@@ -11,8 +11,14 @@ class MarbleViewController: NSViewController {
 
     let scene = SCNScene()
     var terrainNode: SCNNode?
+    let wireframe = false
     let useGradientColours = true
 
+    let maxAmplitude: Float = 4.0
+    lazy var halfMaxAmplitude: Float = maxAmplitude / 2.0
+
+//    let sourceNoise = GradientNoise3D(amplitude: 4.0, frequency: 0.0625, seed: 3105637)
+//    lazy var terrainNoise = FBM(sourceNoise, octaves: 10, persistence: 0.5, lacunarity: 5.0)
     let terrainNoises = [
         GradientNoise3D(amplitude: 4.0, frequency: 0.0625, seed: 3105637),
         GradientNoise3D(amplitude: 2.0, frequency: 0.125, seed: 313902),
@@ -30,13 +36,13 @@ class MarbleViewController: NSViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        scene.fogColor = NSColor.black
-        scene.fogStartDistance = width*2.0
-        scene.fogEndDistance = width*10.0
         scene.background.contents = NSImage(named: "tycho")!
 
+        let camera = SCNCamera()
+        camera.zNear = 0.01
+        camera.zFar = 1000.0
         let cameraNode = SCNNode()
-        cameraNode.camera = SCNCamera()
+        cameraNode.camera = camera
         cameraNode.position = SCNVector3(x: 0, y: width * 2, z: 0.0)
         cameraNode.look(at: SCNVector3())
         scene.rootNode.addChildNode(cameraNode)
@@ -77,26 +83,24 @@ class MarbleViewController: NSViewController {
         scnView.gestureRecognizers = gestureRecognizers
 
         makeWater()
-        makeTerrain()
-//        makePatch()
+//        makeTerrain()
+        makeRoot()
     }
 
     @objc func handleClick(_ gestureRecognizer: NSGestureRecognizer) {
     }
 
     private func makeWater() {
-        let noises = [
-            GradientNoise3D(amplitude: 0.08, frequency: 100.0, seed: 31390),
-        ]
+        let noise = GradientNoise3D(amplitude: 0.08, frequency: 100.0, seed: 31390)
         let icosa = MDLMesh.newIcosahedron(withRadius: Float(halfWidth), inwardNormals: false, allocator: nil)
         let shape = MDLMesh.newSubdividedMesh(icosa, submeshIndex: 0, subdivisionLevels: 5)!
-        let water = makeCrinkly(mdlMesh: shape, noises: noises, levels: 0, smoothing: 1, offset: 0.01, assignColours: false)
+        let water = makeCrinkly(mdlMesh: shape, noises: [noise], levels: 0, smoothing: 1, offset: 0.01, assignColours: false)
         let waterMaterial = SCNMaterial()
         waterMaterial.diffuse.contents = NSColor.blue
         waterMaterial.specular.contents = NSColor.white
         waterMaterial.shininess = 0.5
         waterMaterial.locksAmbientWithDiffuse = true
-        if !useGradientColours {
+        if wireframe {
             waterMaterial.fillMode = .lines
         }
         water.materials = [waterMaterial]
@@ -114,7 +118,9 @@ class MarbleViewController: NSViewController {
             material.specular.contents = NSColor.white
             material.shininess = 0.5
             material.locksAmbientWithDiffuse = true
-            material.fillMode = .lines
+            if wireframe {
+                material.fillMode = .lines
+            }
             land.materials = [material]
         }
         let mesh = SCNNode(geometry: land)
@@ -123,44 +129,108 @@ class MarbleViewController: NSViewController {
         terrainNode = mesh
     }
 
-    private func makePatch() {
+    private func makeRoot() {
 
-        let h = Float(width)
-        let o: Float = Float(halfWidth)
+        let phi: Float = 1.6180339887498948482
 
+//        let h = Float(width)
+//        let o: Float = Float(halfWidth)
+//        let positions: [float3] = [
+//            [0.000000+o, h+o, -h],
+//            [-0.866*h+o, h+o, 0.5*h],
+//            [0.866*h+o, h+o, 0.5*h],
+//            ]
         let positions: [float3] = [
-            [0.000000+o, h+o, -h],
-            [-0.866*h+o, h+o, 0.5*h],
-            [0.866*h+o, h+o, 0.5*h],
+            [1, phi, 0],
+            [-1, phi, 0],
+            [1, -phi, 0],
+            [-1, -phi, 0],
+            [0, 1, phi],
+            [0, -1, phi],
+            [0, 1, -phi],
+            [0, -1, -phi],
+            [phi, 0, 1],
+            [-phi, 0, 1],
+            [phi, 0, -1],
+            [-phi, 0, -1]
         ]
 
-        let numVertices = 3
+        let faces: [[UInt16]] = [
+            [4, 5, 8],
+            [4, 9, 5],
+            [4, 8, 0],
+            [4, 1, 9],
+            [0, 1, 4],
+            [1, 11, 9],
+            [9, 11, 3],
+            [1, 6, 11],
+            [0, 6, 1],
+            [5, 9, 3],
+            [10, 0, 8],
+            [10, 6, 0],
+            [11, 7, 3],
+            [5, 2, 8],
+            [10, 8, 2],
+            [10, 2, 7],
+            [6, 7, 11],
+            [6, 10, 7],
+            [5, 3, 2],
+            [2, 3, 7],
+        ]
 
-        let positionBufferLength: Int = MemoryLayout<float3>.size * positions.count
+        for face in faces {
+            let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
+            let geometry = makePatch(positions: vertices)
+//            let geometry = makePatch(positions: positions, indices: face)
+            let node = SCNNode(geometry: geometry)
+            scene.rootNode.addChildNode(node)
+        }
+    }
 
-        let allocator = MDLMeshBufferDataAllocator()
-        let positionBuffer = allocator.newBuffer(positionBufferLength, type: .vertex)
+    private func makePatch(positions: [float3]/*, indices: [UInt16]*/) -> SCNGeometry {
+//        let mesh = makeMesh(positions: positions, indices: indices)
+//        let (subpositions, subindices) = subdivideTriangle(vertices: [
+//            [0.0, 1.0, 0.0],
+//            [-0.866, -0.5, 0.0],
+//            [0.866, -0.5, 0.0]
+//        ], subdivisionLevels: 4)
+        let (subpositions, subindices) = subdivideTriangle(vertices: positions, subdivisionLevels: 7)
+//        let detailMesh = MDLMesh.newSubdividedMesh(mesh, submeshIndex: 0, subdivisionLevels: 5)!
+        let detailMesh = makeMesh(positions: subpositions, indices: Array(subindices.joined()))
+        let geometry = makeCrinkly(mdlMesh: detailMesh, noises: terrainNoises, levels: 0, smoothing: 0, offset: 0.0, assignColours: useGradientColours)
+//        let geometry = SCNGeometry(mdlMesh: detailMesh)
+        if !useGradientColours {
+            let material = SCNMaterial()
+            material.diffuse.contents = NSColor.red
+            material.specular.contents = NSColor.white
+            material.shininess = 0.5
+            material.locksAmbientWithDiffuse = true
+            if wireframe {
+                material.fillMode = .lines
+            }
+            geometry.materials = [material]
+        }
+        return geometry
+    }
 
-        let positionData = NSData(bytes: positions, length: positionBufferLength) as Data
+    private func makeMesh(positions: [float3], indices: [UInt16]) -> MDLMesh {
 
-        positionBuffer.fill(positionData, offset: 0)
-
-        let meshBuffers = [positionBuffer]
-
-        let indices: [UInt16] = [ 0, 1, 2 ]
-
+        let numVertices = positions.count
         let numIndices = indices.count
 
+        let allocator = MDLMeshBufferDataAllocator()
+
+        let positionBufferLength: Int = MemoryLayout<float3>.size * positions.count
+        let positionBuffer = allocator.newBuffer(positionBufferLength, type: .vertex)
+        let positionData = NSData(bytes: positions, length: positionBufferLength) as Data
+        positionBuffer.fill(positionData, offset: 0)
+
         let indicesBufferLength = MemoryLayout<UInt16>.size * indices.count
-
         let indicesBuffer = allocator.newBuffer(indicesBufferLength, type: .index)
-
         let indicesData = NSData(bytes: indices, length: indicesBufferLength) as Data
-
         indicesBuffer.fill(indicesData, offset: 0)
 
         let submesh = MDLSubmesh(indexBuffer: indicesBuffer, indexCount: numIndices, indexType: .uInt16, geometryType: .triangles, material: nil)
-        let submeshes = [submesh]
 
         let vertexDescriptor = MDLVertexDescriptor()
         let positionAttribute = MDLVertexAttribute(name: MDLVertexAttributePosition, format: .float3, offset: 0, bufferIndex: 0)
@@ -168,25 +238,61 @@ class MarbleViewController: NSViewController {
         let positionLayout = MDLVertexBufferLayout(stride: MemoryLayout<float3>.size)
         vertexDescriptor.layouts = [positionLayout]
 
-        let mesh = MDLMesh(vertexBuffers: meshBuffers, vertexCount: numVertices, descriptor: vertexDescriptor, submeshes: submeshes)
-        let detailMesh = MDLMesh.newSubdividedMesh(mesh, submeshIndex: 0, subdivisionLevels: 8)!
-        let geometry = makeCrinkly(mdlMesh: detailMesh, noises: terrainNoises, levels: 0, smoothing: 0, offset: 0.0, assignColours: useGradientColours)
-        if !useGradientColours {
-            let material = SCNMaterial()
-            material.diffuse.contents = NSColor.red
-            material.specular.contents = NSColor.white
-            material.shininess = 0.5
-            material.locksAmbientWithDiffuse = true
-            material.fillMode = .lines
-            geometry.materials = [material]
-        }
-        let node = SCNNode(geometry: geometry)
-        scene.rootNode.addChildNode(node)
+        let mesh = MDLMesh(vertexBuffers: [positionBuffer], vertexCount: numVertices, descriptor: vertexDescriptor, submeshes: [submesh])
+
+        return mesh
     }
 
-    private func makeCrinkly(mdlMesh: MDLMesh, noises: [GradientNoise3D], levels: Int, smoothing: Int, offset: CGFloat, assignColours: Bool) -> SCNGeometry {
+    private func pow(_ base: UInt16, _ power: UInt16) -> UInt16 {
+        var answer: UInt16 = 1
+        for _ in 0..<power { answer *= base }
+        return answer
+    }
 
-        let vertices = mdlMesh.vertexAttributeData(forAttributeNamed: "position", as: MDLVertexFormat.float3)!
+    private func subdivideTriangle(vertices: [float3], subdivisionLevels: UInt16) -> ([float3], [[UInt16]]) {
+
+        let a = vertices[0]
+        let b = vertices[1]
+        let c = vertices[2]
+
+        let segments = pow(2, subdivisionLevels)
+
+        let dab = b - a
+        let lab = length(dab)
+        let slab = lab / Float(segments)
+        let vab = dab.normalized() * slab
+
+        let dbc = c - b
+        let lbc = length(dbc)
+        let slbc = lbc / Float(segments)
+        let vbc = dbc.normalized() * slbc
+
+        var next: UInt16 = 0
+        var faces = [[UInt16]]()
+        var points = [float3]()
+        points.append(a)
+        for j in 1...segments {
+            let p = a + (vab * Float(j))
+            points.append(p)
+            for i in 1...j {
+                let q = p + (vbc * Float(i))
+                points.append(q)
+                if i < j {
+                    faces.append([next, next+j, next+j+1])
+                    faces.append([next, next+j+1, next+1])
+                    next += 1
+                }
+            }
+            faces.append([next, next+j, next+j+1])
+            next += 1
+        }
+
+        return (points, faces)
+    }
+
+    private func makeCrinkly(mdlMesh: MDLMesh, noises: [Noise], levels: Int, smoothing: Int, offset: CGFloat, assignColours: Bool) -> SCNGeometry {
+
+        let vertices = mdlMesh.vertexAttributeData(forAttributeNamed: MDLVertexAttributePosition, as: .float3)!
         let numVertices = mdlMesh.vertexCount
         let bytes = vertices.map.bytes
         let stride = vertices.stride
@@ -201,6 +307,7 @@ class MarbleViewController: NSViewController {
             let nv = SCNVector3([x, y, z]).normalized()
             let v = nv * width
             let noise = noises.reduce(0.0) { a, n in a + n.evaluate(Double(v.x), Double(v.y), Double(v.z)) }
+//            let noise = noises.evaluate(Double(v.x), Double(v.y), Double(v.z))
             let delta: CGFloat
             if levels > 0 {
                 let adjusted = CGFloat(Int(noise * Double(levels)))
@@ -216,7 +323,8 @@ class MarbleViewController: NSViewController {
             if delta > 0.5 {
                 colors.append([1.0, 1.0, 1.0])
             } else {
-                colors.append([0.0, 9.0*Float(delta)/10.0, 0.0])
+                let colour = (Float(delta) + halfMaxAmplitude) / maxAmplitude
+                colors.append([0.0, Float(colour), 0.0])
             }
         }
 
