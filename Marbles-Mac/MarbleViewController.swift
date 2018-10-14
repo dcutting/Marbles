@@ -4,34 +4,31 @@ import SceneKit
 import SceneKit.ModelIO
 import ModelIO
 
-class MarbleViewController: NSViewController {
+let wireframe = false
+let seed = 315637
+let octaves = 10
+let width: CGFloat = 20.0
+var amplitude: Double = Double(width / 5.0)
 
-    let width: CGFloat = 20.0
-    lazy var halfWidth: CGFloat = width / 2.0
+let subdivisions = 8
+let smoothing = 1
+let levels = 0
+let iciness: CGFloat = 50.0
+
+let halfWidth: CGFloat = width / 2.0
+let halfAmplitude: Double = amplitude / 2.0
+
+class MarbleViewController: NSViewController {
 
     let scene = SCNScene()
     var terrainNode: SCNNode?
-    let wireframe = false
+    let terrainNoise: Noise
 
-    let maxAmplitude: Double = 8.0
-    lazy var halfMaxAmplitude: Double = maxAmplitude / 2.0
-
-    lazy var sourceNoise = GradientNoise3D(amplitude: maxAmplitude, frequency: 0.1, seed: 3105637)
-    lazy var terrainNoise = FBM(sourceNoise, octaves: 10, persistence: 0.6, lacunarity: 6.0)
-    lazy var terrainNoises = [
-//        terrainNoise
-        GradientNoise3D(amplitude: maxAmplitude, frequency: 0.0625, seed: 3105637),
-        GradientNoise3D(amplitude: 2.0, frequency: 0.125, seed: 313902),
-        GradientNoise3D(amplitude: 1.0, frequency: 0.25, seed: 313910),
-        GradientNoise3D(amplitude: 0.5, frequency: 0.5, seed: 31390),
-        GradientNoise3D(amplitude: 0.25, frequency: 2.0, seed: 3110),
-        GradientNoise3D(amplitude: 0.125, frequency: 4.0, seed: 310),
-        GradientNoise3D(amplitude: 0.0625, frequency: 8.0, seed: 31029321),
-        GradientNoise3D(amplitude: 0.03125, frequency: 16.0, seed: 310321),
-        GradientNoise3D(amplitude: 0.015625, frequency: 32.0, seed: 3121),
-        GradientNoise3D(amplitude: 0.0078125, frequency: 64.0, seed: 31303321),
-        GradientNoise3D(amplitude: 0.00390625, frequency: 128.0, seed: 310315321),
-    ]
+    required init?(coder: NSCoder) {
+        let sourceNoise = GradientNoise3D(amplitude: amplitude, frequency: 0.0625, seed: seed)
+        terrainNoise = FBM(sourceNoise, octaves: octaves, persistence: 0.4, lacunarity: 2.0)
+        super.init(coder: coder)
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -53,7 +50,6 @@ class MarbleViewController: NSViewController {
         lightNode2.light = light2
         lightNode2.look(at: SCNVector3())
         lightNode2.position = SCNVector3(x: 0, y: -10*width, z: -10*width)
-//        lightNode.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: 10)))
         scene.rootNode.addChildNode(lightNode2)
 
         let ambientLight = SCNLight()
@@ -87,7 +83,7 @@ class MarbleViewController: NSViewController {
         let noise = GradientNoise3D(amplitude: 0.08, frequency: 100.0, seed: 31390)
         let icosa = MDLMesh.newIcosahedron(withRadius: Float(halfWidth), inwardNormals: false, allocator: nil)
         let shape = MDLMesh.newSubdividedMesh(icosa, submeshIndex: 0, subdivisionLevels: 3)!
-        let water = makeCrinkly(mdlMesh: shape, noises: [noise], levels: 0, smoothing: 1, offset: 0.01, assignColours: false)
+        let water = makeCrinkly(mdlMesh: shape, noise: noise, levels: 0, smoothing: 1, offset: 0.2, assignColours: false)
         let waterMaterial = SCNMaterial()
         waterMaterial.diffuse.contents = NSColor.blue
         waterMaterial.specular.contents = NSColor.white
@@ -148,7 +144,7 @@ class MarbleViewController: NSViewController {
         var faceNodes = [SCNNode?](repeating: nil, count: faces.count)
 
         DispatchQueue.global(qos: .userInitiated).async {
-            DispatchQueue.concurrentPerform(iterations: 10) { depth in
+            DispatchQueue.concurrentPerform(iterations: subdivisions) { depth in
                 DispatchQueue.concurrentPerform(iterations: faces.count) { faceIndex in
                     let face = faces[faceIndex]
                     let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
@@ -171,8 +167,7 @@ class MarbleViewController: NSViewController {
     private func makePatch(positions: [float3], depth: UInt32) -> SCNGeometry {
         let (subpositions, subindices) = subdivideTriangle(vertices: positions, subdivisionLevels: depth)
         let detailMesh = makeMesh(positions: subpositions, indices: Array(subindices.joined()))
-        let geometry = makeCrinkly(mdlMesh: detailMesh, noises: terrainNoises, levels: 0, smoothing: 0, offset: 0.0, assignColours: !wireframe)
-//        let geometry = SCNGeometry(mdlMesh: detailMesh)
+        let geometry = makeCrinkly(mdlMesh: detailMesh, noise: terrainNoise, levels: levels, smoothing: smoothing, offset: 0.0, assignColours: !wireframe)
         if wireframe {
             let material = SCNMaterial()
             material.diffuse.contents = NSColor.white
@@ -260,7 +255,7 @@ class MarbleViewController: NSViewController {
         return (points, faces)
     }
 
-    private func makeCrinkly(mdlMesh: MDLMesh, noises: [Noise], levels: Int, smoothing: Int, offset: CGFloat, assignColours: Bool) -> SCNGeometry {
+    private func makeCrinkly(mdlMesh: MDLMesh, noise: Noise, levels: Int, smoothing: Int, offset: CGFloat, assignColours: Bool) -> SCNGeometry {
 
         let vertices = mdlMesh.vertexAttributeData(forAttributeNamed: MDLVertexAttributePosition, as: .float3)!
         let numVertices = mdlMesh.vertexCount
@@ -276,26 +271,23 @@ class MarbleViewController: NSViewController {
             let z = Double(vertices.dataStart.load(fromByteOffset: index+8, as: Float.self))
             let nv = SCNVector3([x, y, z]).normalized()
             let v = nv * width
-            let noise = noises.reduce(0.0) { a, n in a + n.evaluate(Double(v.x), Double(v.y), Double(v.z)) }
+            let rawNoise = noise.evaluate(Double(v.x), Double(v.y), Double(v.z))
             let delta: CGFloat
             if levels > 0 {
-                let adjusted = CGFloat(Int(noise * Double(levels)))
-                delta = adjusted * width / (100.0 * CGFloat(levels))
+                let ratio = Double(amplitude) / Double(levels)
+                delta = CGFloat(ratio * round(rawNoise / ratio))
             } else {
-                delta = CGFloat(noise * Double(width/100.0))
+                delta = CGFloat(rawNoise)
             }
             let dv = nv * (width + delta + offset)
             let point: float3 = [Float(dv.x), Float(dv.y), Float(dv.z)]
             bytes.storeBytes(of: point.x, toByteOffset: index, as: Float.self)
             bytes.storeBytes(of: point.y, toByteOffset: index+4, as: Float.self)
             bytes.storeBytes(of: point.z, toByteOffset: index+8, as: Float.self)
-            if Float(delta) > (Float(width)-abs(point.y))/Float(halfWidth) {
+            if Float(delta) > (Float(width)-abs(point.y))/Float(iciness/width) {
                 colors.append([1.0, 1.0, 1.0])
-//            } else if point.y > -Float(halfWidth) && point.y < Float(halfWidth) {
-//                let colour = (Double(delta)) / halfMaxAmplitude
-//                colors.append([Float(colour), Float(colour), 0.0])
             } else {
-                let colour = Double(delta) / maxAmplitude
+                let colour = Double(delta) / halfAmplitude
                 colors.append([0.0, Float(colour), 0.0])
             }
         }
