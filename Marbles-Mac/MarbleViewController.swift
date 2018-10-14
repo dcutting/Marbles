@@ -321,7 +321,7 @@ class MarbleViewController: NSViewController {
             if delta > 0.5 {
                 colors.append([1.0, 1.0, 1.0])
             } else {
-                let colour = (Double(delta) + halfMaxAmplitude) / maxAmplitude
+                let colour = (Double(delta)) / halfMaxAmplitude
                 colors.append([0.0, Float(colour), 0.0])
             }
         }
