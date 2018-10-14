@@ -41,20 +41,12 @@ class MarbleViewController: NSViewController {
         lightNode.light = light
         lightNode.look(at: SCNVector3())
         lightNode.position = SCNVector3(x: 0, y: 10*width, z: 10*width)
-//        lightNode.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: 10)))
+        lightNode.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: 200)))
         scene.rootNode.addChildNode(lightNode)
-
-        let light2 = SCNLight()
-        light2.type = .directional
-        let lightNode2 = SCNNode()
-        lightNode2.light = light2
-        lightNode2.look(at: SCNVector3())
-        lightNode2.position = SCNVector3(x: 0, y: -10*width, z: -10*width)
-        scene.rootNode.addChildNode(lightNode2)
 
         let ambientLight = SCNLight()
         ambientLight.type = .ambient
-        ambientLight.color = NSColor(calibratedWhite: 0.5, alpha: 1.0)
+        ambientLight.color = NSColor(calibratedWhite: 0.3, alpha: 1.0)
         let ambientLightNode = SCNNode()
         ambientLightNode.light = ambientLight
         scene.rootNode.addChildNode(ambientLightNode)
@@ -66,7 +58,7 @@ class MarbleViewController: NSViewController {
         scnView.showsStatistics = true
 
         makeWater()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             self.makeRoot()
         }
 
