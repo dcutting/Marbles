@@ -135,13 +135,6 @@ class MarbleViewController: NSViewController {
 
         let phi: Float = 1.6180339887498948482
 
-//        let h = Float(width)
-//        let o: Float = Float(halfWidth)
-//        let positions: [float3] = [
-//            [0.000000+o, h+o, -h],
-//            [-0.866*h+o, h+o, 0.5*h],
-//            [0.866*h+o, h+o, 0.5*h],
-//            ]
         let positions: [float3] = [
             [1, phi, 0],
             [-1, phi, 0],
@@ -185,7 +178,6 @@ class MarbleViewController: NSViewController {
         DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 1) {
             DispatchQueue.concurrentPerform(iterations: 9) { depth in
                 DispatchQueue.concurrentPerform(iterations: faces.count) { faceIndex in
-                    print(faceIndex, depth)
                     let face = faces[faceIndex]
                     let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
                     let geometry = self.makePatch(positions: vertices, depth: UInt32(depth))
@@ -202,17 +194,9 @@ class MarbleViewController: NSViewController {
     }
 
     private func makePatch(positions: [float3], depth: UInt32) -> SCNGeometry {
-//        let mesh = makeMesh(positions: positions, indices: indices)
-//        let (subpositions, subindices) = subdivideTriangle(vertices: [
-//            [0.0, 1.0, 0.0],
-//            [-0.866, -0.5, 0.0],
-//            [0.866, -0.5, 0.0]
-//        ], subdivisionLevels: 4)
         let (subpositions, subindices) = subdivideTriangle(vertices: positions, subdivisionLevels: depth)
-//        let detailMesh = MDLMesh.newSubdividedMesh(mesh, submeshIndex: 0, subdivisionLevels: 5)!
         let detailMesh = makeMesh(positions: subpositions, indices: Array(subindices.joined()))
         let geometry = makeCrinkly(mdlMesh: detailMesh, noises: terrainNoises, levels: 0, smoothing: 1, offset: 0.0, assignColours: useGradientColours)
-//        let geometry = SCNGeometry(mdlMesh: detailMesh)
         if !useGradientColours {
             let material = SCNMaterial()
             material.diffuse.contents = NSColor.red
