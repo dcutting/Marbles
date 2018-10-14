@@ -8,7 +8,10 @@ let wireframe = false
 let seed = 3156
 let octaves = 10
 let width: CGFloat = 20.0
-var amplitude: Double = Double(width / 5.0)
+let frequency = 0.04
+let persistence = 0.6
+let lacunarity = 2.0
+var amplitude: Double = Double(width / 4.0)
 
 let subdivisions = 9
 let smoothing = 1
@@ -25,8 +28,8 @@ class MarbleViewController: NSViewController {
     let terrainNoise: Noise
 
     required init?(coder: NSCoder) {
-        let sourceNoise = GradientNoise3D(amplitude: amplitude, frequency: 0.04, seed: seed)
-        terrainNoise = FBM(sourceNoise, octaves: octaves, persistence: 0.6, lacunarity: 2.0)
+        let sourceNoise = GradientNoise3D(amplitude: amplitude, frequency: frequency, seed: seed)
+        terrainNoise = FBM(sourceNoise, octaves: octaves, persistence: persistence, lacunarity: lacunarity)
         super.init(coder: coder)
     }
 
