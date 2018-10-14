@@ -39,15 +39,6 @@ class MarbleViewController: NSViewController {
 
         scene.background.contents = NSImage(named: "tycho")!
 
-        let camera = SCNCamera()
-        camera.zNear = 0.01
-        camera.zFar = 1000.0
-        let cameraNode = SCNNode()
-        cameraNode.camera = camera
-        cameraNode.position = SCNVector3(x: 0, y: width * 2, z: 0.0)
-        cameraNode.look(at: SCNVector3())
-        scene.rootNode.addChildNode(cameraNode)
-
         let light = SCNLight()
         light.type = .directional
         let lightNode = SCNNode()
@@ -73,20 +64,24 @@ class MarbleViewController: NSViewController {
         ambientLightNode.light = ambientLight
         scene.rootNode.addChildNode(ambientLightNode)
 
+        makeWater()
+        //        makeTerrain()
+//        makeRoot()
+
         let scnView = self.view as! SCNView
         scnView.scene = scene
         scnView.allowsCameraControl = true
         scnView.backgroundColor = .black
         scnView.showsStatistics = true
+//        scnView.defaultCameraController.automaticTarget = false
+//        scnView.defaultCameraController.target = SCNVector3()
+//        scnView.defaultCameraController.interactionMode = .orbitCenteredArcball
+//        scnView.defaultCameraController.worldUp = SCNVector3()
 
         let clickGesture = NSClickGestureRecognizer(target: self, action: #selector(handleClick(_:)))
         var gestureRecognizers = scnView.gestureRecognizers
         gestureRecognizers.insert(clickGesture, at: 0)
         scnView.gestureRecognizers = gestureRecognizers
-
-        makeWater()
-//        makeTerrain()
-        makeRoot()
     }
 
     @objc func handleClick(_ gestureRecognizer: NSGestureRecognizer) {
@@ -176,7 +171,7 @@ class MarbleViewController: NSViewController {
         var faceNodes = [SCNNode?](repeating: nil, count: faces.count)
 
         DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 1) {
-            DispatchQueue.concurrentPerform(iterations: 9) { depth in
+            DispatchQueue.concurrentPerform(iterations: 5) { depth in
                 DispatchQueue.concurrentPerform(iterations: faces.count) { faceIndex in
                     let face = faces[faceIndex]
                     let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
@@ -305,7 +300,6 @@ class MarbleViewController: NSViewController {
             let nv = SCNVector3([x, y, z]).normalized()
             let v = nv * width
             let noise = noises.reduce(0.0) { a, n in a + n.evaluate(Double(v.x), Double(v.y), Double(v.z)) }
-//            let noise = noises.evaluate(Double(v.x), Double(v.y), Double(v.z))
             let delta: CGFloat
             if levels > 0 {
                 let adjusted = CGFloat(Int(noise * Double(levels)))
