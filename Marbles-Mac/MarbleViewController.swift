@@ -5,15 +5,15 @@ import SceneKit.ModelIO
 import ModelIO
 
 let wireframe = false
-let seed = 315637
+let seed = 3156
 let octaves = 10
 let width: CGFloat = 20.0
 var amplitude: Double = Double(width / 5.0)
 
-let subdivisions = 8
+let subdivisions = 9
 let smoothing = 1
 let levels = 0
-let iciness: CGFloat = 50.0
+let iciness: CGFloat = 150.0
 
 let halfWidth: CGFloat = width / 2.0
 let halfAmplitude: Double = amplitude / 2.0
@@ -25,8 +25,8 @@ class MarbleViewController: NSViewController {
     let terrainNoise: Noise
 
     required init?(coder: NSCoder) {
-        let sourceNoise = GradientNoise3D(amplitude: amplitude, frequency: 0.0625, seed: seed)
-        terrainNoise = FBM(sourceNoise, octaves: octaves, persistence: 0.4, lacunarity: 2.0)
+        let sourceNoise = GradientNoise3D(amplitude: amplitude, frequency: 0.04, seed: seed)
+        terrainNoise = FBM(sourceNoise, octaves: octaves, persistence: 0.6, lacunarity: 2.0)
         super.init(coder: coder)
     }
 
