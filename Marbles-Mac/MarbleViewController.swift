@@ -13,7 +13,7 @@ let persistence = 0.6
 let lacunarity = 2.1
 var amplitude: Double = Double(width / 4.0)
 
-let subdivisionsPerNode = 6
+let subdivisionsPerNode = 5
 let quadtreeDepth = 3
 let smoothing = 0
 let levels = 0
