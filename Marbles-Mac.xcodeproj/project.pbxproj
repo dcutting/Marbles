@@ -11,6 +11,7 @@
 		C80E460D216177440029A3A0 /* MarbleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80E460C216177440029A3A0 /* MarbleViewController.swift */; };
 		C80E4611216177440029A3A0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C80E4610216177440029A3A0 /* Assets.xcassets */; };
 		C80E4614216177440029A3A0 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C80E4612216177440029A3A0 /* Main.storyboard */; };
+		C84D35E8217484200072DA10 /* Quadtree.swift in Sources */ = {isa = PBXBuildFile; fileRef = C84D35E7217484200072DA10 /* Quadtree.swift */; };
 		C85EB5822168EC7E00B670B2 /* PerlinMesh.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB5812168EC7E00B670B2 /* PerlinMesh.swift */; };
 		C85EB58E2168F62D00B670B2 /* compounds.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB5872168F62D00B670B2 /* compounds.swift */; };
 		C85EB58F2168F62D00B670B2 /* disk.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB5882168F62D00B670B2 /* disk.swift */; };
@@ -31,6 +32,7 @@
 		C80E4613216177440029A3A0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		C80E4615216177440029A3A0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C80E4616216177440029A3A0 /* Marbles_Mac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Marbles_Mac.entitlements; sourceTree = "<group>"; };
+		C84D35E7217484200072DA10 /* Quadtree.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Quadtree.swift; sourceTree = "<group>"; };
 		C85EB5812168EC7E00B670B2 /* PerlinMesh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PerlinMesh.swift; sourceTree = "<group>"; };
 		C85EB5852168F62D00B670B2 /* cell_meta.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = cell_meta.swift; sourceTree = "<group>"; };
 		C85EB5872168F62D00B670B2 /* compounds.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = compounds.swift; sourceTree = "<group>"; };
@@ -86,6 +88,7 @@
 				C80E4612216177440029A3A0 /* Main.storyboard */,
 				C80E4615216177440029A3A0 /* Info.plist */,
 				C80E4616216177440029A3A0 /* Marbles_Mac.entitlements */,
+				C84D35E7217484200072DA10 /* Quadtree.swift */,
 			);
 			path = "Marbles-Mac";
 			sourceTree = "<group>";
@@ -206,6 +209,7 @@
 				C85EB5932168F62D00B670B2 /* gradient.swift in Sources */,
 				C8757C73216E13CF00CDEC74 /* DiamondSquare.swift in Sources */,
 				C85EB5902168F62D00B670B2 /* hash.swift in Sources */,
+				C84D35E8217484200072DA10 /* Quadtree.swift in Sources */,
 				C85EB5912168F62D00B670B2 /* cell.swift in Sources */,
 				C80E460D216177440029A3A0 /* MarbleViewController.swift in Sources */,
 				C80E460B216177440029A3A0 /* AppDelegate.swift in Sources */,

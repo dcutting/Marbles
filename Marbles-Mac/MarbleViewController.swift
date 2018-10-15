@@ -13,8 +13,9 @@ let persistence = 0.6
 let lacunarity = 2.1
 var amplitude: Double = Double(width / 4.0)
 
-let subdivisions = 9
-let smoothing = 1
+let subdivisionsPerNode = 6
+let quadtreeDepth = 3
+let smoothing = 0
 let levels = 0
 let iciness: CGFloat = 150.0
 
@@ -24,10 +25,11 @@ let halfAmplitude: Double = amplitude / 2.0
 class MarbleViewController: NSViewController {
 
     let scene = SCNScene()
-    var terrainNode: SCNNode?
+    let terrainNode = SCNNode()
     let terrainNoise: Noise
-
     let allocator = MDLMeshBufferDataAllocator()
+
+    let terrainQueue = DispatchQueue(label: "terrain", qos: .userInteractive, attributes: .concurrent)
 
     required init?(coder: NSCoder) {
         let sourceNoise = GradientNoise3D(amplitude: amplitude, frequency: frequency, seed: seed)
@@ -136,7 +138,6 @@ class MarbleViewController: NSViewController {
         let node = SCNNode(geometry: torus)
         node.castsShadow = true
         let s = Double(width)/(Double(outerRadius)/2.0) * 1.1
-        print(s)
         node.scale = SCNVector3(s, s, s)
         let p = -(Double(width*1.1))
         node.position = SCNVector3(p, p, p)
@@ -185,29 +186,51 @@ class MarbleViewController: NSViewController {
             [2, 3, 7],
         ]
 
-        let terrainNode = SCNNode()
-
-        var faceNodes = [SCNNode?](repeating: nil, count: faces.count)
-
-        DispatchQueue.global(qos: .userInitiated).async {
-            DispatchQueue.concurrentPerform(iterations: subdivisions) { depth in
-                DispatchQueue.concurrentPerform(iterations: faces.count) { faceIndex in
-                    let face = faces[faceIndex]
-                    let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
-                    let geometry = self.makePatch(positions: vertices, depth: UInt32(depth))
-                    let node = SCNNode(geometry: geometry)
-                    DispatchQueue.main.async {
-                        let previousNode = faceNodes[faceIndex]
-                        previousNode?.removeFromParentNode()
-                        faceNodes[faceIndex] = node
-                        terrainNode.addChildNode(node)
-                    }
-                }
+        var faceNodes = [Quadtree?](repeating: nil, count: faces.count)
+        terrainQueue.async {
+            DispatchQueue.concurrentPerform(iterations: faces.count) { faceIndex in
+                let face = faces[faceIndex]
+                let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
+                faceNodes[faceIndex] = self.makeFace(faceIndex: UInt32(faceIndex), corners: vertices, depth: UInt32(quadtreeDepth))
             }
         }
 
         self.scene.rootNode.addChildNode(terrainNode)
-        self.terrainNode = terrainNode
+    }
+
+    private func makeFace(faceIndex: UInt32, corners: [float3], depth: UInt32) -> Quadtree {
+//        print(faceIndex, depth)
+        //guard depth > facetree.depth else { return }
+
+        let quadtree = Quadtree(rootFaceIndex: faceIndex, corners: corners)
+
+        // Make patch for this level.
+        let geometry = self.makePatch(positions: quadtree.corners, depth: UInt32(subdivisionsPerNode))
+        let node = SCNNode(geometry: geometry)
+        quadtree.node = node
+        quadtree.depth = UInt32(depth)
+
+        DispatchQueue.main.async {
+            self.terrainNode.addChildNode(node)
+        }
+
+        // Subdivide quadtree.
+        if depth > 0 {
+            terrainQueue.async {
+            let (subvertices, subindices) = self.subdivideTriangle(vertices: quadtree.corners, subdivisionLevels: 1)
+                DispatchQueue.concurrentPerform(iterations: subindices.count) { i in
+                let subindex = subindices[i]
+                let vertices = [subvertices[Int(subindex[0])], subvertices[Int(subindex[1])], subvertices[Int(subindex[2])]]
+                let subquadtree = self.makeFace(faceIndex: faceIndex, corners: vertices, depth: depth-1)
+                quadtree.subtrees.append(subquadtree)
+            }
+                DispatchQueue.main.async {
+                    node.removeFromParentNode()
+                }
+            }
+        }
+
+        return quadtree
     }
 
     private func makePatch(positions: [float3], depth: UInt32) -> SCNGeometry {
