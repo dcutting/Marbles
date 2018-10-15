@@ -10,7 +10,7 @@ let octaves = 10
 let width: CGFloat = 20.0
 let frequency = 0.04
 let persistence = 0.6
-let lacunarity = 2.0
+let lacunarity = 2.1
 var amplitude: Double = Double(width / 4.0)
 
 let subdivisions = 9
@@ -63,7 +63,7 @@ class MarbleViewController: NSViewController {
         scnView.showsStatistics = true
 
         makeWater()
-        makeClouds()
+//        makeClouds()
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             self.makeRoot()
         }
