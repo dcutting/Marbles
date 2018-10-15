@@ -27,6 +27,8 @@ class MarbleViewController: NSViewController {
     var terrainNode: SCNNode?
     let terrainNoise: Noise
 
+    let allocator = MDLMeshBufferDataAllocator()
+
     required init?(coder: NSCoder) {
         let sourceNoise = GradientNoise3D(amplitude: amplitude, frequency: frequency, seed: seed)
         terrainNoise = FBM(sourceNoise, octaves: octaves, persistence: persistence, lacunarity: lacunarity)
@@ -61,6 +63,7 @@ class MarbleViewController: NSViewController {
         scnView.showsStatistics = true
 
         makeWater()
+        makeClouds()
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             self.makeRoot()
         }
@@ -90,6 +93,54 @@ class MarbleViewController: NSViewController {
         water.materials = [waterMaterial]
         let waterNode = SCNNode(geometry: water)
         scene.rootNode.addChildNode(waterNode)
+    }
+
+    private func makeClouds() {
+
+        let sourceNoise = GradientNoise3D(amplitude: 4.0, frequency: 0.004, seed: seed)
+        let noise = FBM(sourceNoise, octaves: 2, persistence: persistence, lacunarity: lacunarity)
+        let cloudWidth: Float = Float(halfWidth)// * 2.1
+
+        var indices = [vector_int4]()
+
+        let outerRadius = 200
+        let innerRadius = outerRadius - 2
+        for k in -outerRadius..<outerRadius {
+            for j in -outerRadius..<outerRadius {
+                for i in -outerRadius..<outerRadius {
+                    let h2 = i*i + j*j + k*k
+                    if h2 > innerRadius*innerRadius && h2 < outerRadius*outerRadius {
+                        let rawNoise = noise.evaluate(Double(i), Double(j), Double(k))
+                        if rawNoise > 1.0 {
+                            let v: vector_int4 = [Int32(i+outerRadius)/2, Int32(j+outerRadius)/2, Int32(k+outerRadius)/2, 0]
+                            indices.append(v)
+                        }
+                    }
+                }
+            }
+        }
+
+        let indicesBufferLength = MemoryLayout<vector_int4>.size * indices.count
+        let indicesData = NSData(bytes: indices, length: indicesBufferLength) as Data
+
+        let cloud = MDLVoxelArray(data: indicesData, boundingBox: MDLAxisAlignedBoundingBox(maxBounds: [cloudWidth, cloudWidth, cloudWidth], minBounds: [-cloudWidth, -cloudWidth, -cloudWidth]), voxelExtent: 0.001)
+        let mesh = cloud.mesh(using: allocator)!
+        let torus = SCNGeometry(mdlMesh: mesh)
+//        let material = SCNMaterial()
+//        material.diffuse.contents = NSColor.yellow
+//        material.specular.contents = NSColor.white
+//        material.shininess = 0.5
+//        material.locksAmbientWithDiffuse = true
+//        material.fillMode = .fill
+//        torus.materials = [material]
+        let node = SCNNode(geometry: torus)
+        node.castsShadow = true
+        let s = Double(width)/(Double(outerRadius)/2.0) * 1.1
+        print(s)
+        node.scale = SCNVector3(s, s, s)
+        let p = -(Double(width*1.1))
+        node.position = SCNVector3(p, p, p)
+        scene.rootNode.addChildNode(node)
     }
 
     private func makeRoot() {
@@ -177,8 +228,6 @@ class MarbleViewController: NSViewController {
 
         let numVertices = positions.count
         let numIndices = indices.count
-
-        let allocator = MDLMeshBufferDataAllocator()
 
         let positionBufferLength: Int = MemoryLayout<float3>.size * positions.count
         let positionBuffer = allocator.newBuffer(positionBufferLength, type: .vertex)
