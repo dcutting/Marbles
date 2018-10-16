@@ -22,6 +22,7 @@ let iciness: CGFloat = 150.0
 
 let halfWidth: CGFloat = width / 2.0
 let halfAmplitude: Double = amplitude / 2.0
+let phi: Float = 1.6180339887498948482
 
 class MarbleViewController: NSViewController {
 
@@ -29,8 +30,47 @@ class MarbleViewController: NSViewController {
     let terrainNode = SCNNode()
     let terrainNoise: Noise
     let allocator = MDLMeshBufferDataAllocator()
-
     let terrainQueue = DispatchQueue(label: "terrain", qos: .userInteractive, attributes: .concurrent)
+
+    var positions: [float3] = [
+        [1, phi, 0],
+        [-1, phi, 0],
+        [1, -phi, 0],
+        [-1, -phi, 0],
+        [0, 1, phi],
+        [0, -1, phi],
+        [0, 1, -phi],
+        [0, -1, -phi],
+        [phi, 0, 1],
+        [-phi, 0, 1],
+        [phi, 0, -1],
+        [-phi, 0, -1]
+    ]
+
+    let faces: [[UInt32]] = [
+        [4, 5, 8],
+        [4, 9, 5],
+        [4, 8, 0],
+        [4, 1, 9],
+        [0, 1, 4],
+        [1, 11, 9],
+        [9, 11, 3],
+        [1, 6, 11],
+        [0, 6, 1],
+        [5, 9, 3],
+        [10, 0, 8],
+        [10, 6, 0],
+        [11, 7, 3],
+        [5, 2, 8],
+        [10, 8, 2],
+        [10, 2, 7],
+        [6, 7, 11],
+        [6, 10, 7],
+        [5, 3, 2],
+        [2, 3, 7],
+    ]
+
+    lazy var faceNodes = [Quadtree?](repeating: nil, count: faces.count)
 
     required init?(coder: NSCoder) {
         let sourceNoise = GradientNoise3D(amplitude: amplitude, frequency: frequency, seed: seed)
@@ -65,6 +105,7 @@ class MarbleViewController: NSViewController {
         scnView.backgroundColor = .black
         scnView.showsStatistics = true
 
+        self.scene.rootNode.addChildNode(terrainNode)
 //        makeWater()
 //        makeClouds()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -149,62 +190,19 @@ class MarbleViewController: NSViewController {
     }
 
     private func makeRoot() {
-
-        let phi: Float = 1.6180339887498948482
-
-        var positions: [float3] = [
-            [1, phi, 0],
-            [-1, phi, 0],
-            [1, -phi, 0],
-            [-1, -phi, 0],
-            [0, 1, phi],
-            [0, -1, phi],
-            [0, 1, -phi],
-            [0, -1, -phi],
-            [phi, 0, 1],
-            [-phi, 0, 1],
-            [phi, 0, -1],
-            [-phi, 0, -1]
-        ]
-
-        let faces: [[UInt32]] = [
-            [4, 5, 8],
-            [4, 9, 5],
-            [4, 8, 0],
-            [4, 1, 9],
-            [0, 1, 4],
-            [1, 11, 9],
-            [9, 11, 3],
-            [1, 6, 11],
-            [0, 6, 1],
-            [5, 9, 3],
-            [10, 0, 8],
-            [10, 6, 0],
-            [11, 7, 3],
-            [5, 2, 8],
-            [10, 8, 2],
-            [10, 2, 7],
-            [6, 7, 11],
-            [6, 10, 7],
-            [5, 3, 2],
-            [2, 3, 7],
-        ]
-
-        var faceNodes = [Quadtree?](repeating: nil, count: faces.count)
         terrainQueue.async {
-//            let faceIndex = 0
-            DispatchQueue.concurrentPerform(iterations: faces.count) { faceIndex in
-                let face = faces[faceIndex]
-                let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
-            let node = self.makeQuadtree(faceIndex: UInt32(faceIndex), corners: vertices, depth: 0)
-            faceNodes[faceIndex] = node
-            DispatchQueue.main.async {
-                self.terrainNode.addChildNode(node.node!)
-            }
+            DispatchQueue.concurrentPerform(iterations: self.faces.count) { faceIndex in
+                let face = self.faces[faceIndex]
+                let vertices = [self.positions[Int(face[0])],
+                                self.positions[Int(face[1])],
+                                self.positions[Int(face[2])]]
+                let node = self.makeQuadtree(faceIndex: UInt32(faceIndex), corners: vertices, depth: 0)
+                self.faceNodes[faceIndex] = node
+                DispatchQueue.main.async {
+                    self.terrainNode.addChildNode(node.node!)
+                }
             }
         }
-
-        self.scene.rootNode.addChildNode(terrainNode)
     }
 
 //    private func subdivide(quadtrees: [Quadtree], to depth: UInt32) {
@@ -234,7 +232,15 @@ class MarbleViewController: NSViewController {
             let pointOfView = scnView.pointOfView
             else { return }
         let nodes = scnView.nodesInsideFrustum(of: pointOfView)
-        print(nodes.count)
+        let invisibleNodes = Set(terrainNode.childNodes).subtracting(Set(nodes))
+        invisibleNodes.forEach { node in
+            let quadtree = node.value(forKey: "quadtree") as! Quadtree
+            if quadtree.parent != nil {
+                node.removeFromParentNode()
+            }
+        }
+        print("Visible nodes: \(nodes.count)")
+        print("Invisible nodes: \(invisibleNodes.count)")
         var depths = [UInt32]()
         for node in nodes {
             let box = node.boundingBox
@@ -260,7 +266,6 @@ class MarbleViewController: NSViewController {
                 guard let parent = quadtree.parent else { continue }
                 for sibling in parent.subtrees {
                     let node = sibling.node
-                    print("    removing sibling \(node.debugDescription)...")
                     node?.removeFromParentNode()
                 }
                 terrainNode.addChildNode(parent.node!)
@@ -270,8 +275,9 @@ class MarbleViewController: NSViewController {
                         terrainNode.addChildNode(tree.node!)
                     }
                     let node = quadtree.node
-                    print("    removing sibling \(node.debugDescription)...")
-                    node?.removeFromParentNode()
+                    if node?.parent != nil {
+                        node?.removeFromParentNode()
+                    }
                 } else {
                     subdivide(quadtree: quadtree)
                 }
