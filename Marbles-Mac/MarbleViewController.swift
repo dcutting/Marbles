@@ -4,12 +4,12 @@ import SceneKit
 import SceneKit.ModelIO
 import ModelIO
 
-let wireframe = false
-let seed = 3156
+let wireframe = true
+let seed = 31596
 let octaves = 20
 let width: CGFloat = 20.0
-let frequency = 0.03
-let persistence = 0.55
+let frequency = 0.04
+let persistence = 0.5
 let lacunarity = 2.0
 var amplitude: Double = Double(width / 4.0)
 
@@ -71,10 +71,13 @@ class MarbleViewController: NSViewController {
         scnView.allowsCameraControl = true
         scnView.backgroundColor = .black
         scnView.showsStatistics = true
-        scnView.defaultCameraController.interactionMode = .fly
+//        scnView.defaultCameraController.interactionMode = .fly
         scnView.cameraControlConfiguration.flyModeVelocity = 0.1
+        if wireframe {
+            scnView.debugOptions = SCNDebugOptions([.renderAsWireframe])
+        }
 
-        makeWater()
+//        makeWater()
 //        makeClouds()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             self.makeRoot()
@@ -102,9 +105,9 @@ class MarbleViewController: NSViewController {
         waterMaterial.specular.contents = NSColor.white
         waterMaterial.shininess = 0.5
         waterMaterial.locksAmbientWithDiffuse = true
-        if wireframe {
-            waterMaterial.fillMode = .lines
-        }
+//        if wireframe {
+//            waterMaterial.fillMode = .lines
+//        }
         water.materials = [waterMaterial]
         let waterNode = SCNNode(geometry: water)
         scene.rootNode.addChildNode(waterNode)
@@ -203,15 +206,19 @@ class MarbleViewController: NSViewController {
 //        terrainQueue.async {
 //            DispatchQueue.concurrentPerform(iterations: faces.count) { faceIndex in
             for faceIndex in 0..<faces.count {
-                let depth = faceIndex == 0 ? 8 : 1
+                let depth = faceIndex == 0 ? 4 : 0
                 let face = faces[faceIndex]
                 let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
-                faceNodes[faceIndex] = self.makeFace(faceIndex: UInt32(faceIndex), corners: vertices, depth: 0, maxDepth: UInt32(depth))
+                let quadtree = self.makeFace(faceIndex: UInt32(faceIndex), corners: vertices, depth: 0, maxDepth: UInt32(depth))
+                self.terrainNode.addChildNode(quadtree.node!)
+//                quadtree.node!.isHidden = false
+                faceNodes[faceIndex] = quadtree
             }
             print("Created all quadtrees to depth \(quadtreeDepth)")
 //            DispatchQueue.main.async {
 //                faceNodes.forEach { quadtree in
-//                    self.terrainNode.addChildNode(quadtree!.node!)
+//                    quadtree?.node?.isHidden = false
+////                    self.terrainNode.addChildNode(quadtree!.node!)
 //                }
 //            }
 //        }
@@ -232,9 +239,10 @@ class MarbleViewController: NSViewController {
         quadtree.depth = UInt32(depth)
         node.setValue(quadtree, forKey: "quadtree")
 
-        DispatchQueue.main.async {
-            self.terrainNode.addChildNode(node)
-        }
+//        DispatchQueue.main.async {
+//            node.isHidden = true
+//            self.terrainNode.addChildNode(node)
+//        }
 
         // Subdivide quadtree.
         if maxDepth > 0 {
@@ -247,6 +255,7 @@ class MarbleViewController: NSViewController {
                     let mD = i == 0 ? maxDepth - 1 : maxDepth / 2
                     let subquadtree = self.makeFace(faceIndex: faceIndex, corners: vertices, depth: depth+1, maxDepth: mD)
                     subquadtree.parent = quadtree
+                    node.addChildNode(subquadtree.node!)
                     quadtree.subtrees.append(subquadtree)
                 }
 //                DispatchQueue.main.async {
@@ -338,13 +347,13 @@ class MarbleViewController: NSViewController {
         let (subpositions, subindices) = subdivideTriangle(vertices: positions, subdivisionLevels: depth)
         let detailMesh = makeMesh(positions: subpositions, indices: Array(subindices.joined()))
         let geometry = makeCrinkly(mdlMesh: detailMesh, noise: terrainNoise, levels: levels, smoothing: smoothing, offset: 0.0, assignColours: !wireframe)
-        if wireframe {
-            let material = SCNMaterial()
-            material.diffuse.contents = NSColor.white
-            material.locksAmbientWithDiffuse = true
-            material.fillMode = .lines
-            geometry.materials = [material]
-        }
+//        if wireframe {
+//            let material = SCNMaterial()
+//            material.diffuse.contents = NSColor.white
+//            material.locksAmbientWithDiffuse = true
+//            material.fillMode = .lines
+//            geometry.materials = [material]
+//        }
         return geometry
     }
 
