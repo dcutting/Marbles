@@ -6,15 +6,15 @@ import ModelIO
 
 let wireframe = false
 let seed = 3156
-let octaves = 10
+let octaves = 20
 let width: CGFloat = 20.0
-let frequency = 0.04
-let persistence = 0.6
-let lacunarity = 2.1
+let frequency = 0.03
+let persistence = 0.55
+let lacunarity = 2.0
 var amplitude: Double = Double(width / 4.0)
 
 let subdivisionsPerNode = 4
-let quadtreeDepth = 2
+let quadtreeDepth = 1
 let smoothing = 0
 let levels = 0
 let iciness: CGFloat = 150.0
@@ -48,7 +48,7 @@ class MarbleViewController: NSViewController {
         lightNode.light = light
         lightNode.look(at: SCNVector3())
         lightNode.position = SCNVector3(x: 0, y: 10*width, z: 10*width)
-        lightNode.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: 200)))
+//        lightNode.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: 200)))
         scene.rootNode.addChildNode(lightNode)
 
         let ambientLight = SCNLight()
@@ -58,11 +58,21 @@ class MarbleViewController: NSViewController {
         ambientLightNode.light = ambientLight
         scene.rootNode.addChildNode(ambientLightNode)
 
+        let camera = SCNCamera()
+        camera.automaticallyAdjustsZRange = true
+        let cameraNode = SCNNode()
+        cameraNode.position = SCNVector3(x: 0.0, y: 0.0, z: width * 1.2)
+        cameraNode.camera = camera
+        cameraNode.look(at: SCNVector3())
+        scene.rootNode.addChildNode(cameraNode)
+
         let scnView = self.view as! SCNView
         scnView.scene = scene
         scnView.allowsCameraControl = true
         scnView.backgroundColor = .black
         scnView.showsStatistics = true
+        scnView.defaultCameraController.interactionMode = .fly
+        scnView.cameraControlConfiguration.flyModeVelocity = 0.1
 
         makeWater()
 //        makeClouds()
@@ -193,9 +203,10 @@ class MarbleViewController: NSViewController {
 //        terrainQueue.async {
 //            DispatchQueue.concurrentPerform(iterations: faces.count) { faceIndex in
             for faceIndex in 0..<faces.count {
+                let depth = faceIndex == 0 ? 8 : 1
                 let face = faces[faceIndex]
                 let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
-                faceNodes[faceIndex] = self.makeFace(faceIndex: UInt32(faceIndex), corners: vertices, depth: 0, maxDepth: UInt32(quadtreeDepth))
+                faceNodes[faceIndex] = self.makeFace(faceIndex: UInt32(faceIndex), corners: vertices, depth: 0, maxDepth: UInt32(depth))
             }
             print("Created all quadtrees to depth \(quadtreeDepth)")
 //            DispatchQueue.main.async {
@@ -233,7 +244,8 @@ class MarbleViewController: NSViewController {
                 for i in 0..<subindices.count {
                     let subindex = subindices[i]
                     let vertices = [subvertices[Int(subindex[0])], subvertices[Int(subindex[1])], subvertices[Int(subindex[2])]]
-                    let subquadtree = self.makeFace(faceIndex: faceIndex, corners: vertices, depth: depth+1, maxDepth: maxDepth-1)
+                    let mD = i == 0 ? maxDepth - 1 : maxDepth / 2
+                    let subquadtree = self.makeFace(faceIndex: faceIndex, corners: vertices, depth: depth+1, maxDepth: mD)
                     subquadtree.parent = quadtree
                     quadtree.subtrees.append(subquadtree)
                 }
