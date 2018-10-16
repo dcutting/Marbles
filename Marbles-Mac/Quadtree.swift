@@ -6,6 +6,7 @@ class Quadtree {
     var corners: [float3]
     var depth: UInt32 = 0
     var node: SCNNode?
+    var parent: Quadtree?
     var subtrees = [Quadtree]()
 
     init(rootFaceIndex: UInt32, corners: [float3]) {

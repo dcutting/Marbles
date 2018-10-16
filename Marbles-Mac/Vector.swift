@@ -4,6 +4,10 @@ public func + (left:SCNVector3, right:SCNVector3) -> SCNVector3 {
     return SCNVector3(left.x + right.x, left.y + right.y, left.z + right.z)
 }
 
+public func - (left:SCNVector3, right:SCNVector3) -> SCNVector3 {
+    return SCNVector3(left.x - right.x, left.y - right.y, left.z - right.z)
+}
+
 public func * (left:SCNVector3, scalar:CGFloat) -> SCNVector3 {
     return SCNVector3(left.x * scalar, left.y * scalar, left.z * scalar)
 }
