@@ -20,8 +20,11 @@
 		C85EB5922168F62D00B670B2 /* noise.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB58B2168F62D00B670B2 /* noise.swift */; };
 		C85EB5932168F62D00B670B2 /* gradient.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB58C2168F62D00B670B2 /* gradient.swift */; };
 		C85EB59E216ABC7C00B670B2 /* ModelIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C85EB59D216ABC7C00B670B2 /* ModelIO.framework */; };
+		C868AB4321775D38005429D1 /* geometry.shader.geometry in Resources */ = {isa = PBXBuildFile; fileRef = C868AB4221775D38005429D1 /* geometry.shader.geometry */; };
 		C8757C71216BB88C00CDEC74 /* Vector.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB59A216AB39D00B670B2 /* Vector.swift */; };
 		C8757C73216E13CF00CDEC74 /* DiamondSquare.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8757C72216E13CF00CDEC74 /* DiamondSquare.swift */; };
+		C88A461121774C8600E50318 /* geometry.shader.fragment in Resources */ = {isa = PBXBuildFile; fileRef = C88A461021774C8600E50318 /* geometry.shader.fragment */; };
+		C8C1B4C221779B9400CDDEDB /* geometry.shader.surface in Resources */ = {isa = PBXBuildFile; fileRef = C8C1B4C121779B9400CDDEDB /* geometry.shader.surface */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -43,7 +46,14 @@
 		C85EB58C2168F62D00B670B2 /* gradient.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = gradient.swift; sourceTree = "<group>"; };
 		C85EB59A216AB39D00B670B2 /* Vector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vector.swift; sourceTree = "<group>"; };
 		C85EB59D216ABC7C00B670B2 /* ModelIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ModelIO.framework; path = System/Library/Frameworks/ModelIO.framework; sourceTree = SDKROOT; };
+		C868AB4221775D38005429D1 /* geometry.shader.geometry */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = geometry.shader.geometry; sourceTree = "<group>"; };
+		C868AB4421776440005429D1 /* terrain.geometry */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = terrain.geometry; sourceTree = "<group>"; };
+		C868AB46217766BF005429D1 /* noise.geometry */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = noise.geometry; sourceTree = "<group>"; };
+		C868AB4821776ACB005429D1 /* sample.geometry */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = sample.geometry; sourceTree = "<group>"; };
+		C868AB4B217776F4005429D1 /* Shader.geometry */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = Shader.geometry; sourceTree = "<group>"; };
 		C8757C72216E13CF00CDEC74 /* DiamondSquare.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiamondSquare.swift; sourceTree = "<group>"; };
+		C88A461021774C8600E50318 /* geometry.shader.fragment */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = geometry.shader.fragment; sourceTree = "<group>"; };
+		C8C1B4C121779B9400CDDEDB /* geometry.shader.surface */ = {isa = PBXFileReference; lastKnownFileType = text; path = geometry.shader.surface; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -89,6 +99,13 @@
 				C80E4615216177440029A3A0 /* Info.plist */,
 				C80E4616216177440029A3A0 /* Marbles_Mac.entitlements */,
 				C84D35E7217484200072DA10 /* Quadtree.swift */,
+				C88A461021774C8600E50318 /* geometry.shader.fragment */,
+				C8C1B4C121779B9400CDDEDB /* geometry.shader.surface */,
+				C868AB4221775D38005429D1 /* geometry.shader.geometry */,
+				C868AB4421776440005429D1 /* terrain.geometry */,
+				C868AB46217766BF005429D1 /* noise.geometry */,
+				C868AB4821776ACB005429D1 /* sample.geometry */,
+				C868AB4B217776F4005429D1 /* Shader.geometry */,
 			);
 			path = "Marbles-Mac";
 			sourceTree = "<group>";
@@ -189,8 +206,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C8C1B4C221779B9400CDDEDB /* geometry.shader.surface in Resources */,
 				C80E4614216177440029A3A0 /* Main.storyboard in Resources */,
 				C80E4611216177440029A3A0 /* Assets.xcassets in Resources */,
+				C88A461121774C8600E50318 /* geometry.shader.fragment in Resources */,
+				C868AB4321775D38005429D1 /* geometry.shader.geometry in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

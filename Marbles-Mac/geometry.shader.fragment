@@ -1,0 +1,7 @@
+#include <metal_stdlib>
+#include <metal_common>
+#include <simd/simd.h>
+
+uniform float colorModifier;
+
+_output.color.r = _output.color.r * (1.0 - colorModifier) + colorModifier * _output.color.g;

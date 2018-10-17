@@ -4,10 +4,10 @@ import SceneKit
 import SceneKit.ModelIO
 import ModelIO
 
-let wireframe = true
+let wireframe = false
 let seed = 31596
 let octaves = 20
-let width: CGFloat = 20.0
+let width: CGFloat = 2000.0
 let frequency = 0.04
 let persistence = 0.5
 let lacunarity = 2.0
@@ -28,6 +28,15 @@ class MarbleViewController: NSViewController {
     let terrainNode = SCNNode()
     let terrainNoise: Noise
     let allocator = MDLMeshBufferDataAllocator()
+    lazy var sphere: SCNGeometry = {
+        let mdl = MDLMesh(icosahedronWithExtent: [Float(width), Float(width), Float(width)], inwardNormals: false, geometryType: .triangles, allocator: nil)
+        return SCNShape(mdlMesh: mdl)
+    }()//SCNSphere(radius: width)
+//    lazy var sphere: SCNSphere = {
+//        let s = SCNSphere(radius: width)
+//        s.isGeodesic = true
+//        return s
+//    }()
 
     let terrainQueue = DispatchQueue(label: "terrain", qos: .userInteractive, attributes: .concurrent)
 
@@ -79,12 +88,14 @@ class MarbleViewController: NSViewController {
 
 //        makeWater()
 //        makeClouds()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            self.makeRoot()
-        }
-        Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { _ in
-            self.updateLevelOfDetail()
-        }
+//        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+//            self.makeRoot()
+//        }
+//        Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { _ in
+//            self.updateLevelOfDetail()
+//        }
+
+        makeTerrain()
 
         let clickGesture = NSClickGestureRecognizer(target: self, action: #selector(handleClick(_:)))
         var gestureRecognizers = scnView.gestureRecognizers
@@ -93,6 +104,44 @@ class MarbleViewController: NSViewController {
     }
 
     @objc func handleClick(_ gestureRecognizer: NSGestureRecognizer) {
+    }
+
+    private func makeTerrain() {
+        let tessellator = SCNGeometryTessellator()
+        tessellator.isAdaptive = true
+        tessellator.isScreenSpace = true
+        tessellator.maximumEdgeLength = 0.01
+//        tessellator.insideTessellationFactor = 10.0
+//        tessellator.edgeTessellationFactor = 10.0
+        tessellator.smoothingMode = .pnTriangles
+        sphere.wantsAdaptiveSubdivision = true
+        sphere.subdivisionLevel = 10
+        sphere.tessellator = tessellator
+        let fragment = try! String(contentsOfFile: Bundle.main.path(forResource: "geometry.shader", ofType: "fragment")!, encoding: String.Encoding.utf8)
+        let surface = try! String(contentsOfFile: Bundle.main.path(forResource: "geometry.shader", ofType: "surface")!, encoding: String.Encoding.utf8)
+        let geometry = try! String(contentsOfFile: Bundle.main.path(forResource: "geometry.shader", ofType: "geometry")!, encoding: String.Encoding.utf8)
+        
+        sphere.shaderModifiers = [
+//            SCNShaderModifierEntryPoint.fragment: fragment,
+//            SCNShaderModifierEntryPoint.surface: surface,
+            SCNShaderModifierEntryPoint.geometry: geometry
+        ]
+        let material = SCNMaterial()
+//        material.diffuse.contents = NSColor.red
+//        material.specular.contents = NSColor.white
+        material.shininess = 0.5
+        material.locksAmbientWithDiffuse = true
+        sphere.materials = [material]
+        let node = SCNNode(geometry: sphere)
+        scene.rootNode.addChildNode(node)
+
+        Timer.scheduledTimer(timeInterval: 0.01, target: self, selector: #selector(changeColor), userInfo: nil, repeats: true)
+
+    }
+
+    @objc private func changeColor() {
+        let t = NSDate().timeIntervalSince1970
+        sphere.firstMaterial?.setValue(sin(t * 2.0), forKey: "colorModifier")
     }
 
     private func makeWater() {
