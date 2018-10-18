@@ -4,7 +4,7 @@ import SceneKit
 import SceneKit.ModelIO
 import ModelIO
 
-let wireframe = false
+let wireframe = true
 let seed = 31596
 let octaves = 20
 let width: CGFloat = 2000.0
@@ -83,7 +83,7 @@ class MarbleViewController: NSViewController {
 //        scnView.defaultCameraController.interactionMode = .fly
         scnView.cameraControlConfiguration.flyModeVelocity = 0.1
         if wireframe {
-            scnView.debugOptions = SCNDebugOptions([.renderAsWireframe])
+            scnView.debugOptions = SCNDebugOptions([.showWireframe])
         }
 
 //        makeWater()
@@ -106,32 +106,54 @@ class MarbleViewController: NSViewController {
     @objc func handleClick(_ gestureRecognizer: NSGestureRecognizer) {
     }
 
+//    var pipeline: MTLRenderPipelineState?
+
     private func makeTerrain() {
         let tessellator = SCNGeometryTessellator()
         tessellator.isAdaptive = true
         tessellator.isScreenSpace = true
-        tessellator.maximumEdgeLength = 0.01
-//        tessellator.insideTessellationFactor = 10.0
-//        tessellator.edgeTessellationFactor = 10.0
-        tessellator.smoothingMode = .pnTriangles
+        tessellator.maximumEdgeLength = 1.0
+//        tessellator.insideTessellationFactor = 100.0
+//        tessellator.edgeTessellationFactor = 100.0
+//        tessellator.smoothingMode = .phong
         sphere.wantsAdaptiveSubdivision = true
         sphere.subdivisionLevel = 10
         sphere.tessellator = tessellator
-        let fragment = try! String(contentsOfFile: Bundle.main.path(forResource: "geometry.shader", ofType: "fragment")!, encoding: String.Encoding.utf8)
-        let surface = try! String(contentsOfFile: Bundle.main.path(forResource: "geometry.shader", ofType: "surface")!, encoding: String.Encoding.utf8)
-        let geometry = try! String(contentsOfFile: Bundle.main.path(forResource: "geometry.shader", ofType: "geometry")!, encoding: String.Encoding.utf8)
-        
-        sphere.shaderModifiers = [
-//            SCNShaderModifierEntryPoint.fragment: fragment,
-//            SCNShaderModifierEntryPoint.surface: surface,
-            SCNShaderModifierEntryPoint.geometry: geometry
-        ]
-        let material = SCNMaterial()
+//        let fragment = try! String(contentsOfFile: Bundle.main.path(forResource: "geometry.shader", ofType: "fragment")!, encoding: String.Encoding.utf8)
+//        let surface = try! String(contentsOfFile: Bundle.main.path(forResource: "geometry.shader", ofType: "surface")!, encoding: String.Encoding.utf8)
+//        let geometry = try! String(contentsOfFile: Bundle.main.path(forResource: "geometry.shader", ofType: "geometry")!, encoding: String.Encoding.utf8)
+//
+//        sphere.shaderModifiers = [
+////            SCNShaderModifierEntryPoint.fragment: fragment,
+////            SCNShaderModifierEntryPoint.surface: surface,
+//            SCNShaderModifierEntryPoint.geometry: geometry
+//        ]
+
+//        let device = MTLCreateSystemDefaultDevice()
+//        let layer = view.layer as! CAMetalLayer
+//        let library = device?.makeDefaultLibrary()
+//        let vertexFunc = library?.makeFunction(name: "vertex_main")
+//        let fragmentFunc = library?.makeFunction(name: "fragment_main")
+
+        let program = SCNProgram()
+        program.vertexFunctionName = "myVertex"
+        program.fragmentFunctionName = "myFragment"
+//        sphere.program = program
+
+//        let pipelineDescriptor = MTLRenderPipelineDescriptor()
+//        pipelineDescriptor.vertexFunction = vertexFunc
+//        pipelineDescriptor.fragmentFunction = fragmentFunc
+//        pipelineDescriptor.colorAttachments[0].pixelFormat = layer.pixelFormat
+//
+//        pipeline = try! device?.makeRenderPipelineState(descriptor: pipelineDescriptor)
+
+//        let material = SCNMaterial()
 //        material.diffuse.contents = NSColor.red
 //        material.specular.contents = NSColor.white
-        material.shininess = 0.5
-        material.locksAmbientWithDiffuse = true
-        sphere.materials = [material]
+//        material.shininess = 0.5
+//        material.locksAmbientWithDiffuse = true
+//        sphere.materials = [material]
+
         let node = SCNNode(geometry: sphere)
         scene.rootNode.addChildNode(node)
 

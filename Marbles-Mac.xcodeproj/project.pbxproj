@@ -25,6 +25,7 @@
 		C8757C73216E13CF00CDEC74 /* DiamondSquare.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8757C72216E13CF00CDEC74 /* DiamondSquare.swift */; };
 		C88A461121774C8600E50318 /* geometry.shader.fragment in Resources */ = {isa = PBXBuildFile; fileRef = C88A461021774C8600E50318 /* geometry.shader.fragment */; };
 		C8C1B4C221779B9400CDDEDB /* geometry.shader.surface in Resources */ = {isa = PBXBuildFile; fileRef = C8C1B4C121779B9400CDDEDB /* geometry.shader.surface */; };
+		C8C1B4C42177E49600CDDEDB /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8C1B4C32177E49600CDDEDB /* Shaders.metal */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -54,6 +55,7 @@
 		C8757C72216E13CF00CDEC74 /* DiamondSquare.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiamondSquare.swift; sourceTree = "<group>"; };
 		C88A461021774C8600E50318 /* geometry.shader.fragment */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = geometry.shader.fragment; sourceTree = "<group>"; };
 		C8C1B4C121779B9400CDDEDB /* geometry.shader.surface */ = {isa = PBXFileReference; lastKnownFileType = text; path = geometry.shader.surface; sourceTree = "<group>"; };
+		C8C1B4C32177E49600CDDEDB /* Shaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shaders.metal; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -106,6 +108,7 @@
 				C868AB46217766BF005429D1 /* noise.geometry */,
 				C868AB4821776ACB005429D1 /* sample.geometry */,
 				C868AB4B217776F4005429D1 /* Shader.geometry */,
+				C8C1B4C32177E49600CDDEDB /* Shaders.metal */,
 			);
 			path = "Marbles-Mac";
 			sourceTree = "<group>";
@@ -223,6 +226,7 @@
 			files = (
 				C85EB58E2168F62D00B670B2 /* compounds.swift in Sources */,
 				C8757C71216BB88C00CDEC74 /* Vector.swift in Sources */,
+				C8C1B4C42177E49600CDDEDB /* Shaders.metal in Sources */,
 				C85EB5822168EC7E00B670B2 /* PerlinMesh.swift in Sources */,
 				C85EB58F2168F62D00B670B2 /* disk.swift in Sources */,
 				C85EB5922168F62D00B670B2 /* noise.swift in Sources */,
