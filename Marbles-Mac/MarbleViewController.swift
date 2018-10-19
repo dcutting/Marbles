@@ -9,7 +9,7 @@ let octaves = 20
 let frequency: Double = Double(1.0 / diameter)
 let persistence = 0.5
 let lacunarity = 2.0
-let amplitude: Double = 10.0//Double(diameter / 40.0)
+let amplitude: Double = Double(radius / 4.0)
 let levels = 0
 let iciness: CGFloat = 150.0
 
@@ -96,7 +96,7 @@ class MarbleViewController: NSViewController {
 //        makeWater()
 //        makeClouds()
 //        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-//            self.makeRoot()
+//            self.makeTerrain()
 //        }
 //        Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { _ in
 //            self.updateLevelOfDetail()
@@ -113,19 +113,9 @@ class MarbleViewController: NSViewController {
     @objc func handleClick(_ gestureRecognizer: NSGestureRecognizer) {
     }
 
-    private func makeTerrain() {
-        makeRoot()
-//        Timer.scheduledTimer(timeInterval: 0.01, target: self, selector: #selector(updateTerrain), userInfo: nil, repeats: true)
-    }
-
-    @objc private func updateTerrain() {
-//        let t = NSDate().timeIntervalSince1970
-        updateLevelOfDetail()
-    }
-
     private func makeWater() {
         let noise = GradientNoise3D(amplitude: 0.08, frequency: 100.0, seed: 31390)
-        let icosa = MDLMesh.newIcosahedron(withRadius: Float(diameter), inwardNormals: false, allocator: nil)
+        let icosa = MDLMesh.newIcosahedron(withRadius: Float(radius), inwardNormals: false, allocator: nil)
         let shape = MDLMesh.newSubdividedMesh(icosa, submeshIndex: 0, subdivisionLevels: 3)!
         let water = makeCrinkly(mdlMesh: shape, noise: noise, levels: 0, smoothing: 1, offset: 0.2, assignColours: false)
         let waterMaterial = SCNMaterial()
@@ -226,66 +216,34 @@ class MarbleViewController: NSViewController {
 
     var patchNode: SCNNode?
 
-    private func makeRoot() {
-
-//        var faceNodes = [Quadtree?](repeating: nil, count: faces.count)
-
-//        terrainQueue.async {
-//            DispatchQueue.concurrentPerform(iterations: faces.count) { faceIndex in
-            for faceIndex in 0..<faces.count {
-//                let depth = 4
-//        faceIndex = 0
-                let face = faces[faceIndex]
-                let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
-                let geom = makePatch(positions: vertices, depth: 0)
-                let node = SCNNode(geometry: geom)
-                if faceIndex == 0 {
-                    patchNode = node
-                }
-                self.terrainNode.addChildNode(node)
+    private func makeTerrain() {
+        for faceIndex in 0..<faces.count {
+            let face = faces[faceIndex]
+            let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
+            let geom = makePatch(positions: vertices, depth: 0)
+            let node = SCNNode(geometry: geom)
+            if faceIndex == 0 {
+                patchNode = node
+            }
+            self.terrainNode.addChildNode(node)
+            updateRoot(face: face, node: node)
         }
-
         self.scene.rootNode.addChildNode(terrainNode)
-
-        updateRoot()
-//                let quadtree = self.makeFace(faceIndex: UInt32(faceIndex), corners: vertices, depth: 0, maxDepth: UInt32(depth))
-//                self.terrainNode.addChildNode(quadtree.node!)
-//                quadtree.node!.isHidden = false
-//                faceNodes[faceIndex] = quadtree
-//            }
     }
 
-//    var patchDepth: UInt32 = 8
     var counter = 0
 
-    private func updateRoot() {
-//        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
-//            self.faceIndex = (self.faceIndex + 1) % faces.count
-            self.terrainQueue.async {
-                let face = self.faces[self.faceIndex]
-                let vertices = [self.positions[Int(face[0])], self.positions[Int(face[1])], self.positions[Int(face[2])]]
-//                if self.patchDepth % 2 == 0 {
-//                    self.patchDepth += 1
-//                } else {
-//                    self.patchDepth -= 1
-//                }
-                let geom = self.makeGeometry(corners: vertices, maxEdgeLength: 50.0)
-                DispatchQueue.main.async {
-                    print("Updated geometry \(self.counter)")
-                    self.counter += 1
-                    self.patchNode?.geometry = geom
-                    self.updateRoot()
-                }
+    private func updateRoot(face: [UInt32], node: SCNNode) {
+        self.terrainQueue.async {
+            let vertices = [self.positions[Int(face[0])], self.positions[Int(face[1])], self.positions[Int(face[2])]]
+            let geom = self.makeGeometry(corners: vertices, maxEdgeLength: 50.0)
+            DispatchQueue.main.async {
+//                print("Updated geometry \(self.counter)")
+                self.counter += 1
+                node.geometry = geom
+                self.updateRoot(face: face, node: node)
             }
-//        }
-//            print("Created all quadtrees to depth \(quadtreeMaxDepth)")
-//            DispatchQueue.main.async {
-//                faceNodes.forEach { quadtree in
-//                    quadtree?.node?.isHidden = false
-////                    self.terrainNode.addChildNode(quadtree!.node!)
-//                }
-//            }
-//        }
+        }
     }
 
     private func makeGeometry(corners: [float3], maxEdgeLength: CGFloat) -> SCNGeometry {
@@ -304,9 +262,9 @@ class MarbleViewController: NSViewController {
         let scnView = view as! SCNView
         
         for index in subindices {
-            let vx = subv[Int(index[0])]//.normalized() * Float(radius)
-            let vy = subv[Int(index[1])]//.normalized() * Float(radius)
-            let vz = subv[Int(index[2])]//.normalized() * Float(radius)
+            let vx = subv[Int(index[0])]
+            let vy = subv[Int(index[1])]
+            let vz = subv[Int(index[2])]
             let px = scnView.projectPoint(SCNVector3(vx))
             let py = scnView.projectPoint(SCNVector3(vy))
             let pz = scnView.projectPoint(SCNVector3(vz))
@@ -327,7 +285,7 @@ class MarbleViewController: NSViewController {
                 break
             }
         }
-        if subdivide && depth < 9 {
+        if subdivide && depth < 10 {
             for index in subindices {
                 let vx = subv[Int(index[0])]
                 let vy = subv[Int(index[1])]
@@ -341,8 +299,9 @@ class MarbleViewController: NSViewController {
                 edges.append(contentsOf: offsetEdges)
             }
         } else {
+            let (subv, subii) = subdivideTriangle(vertices: corners, subdivisionLevels: 1)
             positions.append(contentsOf: subv)
-            edges.append(contentsOf: subindices)
+            edges.append(contentsOf: subii)
         }
         return (positions, edges)
     }
@@ -352,131 +311,10 @@ class MarbleViewController: NSViewController {
         let maxX = max(a.x, b.x, c.x)
         let minY = min(a.y, b.y, c.y)
         let maxY = max(a.y, b.y, c.y)
-        let inset = h / 4.0
+        let inset: CGFloat = 0.0//h / 4.0
         let overlapsX = minX <= (w + inset) && maxX >= (0 - inset)
         let overlapsY = minY <= (h + inset) && maxY >= (0 - inset)
         return overlapsX && overlapsY
-    }
-
-    private func isOnScreen(_ p: SCNVector3) -> Bool {
-        return p.x >= 0.0 && p.x <= w && p.y >= 0.0 && p.y <= h
-    }
-
-    private func makeFace(faceIndex: UInt32, corners: [float3], depth: UInt32, maxDepth: UInt32) -> Quadtree {
-//        print(faceIndex, depth, maxDepth)
-        //guard depth > facetree.depth else { return }
-
-        let quadtree = Quadtree(rootFaceIndex: faceIndex, corners: corners)
-
-        // Make patch for this level.
-        let geometry = self.makePatch(positions: quadtree.corners, depth: UInt32(5))
-        let node = SCNNode(geometry: geometry)
-        quadtree.node = node
-        quadtree.depth = UInt32(depth)
-        node.setValue(quadtree, forKey: "quadtree")
-
-//        DispatchQueue.main.async {
-//            node.isHidden = true
-//            self.terrainNode.addChildNode(node)
-//        }
-
-        // Subdivide quadtree.
-        if maxDepth > 0 {
-//            terrainQueue.async {
-                let (subvertices, subindices) = self.subdivideTriangle(vertices: quadtree.corners, subdivisionLevels: 1)
-//                DispatchQueue.concurrentPerform(iterations: subindices.count) { i in
-                for i in 0..<subindices.count {
-                    let subindex = subindices[i]
-                    let vertices = [subvertices[Int(subindex[0])], subvertices[Int(subindex[1])], subvertices[Int(subindex[2])]]
-                    let mD = i == 0 ? maxDepth - 1 : maxDepth / 2
-                    let subquadtree = self.makeFace(faceIndex: faceIndex, corners: vertices, depth: depth+1, maxDepth: mD)
-                    subquadtree.parent = quadtree
-                    node.addChildNode(subquadtree.node!)
-                    quadtree.subtrees.append(subquadtree)
-                }
-//                DispatchQueue.main.async {
-//                    node.removeFromParentNode()
-//                }
-//            }
-        }
-
-        return quadtree
-    }
-
-    private func updateLevelOfDetail() {
-        guard let scnView = view as? SCNView,
-            let pointOfView = scnView.pointOfView
-            else { return }
-        let frustrumNodes = scnView.nodesInsideFrustum(of: pointOfView)
-//        print()
-//        print("Frustrum nodes: \(frustrumNodes.count)")
-//        let visibleNodes = Set(terrainNode.childNodes).intersection(Set(frustrumNodes))
-//        print("Visible nodes: \(visibleNodes.count)")
-//        let invisibleNodes = Set(terrainNode.childNodes).subtracting(Set(visibleNodes))
-//        print("Invisible nodes: \(invisibleNodes.count)")
-
-        var depths = [UInt32]()
-
-        let minVisualThreshold: CGFloat = 50
-        let maxVisualThreshold: CGFloat = 150
-
-        // find maximum required depth for visible nodes
-        // for every node
-        //   if node is too deep or invisible
-        //     if node is not root
-        //       replace it and siblings with parent
-        //   else if node is not deep enough
-        //     replace with subtrees
-
-        for node in frustrumNodes {
-            guard let quadtree = node.value(forKey: "quadtree") as? Quadtree else { continue }
-            let box = node.boundingBox
-            let screenMin = scnView.projectPoint(box.min)
-            let screenMax = scnView.projectPoint(box.max)
-            let delta = screenMax - screenMin
-            let length = delta.length()
-            if length < minVisualThreshold {
-                guard let parent = quadtree.parent else { continue }
-                depths.append(parent.depth)
-            } else if length > maxVisualThreshold {
-                depths.append(quadtree.depth + 1)
-            } else {
-                depths.append(quadtree.depth)
-            }
-        }
-        guard let bestDepth = depths.max() else { return }
-//        print("bestDepth: \(bestDepth)")
-
-        var removeNodes = [SCNNode]()
-        var insertNodes = [SCNNode]()
-
-        for node in frustrumNodes {
-            guard let quadtree = node.value(forKey: "quadtree") as? Quadtree else { continue }
-            if quadtree.depth > bestDepth {//} || !visibleNodes.contains(node) {
-                guard let parent = quadtree.parent else { continue }
-                for sibling in parent.subtrees {
-                    let node = sibling.node
-                    removeNodes.append(node!)
-                }
-                insertNodes.append(parent.node!)
-            } else if quadtree.depth < bestDepth {
-                if quadtree.hasChildren {
-                    for tree in quadtree.subtrees {
-                        insertNodes.append(tree.node!)
-                    }
-                    removeNodes.append(quadtree.node!)
-                }
-            }
-        }
-
-        insertNodes.forEach { node in
-            node.isHidden = false
-//            self.terrainNode.addChildNode(node)
-        }
-        removeNodes.forEach { node in
-            node.isHidden = true
-//            node.removeFromParentNode()
-        }
     }
 
     private func makePatch(positions: [float3], indices: [UInt32]) -> SCNGeometry {
@@ -623,7 +461,7 @@ class MarbleViewController: NSViewController {
             let z = Double(vertices.dataStart.load(fromByteOffset: index+8, as: Float.self))
             let rv = SCNVector3([x, y, z])
             let nv = rv.normalized()
-            let v = nv * diameter
+            let v = nv * radius
             let rawNoise = noise.evaluate(Double(v.x), Double(v.y), Double(v.z))
             let delta: CGFloat
             if levels > 0 {
@@ -632,7 +470,7 @@ class MarbleViewController: NSViewController {
             } else {
                 delta = CGFloat(rawNoise)
             }
-            let dv = rv//nv * (diameter + delta + offset)
+            let dv = nv * (radius + delta + offset)
             let point: float3 = [Float(dv.x), Float(dv.y), Float(dv.z)]
             bytes.storeBytes(of: point.x, toByteOffset: index, as: Float.self)
             bytes.storeBytes(of: point.y, toByteOffset: index+4, as: Float.self)
