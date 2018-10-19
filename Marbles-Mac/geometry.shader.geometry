@@ -2,19 +2,21 @@
 #include <metal_common>
 #include <simd/simd.h>
 
+//uniform float Amplitude = 0.1;
+
 //constant float3 light_position = float3(-1.0, 1.0, -1.0);
 //constant float4 light_color = float4(1.0, 1.0, 1.0, 1.0);
-constant float teapotMin = -0.144000;
-constant float teapotMax = 100.164622;
+constant float teapotMin = -1000;//0.144000;
+constant float teapotMax = 1000;//0.164622;
 constant float scaleLength = teapotMax - teapotMin;
-constant uint NOISE_DIM = 512;
-constant float NOISE_SIZE = 10000;
-//constant float3 darkBrown = float3(0.234f, 0.125f, 0.109f);
-//constant float3 lightBrown = float3(0.168f, 0.133f, 0.043f);
-//constant float numberOfRings = 84.0;
-//constant float turbulence = 0.015;
-//constant float PI = 3.14159;
-//constant float materialShine = 50.0;
+constant uint NOISE_DIM = 3000;
+constant float NOISE_SIZE = 100;
+////constant float3 darkBrown = float3(0.234f, 0.125f, 0.109f);
+////constant float3 lightBrown = float3(0.168f, 0.133f, 0.043f);
+////constant float numberOfRings = 84.0;
+////constant float turbulence = 0.015;
+////constant float PI = 3.14159;
+////constant float materialShine = 50.0;
 
 // Generate a random float in the range [0.0f, 1.0f] using x, y, and z (based on the xor128 algorithm)
 float rand(int x, int y, int z)
@@ -82,7 +84,7 @@ float noise3D(float unscaledX, float unscaledY, float unscaledZ)
         div += size;
         size /= 2.0f;
     }
-    value /= div;
+//    value /= div;
 
     return value;
 }
@@ -90,6 +92,13 @@ float noise3D(float unscaledX, float unscaledY, float unscaledZ)
 #pragma transparent
 #pragma body
 
-float noise = noise3D(_geometry.position.x+10000, _geometry.position.y+10000, _geometry.position.z+10000);
-_geometry.position += noise;
-_geometry.normal *= noise;
+float offset = 0;
+vec4 p = _geometry.position;
+float noise = noise3D(p.x+offset, p.y+offset, p.z+offset);
+float delta = 1000.0 + 100.0 * noise;//rand(p.x, p.y, p.z);
+vec4 n = normalize(p);// - vec4(-100.0, 0.0, 0.0, 0.0);
+//vec4 s = vec4(n[0] * delta, n[1] * delta, n[2] * delta, n[3] * delta);
+_geometry.position = vec4(n[0] * delta, n[1] * delta, n[2] * delta, 1.0);//vec4(0.0, 0.0, 0.0, 1.0);//rand(_geometry.position.x, _geometry.position.y, _geometry.position.z);//noise;
+//_geometry.normal *= noise;
+
+//_geometry.position += vec4(_geometry.normal, 1.0) * (Amplitude*_geometry.position.y*_geometry.position.x) * sin(1.0 * u_time);

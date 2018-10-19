@@ -7,7 +7,7 @@ import ModelIO
 let wireframe = true
 let seed = 31596
 let octaves = 20
-let width: CGFloat = 2000.0
+let width: CGFloat = 1000.0
 let frequency = 0.04
 let persistence = 0.5
 let lacunarity = 2.0
@@ -34,6 +34,7 @@ class MarbleViewController: NSViewController {
     }()//SCNSphere(radius: width)
 //    lazy var sphere: SCNSphere = {
 //        let s = SCNSphere(radius: width)
+//        s.segmentCount = 20
 //        s.isGeodesic = true
 //        return s
 //    }()
@@ -86,6 +87,11 @@ class MarbleViewController: NSViewController {
             scnView.debugOptions = SCNDebugOptions([.showWireframe])
         }
 
+        let box = SCNBox(width: 100.0, height: 100.0, length: 100.0, chamferRadius: 0.0)
+        let boxNode = SCNNode(geometry: box)
+        boxNode.position = SCNVector3(1000.0, 0.0, 0.0)
+        scene.rootNode.addChildNode(boxNode)
+
 //        makeWater()
 //        makeClouds()
 //        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -100,7 +106,7 @@ class MarbleViewController: NSViewController {
         let clickGesture = NSClickGestureRecognizer(target: self, action: #selector(handleClick(_:)))
         var gestureRecognizers = scnView.gestureRecognizers
         gestureRecognizers.insert(clickGesture, at: 0)
-        scnView.gestureRecognizers = gestureRecognizers
+//        scnView.gestureRecognizers = gestureRecognizers
     }
 
     @objc func handleClick(_ gestureRecognizer: NSGestureRecognizer) {
@@ -115,17 +121,17 @@ class MarbleViewController: NSViewController {
         tessellator.maximumEdgeLength = 1.0
 //        tessellator.insideTessellationFactor = 100.0
 //        tessellator.edgeTessellationFactor = 100.0
-//        tessellator.smoothingMode = .phong
+        tessellator.smoothingMode = .none
         sphere.wantsAdaptiveSubdivision = true
-        sphere.subdivisionLevel = 10
+        sphere.subdivisionLevel = 2
         sphere.tessellator = tessellator
-//        let fragment = try! String(contentsOfFile: Bundle.main.path(forResource: "geometry.shader", ofType: "fragment")!, encoding: String.Encoding.utf8)
-//        let surface = try! String(contentsOfFile: Bundle.main.path(forResource: "geometry.shader", ofType: "surface")!, encoding: String.Encoding.utf8)
-//        let geometry = try! String(contentsOfFile: Bundle.main.path(forResource: "geometry.shader", ofType: "geometry")!, encoding: String.Encoding.utf8)
+        let fragment = try! String(contentsOfFile: Bundle.main.path(forResource: "geometry.shader", ofType: "fragment")!, encoding: String.Encoding.utf8)
+        let surface = try! String(contentsOfFile: Bundle.main.path(forResource: "geometry.shader", ofType: "surface")!, encoding: String.Encoding.utf8)
+        let geometry = try! String(contentsOfFile: Bundle.main.path(forResource: "geometry.shader", ofType: "geometry")!, encoding: String.Encoding.utf8)
 //
 //        sphere.shaderModifiers = [
 ////            SCNShaderModifierEntryPoint.fragment: fragment,
-////            SCNShaderModifierEntryPoint.surface: surface,
+//            SCNShaderModifierEntryPoint.surface: surface,
 //            SCNShaderModifierEntryPoint.geometry: geometry
 //        ]
 
@@ -135,9 +141,9 @@ class MarbleViewController: NSViewController {
 //        let vertexFunc = library?.makeFunction(name: "vertex_main")
 //        let fragmentFunc = library?.makeFunction(name: "fragment_main")
 
-        let program = SCNProgram()
-        program.vertexFunctionName = "myVertex"
-        program.fragmentFunctionName = "myFragment"
+//        let program = SCNProgram()
+//        program.vertexFunctionName = "myVertex"
+//        program.fragmentFunctionName = "myFragment"
 //        sphere.program = program
 
 //        let pipelineDescriptor = MTLRenderPipelineDescriptor()
@@ -168,7 +174,7 @@ class MarbleViewController: NSViewController {
 
     private func makeWater() {
         let noise = GradientNoise3D(amplitude: 0.08, frequency: 100.0, seed: 31390)
-        let icosa = MDLMesh.newIcosahedron(withRadius: Float(halfWidth), inwardNormals: false, allocator: nil)
+        let icosa = MDLMesh.newIcosahedron(withRadius: Float(width), inwardNormals: false, allocator: nil)
         let shape = MDLMesh.newSubdividedMesh(icosa, submeshIndex: 0, subdivisionLevels: 3)!
         let water = makeCrinkly(mdlMesh: shape, noise: noise, levels: 0, smoothing: 1, offset: 0.2, assignColours: false)
         let waterMaterial = SCNMaterial()

@@ -1,10 +1,9 @@
-uniform float Scale = 12.0;
-uniform float Width = 0.25;
-uniform float Blend = 0.3;
+#include <metal_stdlib>
+#include <metal_common>
 
-vec2 position = fract(_surface.diffuseTexcoord * Scale);
-float f1 = clamp(position.y / Blend, 0.0, 1.0);
-float f2 = clamp((position.y - Width) / Blend, 0.0, 1.0);
-f1 = f1 * (1.0 - f2);
-f1 = f1 * f1 * 2.0 * (3. * 2. * f1);
-_surface.diffuse = mix(vec4(1.0), vec4(0.0), f1);
+#pragma transparent
+#pragma body
+
+vec4 p = u_inverseModelTransform * u_inverseViewTransform * vec4(_surface.position, 1.0);
+float x = (length(p) - 5120.0) / 10000.0;// (length(p) - 5000.0) / 10000.0;
+_surface.diffuse = vec4(0.0, x, 0.0, 1.0);
