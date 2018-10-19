@@ -6,17 +6,17 @@ import ModelIO
 
 let seed = 31596
 let octaves = 20
-let frequency = 0.04
+let frequency: Double = Double(1.0 / diameter)
 let persistence = 0.5
 let lacunarity = 2.0
-let amplitude: Double = Double(diamater / 4.0)
+let amplitude: Double = Double(diameter / 4.0)
 let levels = 0
 let iciness: CGFloat = 150.0
 
-let wireframe = true
+let wireframe = false
 let smoothing = 0
-let diamater: CGFloat = 1000.0
-let radius: CGFloat = diamater / 2.0
+let diameter: CGFloat = 1000.0
+let radius: CGFloat = diameter / 2.0
 let halfAmplitude: Double = amplitude / 2.0
 
 class MarbleViewController: NSViewController {
@@ -43,7 +43,7 @@ class MarbleViewController: NSViewController {
         let lightNode = SCNNode()
         lightNode.light = light
         lightNode.look(at: SCNVector3())
-        lightNode.position = SCNVector3(x: 0, y: 10*diamater, z: 10*diamater)
+        lightNode.position = SCNVector3(x: 0, y: 10*diameter, z: 10*diameter)
 //        lightNode.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: 200)))
         scene.rootNode.addChildNode(lightNode)
 
@@ -57,7 +57,7 @@ class MarbleViewController: NSViewController {
         let camera = SCNCamera()
         camera.automaticallyAdjustsZRange = true
         let cameraNode = SCNNode()
-        cameraNode.position = SCNVector3(x: 0.0, y: 0.0, z: diamater * 1.2)
+        cameraNode.position = SCNVector3(x: 0.0, y: 0.0, z: diameter * 1.2)
         cameraNode.camera = camera
         cameraNode.look(at: SCNVector3())
         scene.rootNode.addChildNode(cameraNode)
@@ -101,7 +101,7 @@ class MarbleViewController: NSViewController {
 
     private func makeTerrain() {
         makeRoot()
-        Timer.scheduledTimer(timeInterval: 0.01, target: self, selector: #selector(updateTerrain), userInfo: nil, repeats: true)
+//        Timer.scheduledTimer(timeInterval: 0.01, target: self, selector: #selector(updateTerrain), userInfo: nil, repeats: true)
     }
 
     @objc private func updateTerrain() {
@@ -111,7 +111,7 @@ class MarbleViewController: NSViewController {
 
     private func makeWater() {
         let noise = GradientNoise3D(amplitude: 0.08, frequency: 100.0, seed: 31390)
-        let icosa = MDLMesh.newIcosahedron(withRadius: Float(diamater), inwardNormals: false, allocator: nil)
+        let icosa = MDLMesh.newIcosahedron(withRadius: Float(diameter), inwardNormals: false, allocator: nil)
         let shape = MDLMesh.newSubdividedMesh(icosa, submeshIndex: 0, subdivisionLevels: 3)!
         let water = makeCrinkly(mdlMesh: shape, noise: noise, levels: 0, smoothing: 1, offset: 0.2, assignColours: false)
         let waterMaterial = SCNMaterial()
@@ -157,71 +157,102 @@ class MarbleViewController: NSViewController {
         let torus = SCNGeometry(mdlMesh: mesh)
         let node = SCNNode(geometry: torus)
         node.castsShadow = true
-        let s = Double(diamater)/(Double(outerRadius)/2.0) * 1.1
+        let s = Double(diameter)/(Double(outerRadius)/2.0) * 1.1
         node.scale = SCNVector3(s, s, s)
-        let p = -(Double(diamater*1.1))
+        let p = -(Double(diameter*1.1))
         node.position = SCNVector3(p, p, p)
         scene.rootNode.addChildNode(node)
     }
 
+    var faceIndex = 0
+
+    let phi: Float = 1.6180339887498948482
+
+    lazy var positions: [float3] = [
+        [1, phi, 0],
+        [-1, phi, 0],
+        [1, -phi, 0],
+        [-1, -phi, 0],
+        [0, 1, phi],
+        [0, -1, phi],
+        [0, 1, -phi],
+        [0, -1, -phi],
+        [phi, 0, 1],
+        [-phi, 0, 1],
+        [phi, 0, -1],
+        [-phi, 0, -1]
+    ]
+
+    let faces: [[UInt32]] = [
+        [4, 5, 8],
+        [4, 9, 5],
+        [4, 8, 0],
+        [4, 1, 9],
+        [0, 1, 4],
+        [1, 11, 9],
+        [9, 11, 3],
+        [1, 6, 11],
+        [0, 6, 1],
+        [5, 9, 3],
+        [10, 0, 8],
+        [10, 6, 0],
+        [11, 7, 3],
+        [5, 2, 8],
+        [10, 8, 2],
+        [10, 2, 7],
+        [6, 7, 11],
+        [6, 10, 7],
+        [5, 3, 2],
+        [2, 3, 7]
+    ]
+
+    var patchNode: SCNNode?
+
     private func makeRoot() {
-
-        let phi: Float = 1.6180339887498948482
-
-        var positions: [float3] = [
-            [1, phi, 0],
-            [-1, phi, 0],
-            [1, -phi, 0],
-            [-1, -phi, 0],
-            [0, 1, phi],
-            [0, -1, phi],
-            [0, 1, -phi],
-            [0, -1, -phi],
-            [phi, 0, 1],
-            [-phi, 0, 1],
-            [phi, 0, -1],
-            [-phi, 0, -1]
-        ]
-
-        let faces: [[UInt32]] = [
-            [4, 5, 8],
-            [4, 9, 5],
-            [4, 8, 0],
-            [4, 1, 9],
-            [0, 1, 4],
-            [1, 11, 9],
-            [9, 11, 3],
-            [1, 6, 11],
-            [0, 6, 1],
-            [5, 9, 3],
-            [10, 0, 8],
-            [10, 6, 0],
-            [11, 7, 3],
-            [5, 2, 8],
-            [10, 8, 2],
-            [10, 2, 7],
-            [6, 7, 11],
-            [6, 10, 7],
-            [5, 3, 2],
-            [2, 3, 7],
-        ]
 
 //        var faceNodes = [Quadtree?](repeating: nil, count: faces.count)
 
 //        terrainQueue.async {
 //            DispatchQueue.concurrentPerform(iterations: faces.count) { faceIndex in
-            for faceIndex in 0..<1 {
+            for faceIndex in 0..<faces.count {
 //                let depth = 4
+//        faceIndex = 0
                 let face = faces[faceIndex]
                 let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
-                let geom = makeGeometry(corners: vertices)
+                let geom = makeGeometry(corners: vertices, depth: patchDepth)
                 let node = SCNNode(geometry: geom)
+                if faceIndex == 0 {
+                    patchNode = node
+                }
                 self.terrainNode.addChildNode(node)
+        }
+
+        self.scene.rootNode.addChildNode(terrainNode)
+
+        updateRoot()
 //                let quadtree = self.makeFace(faceIndex: UInt32(faceIndex), corners: vertices, depth: 0, maxDepth: UInt32(depth))
 //                self.terrainNode.addChildNode(quadtree.node!)
 //                quadtree.node!.isHidden = false
 //                faceNodes[faceIndex] = quadtree
+//            }
+    }
+
+    var patchDepth: UInt32 = 0
+
+    private func updateRoot() {
+//        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+//            self.faceIndex = (self.faceIndex + 1) % faces.count
+            self.terrainQueue.async {
+                let face = self.faces[self.faceIndex]
+                let vertices = [self.positions[Int(face[0])], self.positions[Int(face[1])], self.positions[Int(face[2])]]
+                self.patchDepth += 1
+                let geom = self.makeGeometry(corners: vertices, depth: self.patchDepth)
+                DispatchQueue.main.async {
+                    self.patchNode?.geometry = geom
+                    self.updateRoot()
+                }
             }
+//        }
 //            print("Created all quadtrees to depth \(quadtreeMaxDepth)")
 //            DispatchQueue.main.async {
 //                faceNodes.forEach { quadtree in
@@ -230,12 +261,11 @@ class MarbleViewController: NSViewController {
 //                }
 //            }
 //        }
-
-        self.scene.rootNode.addChildNode(terrainNode)
     }
 
-    private func makeGeometry(corners: [float3]) -> SCNGeometry {
-        return makeGeometryMesh(positions: corners, indices: [0, 1, 2, 3, 4, 5])
+    private func makeGeometry(corners: [float3], depth: UInt32) -> SCNGeometry {
+//        return makeGeometryMesh(positions: corners, indices: [0, 1, 2, 3, 4, 5])
+        return makePatch(positions: corners, depth: depth)
     }
 
     private func makeFace(faceIndex: UInt32, corners: [float3], depth: UInt32, maxDepth: UInt32) -> Quadtree {
@@ -376,16 +406,16 @@ class MarbleViewController: NSViewController {
 //        let numVertices = positions.count
 //        let numIndices = indices.count
 
-        let device = MTLCreateSystemDefaultDevice()!
-        let buffer = device.makeBuffer(length: MemoryLayout<float3>.size * positions.count, options: .storageModeManaged)!
-        buffer.contents().copyMemory(from: positions, byteCount: MemoryLayout<float3>.size * positions.count * 2)
-        buffer.didModifyRange(0..<(MemoryLayout<float3>.size * positions.count))
-        self.buffer = buffer
+//        let device = MTLCreateSystemDefaultDevice()!
+//        let buffer = device.makeBuffer(length: MemoryLayout<float3>.size * positions.count, options: .storageModeManaged)!
+//        buffer.contents().copyMemory(from: positions, byteCount: MemoryLayout<float3>.size * positions.count * 2)
+//        buffer.didModifyRange(0..<(MemoryLayout<float3>.size * positions.count))
+//        self.buffer = buffer
+//
+//        let positionSource = SCNGeometrySource(buffer: buffer, vertexFormat: MTLVertexFormat.float3, semantic: SCNGeometrySource.Semantic.vertex, vertexCount: positions.count, dataOffset: 0, dataStride: MemoryLayout<float3>.stride)
 
-        let positionSource = SCNGeometrySource(buffer: buffer, vertexFormat: MTLVertexFormat.float3, semantic: SCNGeometrySource.Semantic.vertex, vertexCount: positions.count, dataOffset: 0, dataStride: MemoryLayout<float3>.stride)
-
-//        let vertices = positions.map { p in SCNVector3(p[0], p[1], p[2]) }
-//        let positionSource = SCNGeometrySource(vertices: vertices)
+        let vertices = positions.map { p in SCNVector3(p[0], p[1], p[2]) }
+        let positionSource = SCNGeometrySource(vertices: vertices)
 
         let edgeElement = SCNGeometryElement(indices: indices, primitiveType: .triangles)
 
@@ -492,7 +522,7 @@ class MarbleViewController: NSViewController {
             let y = Double(vertices.dataStart.load(fromByteOffset: index+4, as: Float.self))
             let z = Double(vertices.dataStart.load(fromByteOffset: index+8, as: Float.self))
             let nv = SCNVector3([x, y, z]).normalized()
-            let v = nv * diamater
+            let v = nv * diameter
             let rawNoise = noise.evaluate(Double(v.x), Double(v.y), Double(v.z))
             let delta: CGFloat
             if levels > 0 {
@@ -501,12 +531,12 @@ class MarbleViewController: NSViewController {
             } else {
                 delta = CGFloat(rawNoise)
             }
-            let dv = nv * (diamater + delta + offset)
+            let dv = nv * (diameter + delta + offset)
             let point: float3 = [Float(dv.x), Float(dv.y), Float(dv.z)]
             bytes.storeBytes(of: point.x, toByteOffset: index, as: Float.self)
             bytes.storeBytes(of: point.y, toByteOffset: index+4, as: Float.self)
             bytes.storeBytes(of: point.z, toByteOffset: index+8, as: Float.self)
-            if Float(delta) > (Float(diamater)-abs(point.y))/Float(iciness/diamater) {
+            if Float(delta) > (Float(diameter)-abs(point.y))/Float(iciness/diameter) {
                 colors.append([1.0, 1.0, 1.0])
             } else {
                 let colour = Double(delta) / halfAmplitude
