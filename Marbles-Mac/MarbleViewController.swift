@@ -29,7 +29,8 @@ class MarbleViewController: NSViewController {
     let terrainNoise: Noise
     let allocator = MDLMeshBufferDataAllocator()
     lazy var sphere: SCNGeometry = {
-        let mdl = MDLMesh(icosahedronWithExtent: [Float(width), Float(width), Float(width)], inwardNormals: false, geometryType: .triangles, allocator: nil)
+        var mdl = MDLMesh(icosahedronWithExtent: [Float(width), Float(width), Float(width)], inwardNormals: false, geometryType: .triangles, allocator: nil)
+//        mdl = MDLMesh(meshBySubdividingMesh: mdl, submeshIndex: 0, subdivisionLevels: 2, allocator: nil)
         return SCNShape(mdlMesh: mdl)
     }()//SCNSphere(radius: width)
 //    lazy var sphere: SCNSphere = {
@@ -116,24 +117,24 @@ class MarbleViewController: NSViewController {
 
     private func makeTerrain() {
         let tessellator = SCNGeometryTessellator()
-        tessellator.isAdaptive = true
-        tessellator.isScreenSpace = true
-        tessellator.maximumEdgeLength = 1.0
-//        tessellator.insideTessellationFactor = 100.0
-//        tessellator.edgeTessellationFactor = 100.0
-        tessellator.smoothingMode = .none
-        sphere.wantsAdaptiveSubdivision = true
-        sphere.subdivisionLevel = 2
+//        tessellator.isAdaptive = true
+//        tessellator.isScreenSpace = true
+//        tessellator.maximumEdgeLength = 50.0
+        tessellator.insideTessellationFactor = 10.0
+        tessellator.edgeTessellationFactor = 10.0
+//        tessellator.smoothingMode = .none
+//        sphere.wantsAdaptiveSubdivision = true
+//        sphere.subdivisionLevel = 2
         sphere.tessellator = tessellator
         let fragment = try! String(contentsOfFile: Bundle.main.path(forResource: "geometry.shader", ofType: "fragment")!, encoding: String.Encoding.utf8)
         let surface = try! String(contentsOfFile: Bundle.main.path(forResource: "geometry.shader", ofType: "surface")!, encoding: String.Encoding.utf8)
         let geometry = try! String(contentsOfFile: Bundle.main.path(forResource: "geometry.shader", ofType: "geometry")!, encoding: String.Encoding.utf8)
 //
-//        sphere.shaderModifiers = [
-////            SCNShaderModifierEntryPoint.fragment: fragment,
-//            SCNShaderModifierEntryPoint.surface: surface,
-//            SCNShaderModifierEntryPoint.geometry: geometry
-//        ]
+        sphere.shaderModifiers = [
+//            SCNShaderModifierEntryPoint.fragment: fragment,
+            SCNShaderModifierEntryPoint.surface: surface,
+            SCNShaderModifierEntryPoint.geometry: geometry
+        ]
 
 //        let device = MTLCreateSystemDefaultDevice()
 //        let layer = view.layer as! CAMetalLayer
