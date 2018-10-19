@@ -47,6 +47,7 @@
 		C85EB58C2168F62D00B670B2 /* gradient.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = gradient.swift; sourceTree = "<group>"; };
 		C85EB59A216AB39D00B670B2 /* Vector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vector.swift; sourceTree = "<group>"; };
 		C85EB59D216ABC7C00B670B2 /* ModelIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ModelIO.framework; path = System/Library/Frameworks/ModelIO.framework; sourceTree = SDKROOT; };
+		C86730862179F48100CD8BB0 /* CSG+SceneKit.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "CSG+SceneKit.swift"; sourceTree = "<group>"; };
 		C868AB4221775D38005429D1 /* geometry.shader.geometry */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = geometry.shader.geometry; sourceTree = "<group>"; };
 		C868AB4421776440005429D1 /* terrain.geometry */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = terrain.geometry; sourceTree = "<group>"; };
 		C868AB46217766BF005429D1 /* noise.geometry */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = noise.geometry; sourceTree = "<group>"; };
@@ -90,6 +91,7 @@
 		C80E4609216177440029A3A0 /* Marbles-Mac */ = {
 			isa = PBXGroup;
 			children = (
+				C86730862179F48100CD8BB0 /* CSG+SceneKit.swift */,
 				C85EB5832168F62D00B670B2 /* noise */,
 				C80E460A216177440029A3A0 /* AppDelegate.swift */,
 				C80E460C216177440029A3A0 /* MarbleViewController.swift */,

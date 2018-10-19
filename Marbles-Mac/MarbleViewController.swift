@@ -206,17 +206,21 @@ class MarbleViewController: NSViewController {
             [2, 3, 7],
         ]
 
-        var faceNodes = [Quadtree?](repeating: nil, count: faces.count)
+//        var faceNodes = [Quadtree?](repeating: nil, count: faces.count)
+
 //        terrainQueue.async {
 //            DispatchQueue.concurrentPerform(iterations: faces.count) { faceIndex in
-            for faceIndex in 0..<faces.count {
-                let depth = faceIndex == 0 ? 4 : 0
+            for faceIndex in 0..<1 {
+//                let depth = 4
                 let face = faces[faceIndex]
                 let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
-                let quadtree = self.makeFace(faceIndex: UInt32(faceIndex), corners: vertices, depth: 0, maxDepth: UInt32(depth))
-                self.terrainNode.addChildNode(quadtree.node!)
+                let geom = makeGeometry(corners: vertices)
+                let node = SCNNode(geometry: geom)
+                self.terrainNode.addChildNode(node)
+//                let quadtree = self.makeFace(faceIndex: UInt32(faceIndex), corners: vertices, depth: 0, maxDepth: UInt32(depth))
+//                self.terrainNode.addChildNode(quadtree.node!)
 //                quadtree.node!.isHidden = false
-                faceNodes[faceIndex] = quadtree
+//                faceNodes[faceIndex] = quadtree
             }
 //            print("Created all quadtrees to depth \(quadtreeMaxDepth)")
 //            DispatchQueue.main.async {
@@ -228,6 +232,10 @@ class MarbleViewController: NSViewController {
 //        }
 
         self.scene.rootNode.addChildNode(terrainNode)
+    }
+
+    private func makeGeometry(corners: [float3]) -> SCNGeometry {
+        return makeGeometryMesh(positions: corners, indices: [0, 1, 2, 3, 4, 5])
     }
 
     private func makeFace(faceIndex: UInt32, corners: [float3], depth: UInt32, maxDepth: UInt32) -> Quadtree {
@@ -358,6 +366,39 @@ class MarbleViewController: NSViewController {
 //            material.fillMode = .lines
 //            geometry.materials = [material]
 //        }
+        return geometry
+    }
+
+    var buffer: MTLBuffer?
+
+    private func makeGeometryMesh(positions: [float3], indices: [UInt32]) -> SCNGeometry {
+
+//        let numVertices = positions.count
+//        let numIndices = indices.count
+
+        let device = MTLCreateSystemDefaultDevice()!
+        let buffer = device.makeBuffer(length: MemoryLayout<float3>.size * positions.count, options: .storageModeManaged)!
+        buffer.contents().copyMemory(from: positions, byteCount: MemoryLayout<float3>.size * positions.count * 2)
+        buffer.didModifyRange(0..<(MemoryLayout<float3>.size * positions.count))
+        self.buffer = buffer
+
+        let positionSource = SCNGeometrySource(buffer: buffer, vertexFormat: MTLVertexFormat.float3, semantic: SCNGeometrySource.Semantic.vertex, vertexCount: positions.count, dataOffset: 0, dataStride: MemoryLayout<float3>.stride)
+
+//        let vertices = positions.map { p in SCNVector3(p[0], p[1], p[2]) }
+//        let positionSource = SCNGeometrySource(vertices: vertices)
+
+        let edgeElement = SCNGeometryElement(indices: indices, primitiveType: .triangles)
+
+        let geometry = SCNGeometry(sources: [positionSource], elements: [edgeElement])
+
+//        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+//            let ptr = self.buffer.contents().advanced(by: MemoryLayout<float3>.size * 3)
+//            let newp = [
+//                [
+//            ]
+//            ptr.copyMemory(from: positions, byteCount: MemoryLayout<float3>.size * positions.count * 2)
+//        }
+
         return geometry
     }
 
