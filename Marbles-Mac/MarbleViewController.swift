@@ -13,7 +13,7 @@ let amplitude: Double = Double(diameter / 4.0)
 let levels = 0
 let iciness: CGFloat = 150.0
 
-let wireframe = false
+let wireframe = true
 let smoothing = 0
 let diameter: CGFloat = 1000.0
 let radius: CGFloat = diameter / 2.0
@@ -219,7 +219,7 @@ class MarbleViewController: NSViewController {
 //        faceIndex = 0
                 let face = faces[faceIndex]
                 let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
-                let geom = makeGeometry(corners: vertices, depth: patchDepth)
+                let geom = makePatch(positions: vertices, depth: 0)
                 let node = SCNNode(geometry: geom)
                 if faceIndex == 0 {
                     patchNode = node
@@ -237,7 +237,7 @@ class MarbleViewController: NSViewController {
 //            }
     }
 
-    var patchDepth: UInt32 = 0
+//    var patchDepth: UInt32 = 8
 
     private func updateRoot() {
 //        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
@@ -245,8 +245,12 @@ class MarbleViewController: NSViewController {
             self.terrainQueue.async {
                 let face = self.faces[self.faceIndex]
                 let vertices = [self.positions[Int(face[0])], self.positions[Int(face[1])], self.positions[Int(face[2])]]
-                self.patchDepth += 1
-                let geom = self.makeGeometry(corners: vertices, depth: self.patchDepth)
+//                if self.patchDepth % 2 == 0 {
+//                    self.patchDepth += 1
+//                } else {
+//                    self.patchDepth -= 1
+//                }
+                let geom = self.makeGeometry(corners: vertices, maxEdgeLength: 4.0)
                 DispatchQueue.main.async {
                     self.patchNode?.geometry = geom
                     self.updateRoot()
@@ -263,9 +267,46 @@ class MarbleViewController: NSViewController {
 //        }
     }
 
-    private func makeGeometry(corners: [float3], depth: UInt32) -> SCNGeometry {
-//        return makeGeometryMesh(positions: corners, indices: [0, 1, 2, 3, 4, 5])
-        return makePatch(positions: corners, depth: depth)
+    private func makeGeometry(corners: [float3], maxEdgeLength: Float) -> SCNGeometry {
+        let (subv, subindices) = makeGeometrySources(corners: corners, maxEdgeLength: maxEdgeLength)
+        return makePatch(positions: subv, indices: Array(subindices.joined()))
+    }
+
+    private func makeGeometrySources(corners: [float3], maxEdgeLength: Float) -> ([float3], [[UInt32]]) {
+        // make vertices and edges from initial corners such that no projected edge is longer
+        // than maxEdgeLength
+        var positions = [float3]()
+        var edges = [[UInt32]]()
+        let (subv, subindices) = subdivideTriangle(vertices: corners, subdivisionLevels: 1)
+        var offset: UInt32 = 0
+        var subdivide = false
+        for index in subindices {
+            let vx = subv[Int(index[0])]
+            let vy = subv[Int(index[1])]
+            let vz = subv[Int(index[2])]
+            if maxEdgeLength > 0.0 {
+                subdivide = true
+                break
+            }
+        }
+        if subdivide {
+            for index in subindices {
+                let vx = subv[Int(index[0])]
+                let vy = subv[Int(index[1])]
+                let vz = subv[Int(index[2])]
+                let (iv, ii) = makeGeometrySources(corners: [vx, vy, vz], maxEdgeLength: maxEdgeLength - 1.0)
+                positions.append(contentsOf: iv)
+                let offsetEdges = ii.map { edge in
+                    edge.map { e in e + offset }
+                }
+                offset += UInt32(iv.count)
+                edges.append(contentsOf: offsetEdges)
+            }
+        } else {
+            positions.append(contentsOf: subv)
+            edges.append(contentsOf: subindices)
+        }
+        return (positions, edges)
     }
 
     private func makeFace(faceIndex: UInt32, corners: [float3], depth: UInt32, maxDepth: UInt32) -> Quadtree {
@@ -383,6 +424,12 @@ class MarbleViewController: NSViewController {
             node.isHidden = true
 //            node.removeFromParentNode()
         }
+    }
+
+    private func makePatch(positions: [float3], indices: [UInt32]) -> SCNGeometry {
+        let detailMesh = makeGeometryMesh(positions: positions, indices: indices)
+        let mdlMesh = MDLMesh(scnGeometry: detailMesh)
+        return makeCrinkly(mdlMesh: mdlMesh, noise: terrainNoise, levels: levels, smoothing: smoothing, offset: 0.0, assignColours: !wireframe)
     }
 
     private func makePatch(positions: [float3], depth: UInt32) -> SCNGeometry {
