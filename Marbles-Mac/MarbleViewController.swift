@@ -9,11 +9,11 @@ let octaves = 20
 let frequency: Double = Double(1.0 / diameter)
 let persistence = 0.5
 let lacunarity = 2.0
-let amplitude: Double = Double(diameter / 4.0)
+let amplitude: Double = 10.0//Double(diameter / 40.0)
 let levels = 0
 let iciness: CGFloat = 150.0
 
-let wireframe = true
+let wireframe = false
 let smoothing = 0
 let diameter: CGFloat = 1000.0
 let radius: CGFloat = diameter / 2.0
@@ -33,6 +33,17 @@ class MarbleViewController: NSViewController {
         super.init(coder: coder)
     }
 
+    var w: CGFloat!
+    var h: CGFloat!
+
+    override func viewDidLayout() {
+        super.viewDidLayout()
+        let scnView = self.view as! SCNView
+        w = scnView.bounds.width
+        h = scnView.bounds.height
+        print(w,h)
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -44,7 +55,7 @@ class MarbleViewController: NSViewController {
         lightNode.light = light
         lightNode.look(at: SCNVector3())
         lightNode.position = SCNVector3(x: 0, y: 10*diameter, z: 10*diameter)
-//        lightNode.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: 200)))
+//        lightNode.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: 20)))
         scene.rootNode.addChildNode(lightNode)
 
         let ambientLight = SCNLight()
@@ -70,8 +81,11 @@ class MarbleViewController: NSViewController {
 //        scnView.defaultCameraController.interactionMode = .fly
         scnView.cameraControlConfiguration.flyModeVelocity = 0.1
         if wireframe {
-            scnView.debugOptions = SCNDebugOptions([.showWireframe])
+            scnView.debugOptions = SCNDebugOptions([.renderAsWireframe])
         }
+        w = scnView.bounds.width
+        h = scnView.bounds.height
+        print(w,h)
 
         // Marker
         let box = SCNBox(width: 100.0, height: 100.0, length: 100.0, chamferRadius: 0.0)
@@ -168,7 +182,7 @@ class MarbleViewController: NSViewController {
 
     let phi: Float = 1.6180339887498948482
 
-    lazy var positions: [float3] = [
+    lazy var platonicPositions: [float3] = [
         [1, phi, 0],
         [-1, phi, 0],
         [1, -phi, 0],
@@ -182,6 +196,10 @@ class MarbleViewController: NSViewController {
         [phi, 0, -1],
         [-phi, 0, -1]
     ]
+
+    lazy var positions: [float3] = platonicPositions.map { p in
+        p * Float(radius)
+    }
 
     let faces: [[UInt32]] = [
         [4, 5, 8],
@@ -238,6 +256,7 @@ class MarbleViewController: NSViewController {
     }
 
 //    var patchDepth: UInt32 = 8
+    var counter = 0
 
     private func updateRoot() {
 //        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
@@ -250,8 +269,10 @@ class MarbleViewController: NSViewController {
 //                } else {
 //                    self.patchDepth -= 1
 //                }
-                let geom = self.makeGeometry(corners: vertices, maxEdgeLength: 4.0)
+                let geom = self.makeGeometry(corners: vertices, maxEdgeLength: 50.0)
                 DispatchQueue.main.async {
+                    print("Updated geometry \(self.counter)")
+                    self.counter += 1
                     self.patchNode?.geometry = geom
                     self.updateRoot()
                 }
@@ -267,12 +288,12 @@ class MarbleViewController: NSViewController {
 //        }
     }
 
-    private func makeGeometry(corners: [float3], maxEdgeLength: Float) -> SCNGeometry {
-        let (subv, subindices) = makeGeometrySources(corners: corners, maxEdgeLength: maxEdgeLength)
+    private func makeGeometry(corners: [float3], maxEdgeLength: CGFloat) -> SCNGeometry {
+        let (subv, subindices) = makeGeometrySources(corners: corners, maxEdgeLength: maxEdgeLength, depth: 0)
         return makePatch(positions: subv, indices: Array(subindices.joined()))
     }
 
-    private func makeGeometrySources(corners: [float3], maxEdgeLength: Float) -> ([float3], [[UInt32]]) {
+    private func makeGeometrySources(corners: [float3], maxEdgeLength: CGFloat, depth: UInt32) -> ([float3], [[UInt32]]) {
         // make vertices and edges from initial corners such that no projected edge is longer
         // than maxEdgeLength
         var positions = [float3]()
@@ -280,21 +301,38 @@ class MarbleViewController: NSViewController {
         let (subv, subindices) = subdivideTriangle(vertices: corners, subdivisionLevels: 1)
         var offset: UInt32 = 0
         var subdivide = false
+        let scnView = view as! SCNView
+        
         for index in subindices {
-            let vx = subv[Int(index[0])]
-            let vy = subv[Int(index[1])]
-            let vz = subv[Int(index[2])]
-            if maxEdgeLength > 0.0 {
+            let vx = subv[Int(index[0])]//.normalized() * Float(radius)
+            let vy = subv[Int(index[1])]//.normalized() * Float(radius)
+            let vz = subv[Int(index[2])]//.normalized() * Float(radius)
+            let px = scnView.projectPoint(SCNVector3(vx))
+            let py = scnView.projectPoint(SCNVector3(vy))
+            let pz = scnView.projectPoint(SCNVector3(vz))
+
+//            guard isOnScreen(px) || isOnScreen(py) || isOnScreen(pz) else { continue }
+            guard intersectsScreen(px, py, pz) else { continue }
+
+            let lx = (px - py).length()
+            let ly = (px - pz).length()
+            let lz = (py - pz).length()
+//            print()
+//            print(vx, vy, vz)
+//            print(px, py, pz)
+//            print(lx, ly, lz)
+            if (lx > maxEdgeLength || ly > maxEdgeLength || lz > maxEdgeLength) {
+//            if maxEdgeLength > 0.0 {
                 subdivide = true
                 break
             }
         }
-        if subdivide {
+        if subdivide && depth < 9 {
             for index in subindices {
                 let vx = subv[Int(index[0])]
                 let vy = subv[Int(index[1])]
                 let vz = subv[Int(index[2])]
-                let (iv, ii) = makeGeometrySources(corners: [vx, vy, vz], maxEdgeLength: maxEdgeLength - 1.0)
+                let (iv, ii) = makeGeometrySources(corners: [vx, vy, vz], maxEdgeLength: maxEdgeLength, depth: depth+1)
                 positions.append(contentsOf: iv)
                 let offsetEdges = ii.map { edge in
                     edge.map { e in e + offset }
@@ -307,6 +345,21 @@ class MarbleViewController: NSViewController {
             edges.append(contentsOf: subindices)
         }
         return (positions, edges)
+    }
+
+    private func intersectsScreen(_ a: SCNVector3, _ b: SCNVector3, _ c: SCNVector3) -> Bool {
+        let minX = min(a.x, b.x, c.x)
+        let maxX = max(a.x, b.x, c.x)
+        let minY = min(a.y, b.y, c.y)
+        let maxY = max(a.y, b.y, c.y)
+        let inset = h / 4.0
+        let overlapsX = minX <= (w + inset) && maxX >= (0 - inset)
+        let overlapsY = minY <= (h + inset) && maxY >= (0 - inset)
+        return overlapsX && overlapsY
+    }
+
+    private func isOnScreen(_ p: SCNVector3) -> Bool {
+        return p.x >= 0.0 && p.x <= w && p.y >= 0.0 && p.y <= h
     }
 
     private func makeFace(faceIndex: UInt32, corners: [float3], depth: UInt32, maxDepth: UInt32) -> Quadtree {
@@ -568,7 +621,8 @@ class MarbleViewController: NSViewController {
             let x = Double(vertices.dataStart.load(fromByteOffset: index, as: Float.self))
             let y = Double(vertices.dataStart.load(fromByteOffset: index+4, as: Float.self))
             let z = Double(vertices.dataStart.load(fromByteOffset: index+8, as: Float.self))
-            let nv = SCNVector3([x, y, z]).normalized()
+            let rv = SCNVector3([x, y, z])
+            let nv = rv.normalized()
             let v = nv * diameter
             let rawNoise = noise.evaluate(Double(v.x), Double(v.y), Double(v.z))
             let delta: CGFloat
@@ -578,7 +632,7 @@ class MarbleViewController: NSViewController {
             } else {
                 delta = CGFloat(rawNoise)
             }
-            let dv = nv * (diameter + delta + offset)
+            let dv = rv//nv * (diameter + delta + offset)
             let point: float3 = [Float(dv.x), Float(dv.y), Float(dv.z)]
             bytes.storeBytes(of: point.x, toByteOffset: index, as: Float.self)
             bytes.storeBytes(of: point.y, toByteOffset: index+4, as: Float.self)

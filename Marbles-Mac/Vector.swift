@@ -39,3 +39,7 @@ extension float3 {
         }
     }
 }
+
+public func times (left:float3, scalar:Float) -> float3 {
+    return [left[0] * scalar, left[1] * scalar, left[2] * scalar]
+}
