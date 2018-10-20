@@ -170,9 +170,9 @@ class MarbleViewController: NSViewController {
 
     var faceIndex = 0
 
-    let phi: Float = 1.6180339887498948482
+    let phi: FP = 1.6180339887498948482
 
-    lazy var platonicPositions: [float3] = [
+    lazy var platonicPositions: [FP3] = [
         [1, phi, 0],
         [-1, phi, 0],
         [1, -phi, 0],
@@ -187,8 +187,8 @@ class MarbleViewController: NSViewController {
         [-phi, 0, -1]
     ]
 
-    lazy var positions: [float3] = platonicPositions.map { p in
-        p * Float(radius)
+    lazy var positions: [FP3] = platonicPositions.map { p in
+        p * FP(radius)
     }
 
     let faces: [[UInt32]] = [
@@ -218,7 +218,7 @@ class MarbleViewController: NSViewController {
         for faceIndex in 0..<faces.count {
             let face = faces[faceIndex]
             let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
-            let geom = makePatch(positions: vertices, depth: 0)
+            let geom = makePatch(positions: vertices, indices: [0, 1, 2])
             let node = SCNNode(geometry: geom)
             self.terrainNode.addChildNode(node)
             updateRoot(faceIndex: faceIndex, node: node)
@@ -242,22 +242,24 @@ class MarbleViewController: NSViewController {
         }
     }
 
-    private func makeGeometry(corners: [float3], maxEdgeLength: CGFloat) -> SCNGeometry {
-        let (subv, subindices) = makeGeometrySources(corners: corners, maxEdgeLength: maxEdgeLength, depth: 0)
-        return makePatch(positions: subv, indices: Array(subindices.joined()))
+    private func makeGeometry(corners: [FP3], maxEdgeLength: FP) -> SCNGeometry {
+        let (vertices, edges) = makeGeometrySources(corners: corners, maxEdgeLength: maxEdgeLength, depth: 0)
+        return makePatch(positions: vertices, indices: Array(edges.joined()))
     }
 
-    private func makeGeometrySources(corners: [float3], maxEdgeLength: CGFloat, depth: UInt32) -> ([float3], [[UInt32]]) {
+    let subdividedTriangleEdges: [[UInt32]] = [[0, 3, 5], [3, 1, 4], [3, 4, 5], [5, 4, 2]]
+
+    private func makeGeometrySources(corners: [FP3], maxEdgeLength: FP, depth: UInt32) -> ([FP3], [[UInt32]]) {
         // make vertices and edges from initial corners such that no projected edge is longer
         // than maxEdgeLength
-        var positions = [float3]()
+        var positions = [FP3]()
         var edges = [[UInt32]]()
-        let (subv, subindices) = subdivideTriangle(vertices: corners, subdivisionLevels: 1)
+        let subv = sphericallySubdivide(vertices: corners, radius: FP(radius))
         var offset: UInt32 = 0
         var subdivide = false
         let scnView = view as! SCNView
-        
-        for index in subindices {
+
+        for index in subdividedTriangleEdges {
             let vx = subv[Int(index[0])]
             let vy = subv[Int(index[1])]
             let vz = subv[Int(index[2])]
@@ -267,9 +269,9 @@ class MarbleViewController: NSViewController {
 
             guard intersectsScreen(px, py, pz) else { continue }
 
-            let lx = (px - py).length()
-            let ly = (px - pz).length()
-            let lz = (py - pz).length()
+            let lx = FP((px - py).length())
+            let ly = FP((px - pz).length())
+            let lz = FP((py - pz).length())
 //            print()
 //            print(vx, vy, vz)
 //            print(px, py, pz)
@@ -280,11 +282,11 @@ class MarbleViewController: NSViewController {
             }
         }
         if subdivide && depth < 10 {
-            var newpositions = [[float3]](repeating: [], count: 4)
+            var newpositions = [[FP3]](repeating: [], count: 4)
             var newindices = [[[UInt32]]](repeating: [], count: 4)
-            DispatchQueue.concurrentPerform(iterations: subindices.count) { i in
+            DispatchQueue.concurrentPerform(iterations: subdividedTriangleEdges.count) { i in
 //            for index in subindices {
-                let index = subindices[i]
+                let index = subdividedTriangleEdges[i]
                 let vx = subv[Int(index[0])]
                 let vy = subv[Int(index[1])]
                 let vz = subv[Int(index[2])]
@@ -301,9 +303,8 @@ class MarbleViewController: NSViewController {
                 edges.append(contentsOf: offsetEdges)
             }
         } else {
-            let (subv, subii) = subdivideTriangle(vertices: corners, subdivisionLevels: 1)
             positions.append(contentsOf: subv)
-            edges.append(contentsOf: subii)
+            edges.append(contentsOf: subdividedTriangleEdges)
         }
         return (positions, edges)
     }
@@ -319,22 +320,22 @@ class MarbleViewController: NSViewController {
         return overlapsX && overlapsY
     }
 
-    private func makePatch(positions: [float3], indices: [UInt32]) -> SCNGeometry {
+    private func makePatch(positions: [FP3], indices: [UInt32]) -> SCNGeometry {
         let detailMesh = makeGeometry(positions: positions, indices: indices)
         let mdlMesh = MDLMesh(scnGeometry: detailMesh)
         return makeCrinkly(mdlMesh: mdlMesh, noise: terrainNoise, levels: levels, smoothing: smoothing, offset: 0.0, assignColours: !wireframe)
     }
 
-    private func makePatch(positions: [float3], depth: UInt32) -> SCNGeometry {
-        let (subpositions, subindices) = subdivideTriangle(vertices: positions, subdivisionLevels: depth)
-        let detailMesh = makeMDLMesh(positions: subpositions, indices: Array(subindices.joined()))
-        let geometry = makeCrinkly(mdlMesh: detailMesh, noise: terrainNoise, levels: levels, smoothing: smoothing, offset: 0.0, assignColours: !wireframe)
-        return geometry
-    }
+//    private func makePatch(positions: [FP3], depth: UInt32) -> SCNGeometry {
+//        let (subpositions, subindices) = subdivideTriangle(vertices: positions, subdivisionLevels: depth)
+//        let detailMesh = makeMDLMesh(positions: subpositions, indices: Array(subindices.joined()))
+//        let geometry = makeCrinkly(mdlMesh: detailMesh, noise: terrainNoise, levels: levels, smoothing: smoothing, offset: 0.0, assignColours: !wireframe)
+//        return geometry
+//    }
 
     var buffer: MTLBuffer?
 
-    private func makeGeometry(positions: [float3], indices: [UInt32]) -> SCNGeometry {
+    private func makeGeometry(positions: [FP3], indices: [UInt32]) -> SCNGeometry {
         let vertices = positions.map { p in SCNVector3(p[0], p[1], p[2]) }
         let positionSource = SCNGeometrySource(vertices: vertices)
         let edgeElement = SCNGeometryElement(indices: indices, primitiveType: .triangles)
@@ -374,6 +375,36 @@ class MarbleViewController: NSViewController {
         var answer: UInt32 = 1
         for _ in 0..<power { answer *= base }
         return answer
+    }
+
+    private func sphericallySubdivide(vertices: [FP3], radius: FP) -> [FP3] {
+
+        let a = vertices[0]
+        let b = vertices[1]
+        let c = vertices[2]
+
+        let ab = midway(a, b)
+        let bc = midway(b, c)
+        let ca = midway(c, a)
+
+        let abs = spherical(ab, radius)
+        let bcs = spherical(bc, radius)
+        let cas = spherical(ca, radius)
+
+        return [a, b, c, abs, bcs, cas]
+    }
+
+    private func midway(_ a: FP3, _ b: FP3) -> FP3 {
+
+        let abx = (a.x + b.x) / 2.0
+        let aby = (a.y + b.y) / 2.0
+        let abz = (a.z + b.z) / 2.0
+
+        return [abx, aby, abz]
+    }
+
+    private func spherical(_ a: FP3, _ radius: FP) -> FP3 {
+        return a.normalized() * radius
     }
 
     private func subdivideTriangle(vertices: [float3], subdivisionLevels: UInt32) -> ([float3], [[UInt32]]) {
