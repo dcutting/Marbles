@@ -5,7 +5,7 @@ import SceneKit.ModelIO
 import ModelIO
 
 let seed = 31596
-let octaves = 20
+let octaves = 4
 let frequency: Double = Double(1.0 / diameter)
 let persistence = 0.5
 let lacunarity = 2.0
@@ -13,7 +13,7 @@ let amplitude: Double = Double(radius / 4.0)
 let levels = 0
 let iciness: CGFloat = 150.0
 
-let wireframe = false
+let wireframe = true
 let smoothing = 0
 let diameter: CGFloat = 1000.0
 let radius: CGFloat = diameter / 2.0
@@ -90,19 +90,19 @@ class MarbleViewController: NSViewController {
         // Marker
         let box = SCNBox(width: 100.0, height: 100.0, length: 100.0, chamferRadius: 0.0)
         let boxNode = SCNNode(geometry: box)
-        boxNode.position = SCNVector3(radius, 0.0, 0.0)
+//        boxNode.position = SCNVector3(radius, 0.0, 0.0)
         scene.rootNode.addChildNode(boxNode)
 
 //        makeWater()
 //        makeClouds()
-//        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-//            self.makeTerrain()
-//        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            self.makeTerrain()
+        }
 //        Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { _ in
 //            self.updateLevelOfDetail()
 //        }
 
-        makeTerrain()
+//        makeTerrain()
 
         let clickGesture = NSClickGestureRecognizer(target: self, action: #selector(handleClick(_:)))
         var gestureRecognizers = scnView.gestureRecognizers
@@ -218,8 +218,8 @@ class MarbleViewController: NSViewController {
         for faceIndex in 0..<faces.count {
             let face = faces[faceIndex]
             let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
-            let geom = makePatch(positions: vertices, indices: [0, 1, 2])
-            let node = SCNNode(geometry: geom)
+            let geometry = makeGeometry(positions: vertices, indices: [0, 1, 2])
+            let node = SCNNode(geometry: geometry)
             self.terrainNode.addChildNode(node)
             updateRoot(faceIndex: faceIndex, node: node)
         }
@@ -232,9 +232,9 @@ class MarbleViewController: NSViewController {
         self.terrainQueue.async {
             let face = self.faces[faceIndex]
             let vertices = [self.positions[Int(face[0])], self.positions[Int(face[1])], self.positions[Int(face[2])]]
-            let geom = self.makeGeometry(corners: vertices, maxEdgeLength: 50.0)
+            let geom = self.makeGeometry(corners: vertices, maxEdgeLength: 100.0)
             DispatchQueue.main.async {
-                print("[\(faceIndex)] updated geometry: \(self.counter)")
+//                print("[\(faceIndex)] updated geometry: \(self.counter)")
                 self.counter += 1
                 node.geometry = geom
                 self.updateRoot(faceIndex: faceIndex, node: node)
@@ -244,7 +244,7 @@ class MarbleViewController: NSViewController {
 
     private func makeGeometry(corners: [FP3], maxEdgeLength: FP) -> SCNGeometry {
         let (vertices, edges) = makeGeometrySources(corners: corners, maxEdgeLength: maxEdgeLength, depth: 0)
-        return makePatch(positions: vertices, indices: Array(edges.joined()))
+        return makeGeometry(positions: vertices, indices: Array(edges.joined()))
     }
 
     let subdividedTriangleEdges: [[UInt32]] = [[0, 3, 5], [3, 1, 4], [3, 4, 5], [5, 4, 2]]
@@ -387,9 +387,9 @@ class MarbleViewController: NSViewController {
         let bc = midway(b, c)
         let ca = midway(c, a)
 
-        let abs = spherical(ab, radius)
-        let bcs = spherical(bc, radius)
-        let cas = spherical(ca, radius)
+        let abs = spherical(ab, radius: radius, noise: terrainNoise)
+        let bcs = spherical(bc, radius: radius, noise: terrainNoise)
+        let cas = spherical(ca, radius: radius, noise: terrainNoise)
 
         return [a, b, c, abs, bcs, cas]
     }
@@ -403,8 +403,11 @@ class MarbleViewController: NSViewController {
         return [abx, aby, abz]
     }
 
-    private func spherical(_ a: FP3, _ radius: FP) -> FP3 {
-        return a.normalized() * radius
+    private func spherical(_ a: FP3, radius: FP, noise: Noise) -> FP3 {
+        let an = a.normalized()
+        let ans = an * radius
+        let delta = noise.evaluate(Double(ans.x), Double(ans.y), Double(ans.z))
+        return an * (radius + delta)
     }
 
     private func subdivideTriangle(vertices: [float3], subdivisionLevels: UInt32) -> ([float3], [[UInt32]]) {
