@@ -214,34 +214,30 @@ class MarbleViewController: NSViewController {
         [2, 3, 7]
     ]
 
-    var patchNode: SCNNode?
-
     private func makeTerrain() {
         for faceIndex in 0..<faces.count {
             let face = faces[faceIndex]
             let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
             let geom = makePatch(positions: vertices, depth: 0)
             let node = SCNNode(geometry: geom)
-            if faceIndex == 0 {
-                patchNode = node
-            }
             self.terrainNode.addChildNode(node)
-            updateRoot(face: face, node: node)
+            updateRoot(faceIndex: faceIndex, node: node)
         }
         self.scene.rootNode.addChildNode(terrainNode)
     }
 
     var counter = 0
 
-    private func updateRoot(face: [UInt32], node: SCNNode) {
+    private func updateRoot(faceIndex: Int, node: SCNNode) {
         self.terrainQueue.async {
+            let face = self.faces[faceIndex]
             let vertices = [self.positions[Int(face[0])], self.positions[Int(face[1])], self.positions[Int(face[2])]]
             let geom = self.makeGeometry(corners: vertices, maxEdgeLength: 50.0)
             DispatchQueue.main.async {
-//                print("Updated geometry \(self.counter)")
+                print("[\(faceIndex)] updated geometry: \(self.counter)")
                 self.counter += 1
                 node.geometry = geom
-                self.updateRoot(face: face, node: node)
+                self.updateRoot(faceIndex: faceIndex, node: node)
             }
         }
     }
@@ -269,7 +265,6 @@ class MarbleViewController: NSViewController {
             let py = scnView.projectPoint(SCNVector3(vy))
             let pz = scnView.projectPoint(SCNVector3(vz))
 
-//            guard isOnScreen(px) || isOnScreen(py) || isOnScreen(pz) else { continue }
             guard intersectsScreen(px, py, pz) else { continue }
 
             let lx = (px - py).length()
@@ -280,7 +275,6 @@ class MarbleViewController: NSViewController {
 //            print(px, py, pz)
 //            print(lx, ly, lz)
             if (lx > maxEdgeLength || ly > maxEdgeLength || lz > maxEdgeLength) {
-//            if maxEdgeLength > 0.0 {
                 subdivide = true
                 break
             }
@@ -318,59 +312,29 @@ class MarbleViewController: NSViewController {
     }
 
     private func makePatch(positions: [float3], indices: [UInt32]) -> SCNGeometry {
-        let detailMesh = makeGeometryMesh(positions: positions, indices: indices)
+        let detailMesh = makeGeometry(positions: positions, indices: indices)
         let mdlMesh = MDLMesh(scnGeometry: detailMesh)
         return makeCrinkly(mdlMesh: mdlMesh, noise: terrainNoise, levels: levels, smoothing: smoothing, offset: 0.0, assignColours: !wireframe)
     }
 
     private func makePatch(positions: [float3], depth: UInt32) -> SCNGeometry {
         let (subpositions, subindices) = subdivideTriangle(vertices: positions, subdivisionLevels: depth)
-        let detailMesh = makeMesh(positions: subpositions, indices: Array(subindices.joined()))
+        let detailMesh = makeMDLMesh(positions: subpositions, indices: Array(subindices.joined()))
         let geometry = makeCrinkly(mdlMesh: detailMesh, noise: terrainNoise, levels: levels, smoothing: smoothing, offset: 0.0, assignColours: !wireframe)
-//        if wireframe {
-//            let material = SCNMaterial()
-//            material.diffuse.contents = NSColor.white
-//            material.locksAmbientWithDiffuse = true
-//            material.fillMode = .lines
-//            geometry.materials = [material]
-//        }
         return geometry
     }
 
     var buffer: MTLBuffer?
 
-    private func makeGeometryMesh(positions: [float3], indices: [UInt32]) -> SCNGeometry {
-
-//        let numVertices = positions.count
-//        let numIndices = indices.count
-
-//        let device = MTLCreateSystemDefaultDevice()!
-//        let buffer = device.makeBuffer(length: MemoryLayout<float3>.size * positions.count, options: .storageModeManaged)!
-//        buffer.contents().copyMemory(from: positions, byteCount: MemoryLayout<float3>.size * positions.count * 2)
-//        buffer.didModifyRange(0..<(MemoryLayout<float3>.size * positions.count))
-//        self.buffer = buffer
-//
-//        let positionSource = SCNGeometrySource(buffer: buffer, vertexFormat: MTLVertexFormat.float3, semantic: SCNGeometrySource.Semantic.vertex, vertexCount: positions.count, dataOffset: 0, dataStride: MemoryLayout<float3>.stride)
-
+    private func makeGeometry(positions: [float3], indices: [UInt32]) -> SCNGeometry {
         let vertices = positions.map { p in SCNVector3(p[0], p[1], p[2]) }
         let positionSource = SCNGeometrySource(vertices: vertices)
-
         let edgeElement = SCNGeometryElement(indices: indices, primitiveType: .triangles)
-
         let geometry = SCNGeometry(sources: [positionSource], elements: [edgeElement])
-
-//        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-//            let ptr = self.buffer.contents().advanced(by: MemoryLayout<float3>.size * 3)
-//            let newp = [
-//                [
-//            ]
-//            ptr.copyMemory(from: positions, byteCount: MemoryLayout<float3>.size * positions.count * 2)
-//        }
-
         return geometry
     }
 
-    private func makeMesh(positions: [float3], indices: [UInt32]) -> MDLMesh {
+    private func makeMDLMesh(positions: [float3], indices: [UInt32]) -> MDLMesh {
 
         let numVertices = positions.count
         let numIndices = indices.count
