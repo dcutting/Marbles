@@ -280,16 +280,24 @@ class MarbleViewController: NSViewController {
             }
         }
         if subdivide && depth < 10 {
-            for index in subindices {
+            var newpositions = [[float3]](repeating: [], count: 4)
+            var newindices = [[[UInt32]]](repeating: [], count: 4)
+            DispatchQueue.concurrentPerform(iterations: subindices.count) { i in
+//            for index in subindices {
+                let index = subindices[i]
                 let vx = subv[Int(index[0])]
                 let vy = subv[Int(index[1])]
                 let vz = subv[Int(index[2])]
                 let (iv, ii) = makeGeometrySources(corners: [vx, vy, vz], maxEdgeLength: maxEdgeLength, depth: depth+1)
-                positions.append(contentsOf: iv)
-                let offsetEdges = ii.map { edge in
-                    edge.map { e in e + offset }
+                newpositions[i] = iv
+                newindices[i] = ii
+            }
+            for i in 0..<4 {
+                positions.append(contentsOf: newpositions[i])
+                let offsetEdges = newindices[i].map { edges in
+                    edges.map { edge in edge + offset }
                 }
-                offset += UInt32(iv.count)
+                offset += UInt32(newpositions[i].count)
                 edges.append(contentsOf: offsetEdges)
             }
         } else {
