@@ -5,7 +5,7 @@ import SceneKit.ModelIO
 import ModelIO
 
 let seed = 31596
-let octaves = 10
+let octaves = 20
 let frequency: Double = Double(1.0 / diameter)
 let persistence = 0.5
 let lacunarity = 2.0
@@ -232,7 +232,7 @@ class MarbleViewController: NSViewController {
         self.terrainQueues[faceIndex].async {
             let face = self.faces[faceIndex]
             let vertices = [self.positions[Int(face[0])], self.positions[Int(face[1])], self.positions[Int(face[2])]]
-            let geom = self.makeGeometry(corners: vertices, maxEdgeLength: 200.0)
+            let geom = self.makeGeometry(faceIndex: faceIndex, corners: vertices, maxEdgeLength: 100.0)
             DispatchQueue.main.async {
 //                print("[\(faceIndex)] updated geometry: \(self.counter)")
                 self.counter += 1
@@ -242,15 +242,15 @@ class MarbleViewController: NSViewController {
         }
     }
 
-    private func makeGeometry(corners: [FP3], maxEdgeLength: FP) -> SCNGeometry {
-        let (vertices, edges) = makeGeometrySources(corners: corners, maxEdgeLengthSq: maxEdgeLength * maxEdgeLength, depth: 0)
+    private func makeGeometry(faceIndex: Int, corners: [FP3], maxEdgeLength: FP) -> SCNGeometry {
+        let (vertices, edges) = makeGeometrySources(faceIndex: faceIndex, name: "", corners: corners, maxEdgeLengthSq: maxEdgeLength * maxEdgeLength, depth: 0)
 //        print(vertices)
         return makeGeometry(positions: vertices, indices: Array(edges.joined()))
     }
 
     let subdividedTriangleEdges: [[UInt32]] = [[0, 3, 5], [3, 1, 4], [3, 4, 5], [5, 4, 2]]
 
-    private func makeGeometrySources(corners: [FP3], maxEdgeLengthSq: FP, depth: UInt32) -> ([FP3], [[UInt32]]) {
+    private func makeGeometrySources(faceIndex: Int, name: String, corners: [FP3], maxEdgeLengthSq: FP, depth: UInt32) -> ([FP3], [[UInt32]]) {
         // make vertices and edges from initial corners such that no projected edge is longer
         // than maxEdgeLength
         var positions = [FP3]()
@@ -285,13 +285,15 @@ class MarbleViewController: NSViewController {
         if subdivide && depth < 20 {
             var newpositions = [[FP3]](repeating: [], count: 4)
             var newindices = [[[UInt32]]](repeating: [], count: 4)
-            DispatchQueue.concurrentPerform(iterations: subdividedTriangleEdges.count) { i in
+//            DispatchQueue.concurrentPerform(iterations: subdividedTriangleEdges.count) { i in
+            for i in 0..<subdividedTriangleEdges.count {
 //            for index in subindices {
                 let index = subdividedTriangleEdges[i]
                 let vx = subv[Int(index[0])]
                 let vy = subv[Int(index[1])]
                 let vz = subv[Int(index[2])]
-                let (iv, ii) = makeGeometrySources(corners: [vx, vy, vz], maxEdgeLengthSq: maxEdgeLengthSq, depth: depth+1)
+                let subname = name + "\(i)"
+                let (iv, ii) = makeGeometrySources(faceIndex: faceIndex, name: subname, corners: [vx, vy, vz], maxEdgeLengthSq: maxEdgeLengthSq, depth: depth+1)
                 newpositions[i] = iv
                 newindices[i] = ii
             }
@@ -304,12 +306,22 @@ class MarbleViewController: NSViewController {
                 edges.append(contentsOf: offsetEdges)
             }
         } else {
-            let (subv, subii) = subdivideTriangle(vertices: corners, subdivisionLevels: 6)
-            positions.append(contentsOf: subv)
-            edges.append(contentsOf: subii)
+            if let (cv, ci) = cachedPatches[faceIndex][name] {
+//                print("cache hit \(name)")
+                positions.append(contentsOf: cv)
+                edges.append(contentsOf: ci)
+            } else {
+//                print("miss \(name)")
+                let (subv, subii) = subdivideTriangle(vertices: corners, subdivisionLevels: 5)
+                cachedPatches[faceIndex][name] = (subv, subii)
+                positions.append(contentsOf: subv)
+                edges.append(contentsOf: subii)
+            }
         }
         return (positions, edges)
     }
+
+    var cachedPatches = [[String: ([FP3], [[UInt32]])]](repeating: [:], count: 20)
 
     private func intersectsScreen(_ a: SCNVector3, _ b: SCNVector3, _ c: SCNVector3) -> Bool {
         let minX = min(a.x, b.x, c.x)
