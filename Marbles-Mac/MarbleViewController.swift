@@ -93,7 +93,7 @@ class MarbleViewController: NSViewController {
 //        boxNode.position = SCNVector3(radius, 0.0, 0.0)
         scene.rootNode.addChildNode(boxNode)
 
-        makeWater()
+//        makeWater()
 //        makeClouds()
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             self.makeTerrain()
@@ -232,7 +232,7 @@ class MarbleViewController: NSViewController {
         self.terrainQueues[faceIndex].async {
             let face = self.faces[faceIndex]
             let vertices = [self.positions[Int(face[0])], self.positions[Int(face[1])], self.positions[Int(face[2])]]
-            let geom = self.makeGeometry(corners: vertices, maxEdgeLength: 10.0)
+            let geom = self.makeGeometry(corners: vertices, maxEdgeLength: 200.0)
             DispatchQueue.main.async {
 //                print("[\(faceIndex)] updated geometry: \(self.counter)")
                 self.counter += 1
@@ -304,8 +304,9 @@ class MarbleViewController: NSViewController {
                 edges.append(contentsOf: offsetEdges)
             }
         } else {
+            let (subv, subii) = subdivideTriangle(vertices: corners, subdivisionLevels: 6)
             positions.append(contentsOf: subv)
-            edges.append(contentsOf: subdividedTriangleEdges)
+            edges.append(contentsOf: subii)
         }
         return (positions, edges)
     }
@@ -414,46 +415,48 @@ class MarbleViewController: NSViewController {
         return an * (radius + delta)
     }
 
-//    private func subdividseTriangle(vertices: [float3], subdivisionLevels: UInt32) -> ([float3], [[UInt32]]) {
-//
-//        let a = vertices[0]
-//        let b = vertices[1]
-//        let c = vertices[2]
-//
-//        let segments = pow(2, subdivisionLevels)
-//
-//        let dab = b - a
-//        let lab = length(dab)
-//        let slab = lab / Float(segments)
-//        let vab = normalized(dab) * slab
-//
-//        let dbc = c - b
-//        let lbc = length(dbc)
-//        let slbc = lbc / Float(segments)
-//        let vbc = normalize(dbc) * slbc
-//
-//        var next: UInt32 = 0
-//        var faces = [[UInt32]]()
-//        var points = [float3]()
-//        points.append(a)
-//        for j in 1...segments {
-//            let p = a + (vab * Float(j))
-//            points.append(p)
-//            for i in 1...j {
-//                let q = p + (vbc * Float(i))
-//                points.append(q)
-//                if i < j {
-//                    faces.append([next, next+j, next+j+1])
-//                    faces.append([next, next+j+1, next+1])
-//                    next += 1
-//                }
-//            }
-//            faces.append([next, next+j, next+j+1])
-//            next += 1
-//        }
-//
-//        return (points, faces)
-//    }
+    private func subdivideTriangle(vertices: [FP3], subdivisionLevels: UInt32) -> ([FP3], [[UInt32]]) {
+
+        let a = spherical(vertices[0], radius: FP(radius), noise: terrainNoise)
+        let b = spherical(vertices[1], radius: FP(radius), noise: terrainNoise)
+        let c = spherical(vertices[2], radius: FP(radius), noise: terrainNoise)
+
+        let segments = pow(2, subdivisionLevels)
+
+        let dab = b - a
+        let lab = length(dab)
+        let slab = lab / FP(segments)
+        let vab = normalize(dab) * slab
+
+        let dbc = c - b
+        let lbc = length(dbc)
+        let slbc = lbc / FP(segments)
+        let vbc = normalize(dbc) * slbc
+
+        var next: UInt32 = 0
+        var faces = [[UInt32]]()
+        var points = [FP3]()
+        points.append(a)
+        for j in 1...segments {
+            let p = a + (vab * FP(j))
+            let ps = spherical(p, radius: FP(radius), noise: terrainNoise)
+            points.append(ps)
+            for i in 1...j {
+                let q = p + (vbc * FP(i))
+                let qs = spherical(q, radius: FP(radius), noise: terrainNoise)
+                points.append(qs)
+                if i < j {
+                    faces.append([next, next+j, next+j+1])
+                    faces.append([next, next+j+1, next+1])
+                    next += 1
+                }
+            }
+            faces.append([next, next+j, next+j+1])
+            next += 1
+        }
+
+        return (points, faces)
+    }
 
     private func makeCrinkly(mdlMesh: MDLMesh, noise: Noise, levels: Int, smoothing: Int, offset: CGFloat, assignColours: Bool) -> SCNGeometry {
 
