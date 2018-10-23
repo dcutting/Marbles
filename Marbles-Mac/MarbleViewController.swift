@@ -245,7 +245,7 @@ class MarbleViewController: NSViewController {
         let item = DispatchWorkItem {
             let face = self.faces[faceIndex]
             let vertices = [self.positions[Int(face[0])], self.positions[Int(face[1])], self.positions[Int(face[2])]]
-            let geom = self.makeGeometry(faceIndex: faceIndex, corners: vertices, maxEdgeLength: 150.0)
+            let geom = self.makeGeometry(faceIndex: faceIndex, corners: vertices, maxEdgeLength: 200.0)
             DispatchQueue.main.async {
 //                print("[\(faceIndex)] updated geometry: \(self.counter)")
                 self.counter += 1
@@ -331,7 +331,8 @@ class MarbleViewController: NSViewController {
                 positions.append(contentsOf: subv)
                 edges.append(contentsOf: subdividedTriangleEdges)
                 let item = DispatchWorkItem {
-                    let (subv, subii) = self.subdivideTriangle(vertices: corners, subdivisionLevels: 3)
+                    guard nil == self.cachedPatches[faceIndex][name] else { return }
+                    let (subv, subii) = self.subdivideTriangle(vertices: corners, subdivisionLevels: 4)
                     DispatchQueue.main.async {
                         self.cachedPatches[faceIndex][name] = (subv, subii)
                     }
