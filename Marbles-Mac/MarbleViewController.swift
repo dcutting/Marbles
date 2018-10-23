@@ -26,6 +26,7 @@ class MarbleViewController: NSViewController {
     let terrainNoise: Noise
     let allocator = MDLMeshBufferDataAllocator()
     let terrainQueues = [DispatchQueue](repeating: DispatchQueue(label: "terrain", qos: .userInteractive, attributes: .concurrent), count: 20)
+    let patchQueue = DispatchQueue(label: "patch", qos: .userInitiated, attributes: .concurrent)
 
     required init?(coder: NSCoder) {
         let sourceNoise = GradientNoise3D(amplitude: amplitude, frequency: frequency, seed: seed)
@@ -78,7 +79,7 @@ class MarbleViewController: NSViewController {
         scnView.allowsCameraControl = true
         scnView.backgroundColor = .black
         scnView.showsStatistics = true
-        scnView.defaultCameraController.interactionMode = .fly
+//        scnView.defaultCameraController.interactionMode = .fly
         scnView.cameraControlConfiguration.flyModeVelocity = 0.1
         if wireframe {
             scnView.debugOptions = SCNDebugOptions([.renderAsWireframe])
@@ -112,8 +113,9 @@ class MarbleViewController: NSViewController {
 
     @objc func handleClick(_ gestureRecognizer: NSGestureRecognizer) {
         dispatchWorkItems.allObjects.forEach { object in
-            let pointer = object as! UnsafeRawPointer
-            let item = Unmanaged<DispatchWorkItem>.fromOpaque(pointer).takeUnretainedValue()
+//            let pointer = object as! UnsafeRawPointer
+//            let item = Unmanaged<DispatchWorkItem>.fromOpaque(pointer).takeUnretainedValue()
+            let item = object as! DispatchWorkItem
             item.cancel()
         }
         for _ in 0..<dispatchWorkItems.count {
@@ -251,8 +253,8 @@ class MarbleViewController: NSViewController {
                 self.updateRoot(faceIndex: faceIndex, node: node)
             }
         }
-        let pointer = Unmanaged.passUnretained(item).toOpaque()
-        dispatchWorkItems.addPointer(pointer)
+//        let pointer = Unmanaged.passUnretained(item).toOpaque()
+//        dispatchWorkItems.addPointer(pointer)
         self.terrainQueues[faceIndex].async(execute: item)
     }
 
@@ -321,15 +323,22 @@ class MarbleViewController: NSViewController {
             }
         } else {
             if let (cv, ci) = cachedPatches[faceIndex][name] {
-//                print("cache hit \(name)")
+                print("cache hit \(name)")
                 positions.append(contentsOf: cv)
                 edges.append(contentsOf: ci)
             } else {
-//                print("miss \(name)")
-                let (subv, subii) = subdivideTriangle(vertices: corners, subdivisionLevels: 4)
-                cachedPatches[faceIndex][name] = (subv, subii)
+                print("miss \(name)")
                 positions.append(contentsOf: subv)
-                edges.append(contentsOf: subii)
+                edges.append(contentsOf: subdividedTriangleEdges)
+                let item = DispatchWorkItem {
+                    let (subv, subii) = self.subdivideTriangle(vertices: corners, subdivisionLevels: 3)
+                    DispatchQueue.main.async {
+                        self.cachedPatches[faceIndex][name] = (subv, subii)
+                    }
+                }
+                let pointer = Unmanaged.passUnretained(item).toOpaque()
+                dispatchWorkItems.addPointer(pointer)
+                patchQueue.async(execute: item)
             }
         }
         return (positions, edges)
