@@ -5,7 +5,7 @@ import SceneKit.ModelIO
 import ModelIO
 
 let seed = 31596
-let octaves = 20
+let octaves = 15
 let frequency: Double = Double(1.0 / diameter)
 let persistence = 0.5
 let lacunarity = 2.0
@@ -78,7 +78,7 @@ class MarbleViewController: NSViewController {
         scnView.allowsCameraControl = true
         scnView.backgroundColor = .black
         scnView.showsStatistics = true
-//        scnView.defaultCameraController.interactionMode = .fly
+        scnView.defaultCameraController.interactionMode = .fly
         scnView.cameraControlConfiguration.flyModeVelocity = 0.1
         if wireframe {
             scnView.debugOptions = SCNDebugOptions([.renderAsWireframe])
@@ -107,10 +107,19 @@ class MarbleViewController: NSViewController {
         let clickGesture = NSClickGestureRecognizer(target: self, action: #selector(handleClick(_:)))
         var gestureRecognizers = scnView.gestureRecognizers
         gestureRecognizers.insert(clickGesture, at: 0)
-//        scnView.gestureRecognizers = gestureRecognizers
+        scnView.gestureRecognizers = gestureRecognizers
     }
 
     @objc func handleClick(_ gestureRecognizer: NSGestureRecognizer) {
+        dispatchWorkItems.allObjects.forEach { object in
+            let pointer = object as! UnsafeRawPointer
+            let item = Unmanaged<DispatchWorkItem>.fromOpaque(pointer).takeUnretainedValue()
+            item.cancel()
+        }
+        for _ in 0..<dispatchWorkItems.count {
+            dispatchWorkItems.removePointer(at: 0)
+        }
+        dispatchWorkItems.compact()
     }
 
     private func makeWater() {
@@ -228,11 +237,13 @@ class MarbleViewController: NSViewController {
 
     var counter = 0
 
+    var dispatchWorkItems = NSPointerArray.weakObjects()
+
     private func updateRoot(faceIndex: Int, node: SCNNode) {
-        self.terrainQueues[faceIndex].async {
+        let item = DispatchWorkItem {
             let face = self.faces[faceIndex]
             let vertices = [self.positions[Int(face[0])], self.positions[Int(face[1])], self.positions[Int(face[2])]]
-            let geom = self.makeGeometry(faceIndex: faceIndex, corners: vertices, maxEdgeLength: 100.0)
+            let geom = self.makeGeometry(faceIndex: faceIndex, corners: vertices, maxEdgeLength: 150.0)
             DispatchQueue.main.async {
 //                print("[\(faceIndex)] updated geometry: \(self.counter)")
                 self.counter += 1
@@ -240,6 +251,9 @@ class MarbleViewController: NSViewController {
                 self.updateRoot(faceIndex: faceIndex, node: node)
             }
         }
+        let pointer = Unmanaged.passUnretained(item).toOpaque()
+        dispatchWorkItems.addPointer(pointer)
+        self.terrainQueues[faceIndex].async(execute: item)
     }
 
     private func makeGeometry(faceIndex: Int, corners: [FP3], maxEdgeLength: FP) -> SCNGeometry {
@@ -282,7 +296,7 @@ class MarbleViewController: NSViewController {
                 break
             }
         }
-        if subdivide && depth < 20 {
+        if subdivide && depth < 50 {
             var newpositions = [[FP3]](repeating: [], count: 4)
             var newindices = [[[UInt32]]](repeating: [], count: 4)
 //            DispatchQueue.concurrentPerform(iterations: subdividedTriangleEdges.count) { i in
@@ -312,7 +326,7 @@ class MarbleViewController: NSViewController {
                 edges.append(contentsOf: ci)
             } else {
 //                print("miss \(name)")
-                let (subv, subii) = subdivideTriangle(vertices: corners, subdivisionLevels: 5)
+                let (subv, subii) = subdivideTriangle(vertices: corners, subdivisionLevels: 4)
                 cachedPatches[faceIndex][name] = (subv, subii)
                 positions.append(contentsOf: subv)
                 edges.append(contentsOf: subii)
