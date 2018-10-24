@@ -15,7 +15,7 @@ let iciness: CGFloat = 150.0
 
 let wireframe = false
 let smoothing = 0
-let diameter: CGFloat = 1000.0
+let diameter: CGFloat = 100000.0
 let radius: CGFloat = diameter / 2.0
 let halfAmplitude: Double = amplitude / 2.0
 
@@ -548,3 +548,20 @@ class MarbleViewController: NSViewController {
         return finalGeometry
     }
 }
+
+/*
+
+ main loop: when camera/scene stops moving, or once per second, etc.):
+
+ cancel everything in priority queue
+ bestdepth = calculate number of divisions needed to make nearest triangle less than max edge length
+ subdivide all visible triangles to bestdepth
+ leaf triangles should show best subdivision patch available (possibly 0, or otherwise cached)
+ for those leaves not at max subdivision add them to priority queue in order of distance from camera
+
+ priority queue:
+
+ ordered by distance from camera and subdivision level?
+ want visible differences asap, but prioritise everything at same subdivision level over distance from camera ("breadth-first")
+
+ */
