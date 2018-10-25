@@ -15,7 +15,7 @@ let iciness: CGFloat = 150.0
 
 let wireframe = false
 let smoothing = 0
-let diameter: CGFloat = 100000.0
+let diameter: CGFloat = 1000.0
 let radius: CGFloat = diameter / 2.0
 let halfAmplitude: Double = amplitude / 2.0
 
@@ -27,6 +27,10 @@ class MarbleViewController: NSViewController {
     let allocator = MDLMeshBufferDataAllocator()
     let terrainQueues = [DispatchQueue](repeating: DispatchQueue(label: "terrain", qos: .userInteractive, attributes: .concurrent), count: 20)
     let patchQueue = DispatchQueue(label: "patch", qos: .userInitiated, attributes: .concurrent)
+
+    var counter = 0
+
+    var dispatchWorkItems = NSPointerArray.weakObjects()
 
     required init?(coder: NSCoder) {
         let sourceNoise = GradientNoise3D(amplitude: amplitude, frequency: frequency, seed: seed)
@@ -97,7 +101,7 @@ class MarbleViewController: NSViewController {
 //        makeWater()
 //        makeClouds()
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            self.makeTerrain()
+            self.makeLODTerrain()
         }
 //        Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { _ in
 //            self.updateLevelOfDetail()
@@ -225,6 +229,46 @@ class MarbleViewController: NSViewController {
         [2, 3, 7]
     ]
 
+    private func makeLODTerrain() {
+        scene.rootNode.addChildNode(terrainNode)
+        for faceIndex in 0..<faces.count {
+            let face = faces[faceIndex]
+            let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
+            let geometryA = makeLODGeometry(positions: vertices, near: 2500, far: 100000)
+            let parentNode = SCNNode(geometry: geometryA)
+            terrainNode.addChildNode(parentNode)
+            makeLODTerrain(parentNode: parentNode, vertices: vertices, far: 2500)
+        }
+    }
+
+    private func makeLODTerrain(parentNode: SCNNode, vertices: [FP3], far: CGFloat) {
+        let subv = sphericallySubdivide(vertices: vertices, radius: FP(radius))
+        for subface in subdividedTriangleEdges {
+            let subfacev = [subv[Int(subface[0])], subv[Int(subface[1])], subv[Int(subface[2])]]
+            let geometryB = makeLODGeometry(positions: subfacev, near: 0, far: far)
+            let node = SCNNode(geometry: geometryB)
+            parentNode.addChildNode(node)
+        }
+        if let g = parentNode.geometry, let d = g.levelsOfDetail {
+            let lNear = SCNLevelOfDetail(geometry: nil, worldSpaceDistance: 0.0)
+            g.levelsOfDetail = d + [lNear]
+        }
+    }
+
+    private func makeLODGeometry(positions: [FP3], near: CGFloat, far: CGFloat) -> SCNGeometry {
+        let (l1Positions, l1Edges) = subdivideTriangle(vertices: positions, subdivisionLevels: 5)
+        let l1Geo = makeGeometry(positions: l1Positions, indices: l1Edges)
+        let rootGeo = makeGeometry(positions: l1Positions, indices: l1Edges)
+        let (l2Positions, l2Edges) = subdivideTriangle(vertices: positions, subdivisionLevels: 6)
+        let l2Geo = makeGeometry(positions: l2Positions, indices: l2Edges)
+        let lFar = SCNLevelOfDetail(geometry: nil, worldSpaceDistance: near+far)
+        let l1 = SCNLevelOfDetail(geometry: l1Geo, worldSpaceDistance: near+(far-near)/2.0)
+        let l2 = SCNLevelOfDetail(geometry: l2Geo, worldSpaceDistance: near)
+//        let lNear = SCNLevelOfDetail(geometry: nil, worldSpaceDistance: 0.0)
+        rootGeo.levelsOfDetail = [lFar, l1, l2]
+        return rootGeo
+    }
+
     private func makeTerrain() {
         for faceIndex in 0..<faces.count {
             let face = faces[faceIndex]
@@ -236,10 +280,6 @@ class MarbleViewController: NSViewController {
         }
         self.scene.rootNode.addChildNode(terrainNode)
     }
-
-    var counter = 0
-
-    var dispatchWorkItems = NSPointerArray.weakObjects()
 
     private func updateRoot(faceIndex: Int, node: SCNNode) {
         let item = DispatchWorkItem {
@@ -372,6 +412,10 @@ class MarbleViewController: NSViewController {
 //    }
 
     var buffer: MTLBuffer?
+
+    private func makeGeometry(positions: [FP3], indices: [[UInt32]]) -> SCNGeometry {
+        return makeGeometry(positions: positions, indices: Array(indices.joined()))
+    }
 
     private func makeGeometry(positions: [FP3], indices: [UInt32]) -> SCNGeometry {
         let vertices = positions.map { p in SCNVector3(p[0], p[1], p[2]) }
@@ -563,5 +607,8 @@ class MarbleViewController: NSViewController {
 
  ordered by distance from camera and subdivision level?
  want visible differences asap, but prioritise everything at same subdivision level over distance from camera ("breadth-first")
+
+
+
 
  */
