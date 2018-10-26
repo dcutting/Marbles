@@ -231,42 +231,44 @@ class MarbleViewController: NSViewController {
 
     private func makeLODTerrain() {
         scene.rootNode.addChildNode(terrainNode)
-        for faceIndex in 0..<faces.count {
+        let distance: CGFloat = 4096
+        for faceIndex in 0..<1{//faces.count {
             let face = faces[faceIndex]
             let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
-            let geometryA = makeLODGeometry(positions: vertices, near: 2500, far: 100000)
+            let geometryA = makeLODGeometry(positions: vertices, near: distance, far: 50000000)
             let parentNode = SCNNode(geometry: geometryA)
             terrainNode.addChildNode(parentNode)
-            makeLODTerrain(parentNode: parentNode, vertices: vertices, far: 2500)
+            makeLODTerrain(parentNode: parentNode, vertices: vertices, far: distance)
         }
     }
 
+    private func makeLODGeometry(positions: [FP3], near: CGFloat, far: CGFloat) -> SCNGeometry {
+        let (l1Positions, l1Edges) = subdivideTriangle(vertices: positions, subdivisionLevels: 4)
+        let rootGeo = makeGeometry(positions: l1Positions, indices: l1Edges)
+        let midGeo = makeGeometry(positions: l1Positions, indices: l1Edges)
+        let lFar = SCNLevelOfDetail(geometry: nil, worldSpaceDistance: far)
+        let lMid = SCNLevelOfDetail(geometry: midGeo, worldSpaceDistance: near)
+        rootGeo.levelsOfDetail = [lMid, lFar]
+        return rootGeo
+    }
+
+    let farDiv: CGFloat = 1.5
+
     private func makeLODTerrain(parentNode: SCNNode, vertices: [FP3], far: CGFloat) {
+        print(far)
+        guard far > 500 else { return }
         let subv = sphericallySubdivide(vertices: vertices, radius: FP(radius))
         for subface in subdividedTriangleEdges {
             let subfacev = [subv[Int(subface[0])], subv[Int(subface[1])], subv[Int(subface[2])]]
-            let geometryB = makeLODGeometry(positions: subfacev, near: 0, far: far)
+            let geometryB = makeLODGeometry(positions: subfacev, near: far / farDiv, far: far)
             let node = SCNNode(geometry: geometryB)
             parentNode.addChildNode(node)
+            makeLODTerrain(parentNode: node, vertices: subfacev, far: far / farDiv)
         }
         if let g = parentNode.geometry, let d = g.levelsOfDetail {
             let lNear = SCNLevelOfDetail(geometry: nil, worldSpaceDistance: 0.0)
             g.levelsOfDetail = d + [lNear]
         }
-    }
-
-    private func makeLODGeometry(positions: [FP3], near: CGFloat, far: CGFloat) -> SCNGeometry {
-        let (l1Positions, l1Edges) = subdivideTriangle(vertices: positions, subdivisionLevels: 5)
-        let l1Geo = makeGeometry(positions: l1Positions, indices: l1Edges)
-        let rootGeo = makeGeometry(positions: l1Positions, indices: l1Edges)
-        let (l2Positions, l2Edges) = subdivideTriangle(vertices: positions, subdivisionLevels: 6)
-        let l2Geo = makeGeometry(positions: l2Positions, indices: l2Edges)
-        let lFar = SCNLevelOfDetail(geometry: nil, worldSpaceDistance: near+far)
-        let l1 = SCNLevelOfDetail(geometry: l1Geo, worldSpaceDistance: near+(far-near)/2.0)
-        let l2 = SCNLevelOfDetail(geometry: l2Geo, worldSpaceDistance: near)
-//        let lNear = SCNLevelOfDetail(geometry: nil, worldSpaceDistance: 0.0)
-        rootGeo.levelsOfDetail = [lFar, l1, l2]
-        return rootGeo
     }
 
     private func makeTerrain() {
