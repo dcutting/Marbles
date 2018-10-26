@@ -4,18 +4,18 @@ import SceneKit
 import SceneKit.ModelIO
 import ModelIO
 
-let seed = 31596
+let seed = 315
 let octaves = 15
-let frequency: Double = Double(1.0 / diameter)
+let frequency: Double = Double(1.0 / diameter * 2.0)
 let persistence = 0.5
 let lacunarity = 2.0
-let amplitude: Double = Double(radius / 4.0)
+let amplitude: Double = Double(radius / 10.0)
 let levels = 0
-let iciness: CGFloat = 150.0
+let iciness: CGFloat = 10000.0
 
 let wireframe = false
 let smoothing = 0
-let diameter: CGFloat = 1000.0
+let diameter: CGFloat = 10000.0
 let radius: CGFloat = diameter / 2.0
 let halfAmplitude: Double = amplitude / 2.0
 
@@ -25,8 +25,9 @@ class MarbleViewController: NSViewController {
     let terrainNode = SCNNode()
     let terrainNoise: Noise
     let allocator = MDLMeshBufferDataAllocator()
-    let terrainQueues = [DispatchQueue](repeating: DispatchQueue(label: "terrain", qos: .userInteractive, attributes: .concurrent), count: 20)
-    let patchQueue = DispatchQueue(label: "patch", qos: .userInitiated, attributes: .concurrent)
+//    let terrainQueues = [DispatchQueue](repeating: DispatchQueue(label: "terrain", qos: DispatchQoS.background, attributes: .concurrent), count: 20)
+    let terrainQueue = DispatchQueue(label: "terrain", qos: .default, attributes: .concurrent)
+    let patchQueue = DispatchQueue(label: "patch", qos: .userInteractive, attributes: .concurrent)
 
     var counter = 0
 
@@ -98,7 +99,7 @@ class MarbleViewController: NSViewController {
 //        boxNode.position = SCNVector3(radius, 0.0, 0.0)
         scene.rootNode.addChildNode(boxNode)
 
-//        makeWater()
+        makeWater()
 //        makeClouds()
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             self.makeLODTerrain()
@@ -231,8 +232,8 @@ class MarbleViewController: NSViewController {
 
     private func makeLODTerrain() {
         scene.rootNode.addChildNode(terrainNode)
-        let distance: CGFloat = 4096
-        for faceIndex in 0..<1{//faces.count {
+        let distance: CGFloat = radius * 10
+        for faceIndex in 0..<faces.count {
             let face = faces[faceIndex]
             let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
             let geometryA = makeLODGeometry(positions: vertices, near: distance, far: 50000000)
@@ -243,7 +244,7 @@ class MarbleViewController: NSViewController {
     }
 
     private func makeLODGeometry(positions: [FP3], near: CGFloat, far: CGFloat) -> SCNGeometry {
-        let (l1Positions, l1Edges) = subdivideTriangle(vertices: positions, subdivisionLevels: 4)
+        let (l1Positions, l1Edges) = subdivideTriangle(vertices: positions, subdivisionLevels: 5)
         let rootGeo = makeGeometry(positions: l1Positions, indices: l1Edges)
         let midGeo = makeGeometry(positions: l1Positions, indices: l1Edges)
         let lFar = SCNLevelOfDetail(geometry: nil, worldSpaceDistance: far)
@@ -252,22 +253,31 @@ class MarbleViewController: NSViewController {
         return rootGeo
     }
 
-    let farDiv: CGFloat = 1.5
-
     private func makeLODTerrain(parentNode: SCNNode, vertices: [FP3], far: CGFloat) {
+        let farDiv: CGFloat = 2.0
         print(far)
-        guard far > 500 else { return }
+        guard far > 4000 else { return }
         let subv = sphericallySubdivide(vertices: vertices, radius: FP(radius))
-        for subface in subdividedTriangleEdges {
-            let subfacev = [subv[Int(subface[0])], subv[Int(subface[1])], subv[Int(subface[2])]]
-            let geometryB = makeLODGeometry(positions: subfacev, near: far / farDiv, far: far)
-            let node = SCNNode(geometry: geometryB)
-            parentNode.addChildNode(node)
-            makeLODTerrain(parentNode: node, vertices: subfacev, far: far / farDiv)
-        }
-        if let g = parentNode.geometry, let d = g.levelsOfDetail {
-            let lNear = SCNLevelOfDetail(geometry: nil, worldSpaceDistance: 0.0)
-            g.levelsOfDetail = d + [lNear]
+//        var didRecurse = false
+        terrainQueue.async {
+            var childNodes = [SCNNode]()
+            for subface in self.subdividedTriangleEdges {
+                let subfacev = [subv[Int(subface[0])], subv[Int(subface[1])], subv[Int(subface[2])]]
+                let geometryB = self.makeLODGeometry(positions: subfacev, near: far / farDiv, far: far)
+                let node = SCNNode(geometry: geometryB)
+                childNodes.append(node)
+//                if !didRecurse {
+//                    didRecurse = true
+                    self.makeLODTerrain(parentNode: node, vertices: subfacev, far: far / farDiv)
+//                }
+            }
+            DispatchQueue.main.async {
+                childNodes.forEach { parentNode.addChildNode($0) }
+                if let g = parentNode.geometry, let d = g.levelsOfDetail {
+                    let lNear = SCNLevelOfDetail(geometry: nil, worldSpaceDistance: 0.0)
+                    g.levelsOfDetail = d + [lNear]
+                }
+            }
         }
     }
 
@@ -297,7 +307,7 @@ class MarbleViewController: NSViewController {
         }
 //        let pointer = Unmanaged.passUnretained(item).toOpaque()
 //        dispatchWorkItems.addPointer(pointer)
-        self.terrainQueues[faceIndex].async(execute: item)
+//        self.terrainQueues[faceIndex].async(execute: item)
     }
 
     private func makeGeometry(faceIndex: Int, corners: [FP3], maxEdgeLength: FP) -> SCNGeometry {
@@ -420,10 +430,28 @@ class MarbleViewController: NSViewController {
     }
 
     private func makeGeometry(positions: [FP3], indices: [UInt32]) -> SCNGeometry {
-        let vertices = positions.map { p in SCNVector3(p[0], p[1], p[2]) }
+        var colours = [float3]()
+        var vertices = [SCNVector3]()
+        for p in positions {
+            let pn = normalize(p) * FP(radius)
+            let delta = length(p - pn)
+            let bsq = halfAmplitude / 2.0//(FP(diameter)-abs(p.y))/FP(iciness/diameter)
+            if FP(delta) > bsq {
+                colours.append([1.0, 1.0, 1.0])
+            } else {
+                let colour = Double(delta) / halfAmplitude
+                colours.append([0.0, Float(colour), 0.0])
+            }
+            let v = SCNVector3(p[0], p[1], p[2])
+            vertices.append(v)
+        }
         let positionSource = SCNGeometrySource(vertices: vertices)
+
+        let colourData = NSData(bytes: colours, length: MemoryLayout<float3>.size * colours.count)
+        let colourSource = SCNGeometrySource(data: colourData as Data, semantic: .color, vectorCount: colours.count, usesFloatComponents: true, componentsPerVector: 3, bytesPerComponent: MemoryLayout<Float>.size, dataOffset: 0, dataStride: MemoryLayout<float3>.size)
+
         let edgeElement = SCNGeometryElement(indices: indices, primitiveType: .triangles)
-        let geometry = SCNGeometry(sources: [positionSource], elements: [edgeElement])
+        let geometry = SCNGeometry(sources: [positionSource, colourSource], elements: [edgeElement])
         return geometry
     }
 
