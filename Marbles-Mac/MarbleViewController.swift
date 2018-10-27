@@ -84,8 +84,8 @@ class MarbleViewController: NSViewController {
         scnView.allowsCameraControl = true
         scnView.backgroundColor = .black
         scnView.showsStatistics = true
-//        scnView.defaultCameraController.interactionMode = .fly
-        scnView.cameraControlConfiguration.flyModeVelocity = 0.1
+        scnView.defaultCameraController.interactionMode = .fly
+        scnView.cameraControlConfiguration.flyModeVelocity = 0.5
         if wireframe {
             scnView.debugOptions = SCNDebugOptions([.renderAsWireframe])
         }
@@ -254,21 +254,21 @@ class MarbleViewController: NSViewController {
     }
 
     private func makeLODTerrain(parentNode: SCNNode, vertices: [FP3], far: CGFloat) {
-        let farDiv: CGFloat = 0.8
+        let nextFar: CGFloat = 0.8*(far - radius) + radius
         print(far)
-        guard far > radius else { return }
+        guard far > radius+1 else { return }
         let subv = sphericallySubdivide(vertices: vertices, radius: FP(radius))
         var didRecurse = false
         terrainQueue.async {
             var childNodes = [SCNNode]()
             for subface in self.subdividedTriangleEdges {
                 let subfacev = [subv[Int(subface[0])], subv[Int(subface[1])], subv[Int(subface[2])]]
-                let geometryB = self.makeLODGeometry(positions: subfacev, near: far * farDiv, far: far)
+                let geometryB = self.makeLODGeometry(positions: subfacev, near: nextFar, far: far)
                 let node = SCNNode(geometry: geometryB)
                 childNodes.append(node)
                 if !didRecurse {
-//                    didRecurse = true
-                    self.makeLODTerrain(parentNode: node, vertices: subfacev, far: far * farDiv)
+                    didRecurse = true
+                    self.makeLODTerrain(parentNode: node, vertices: subfacev, far: nextFar)
                 }
             }
             DispatchQueue.main.async {
@@ -450,8 +450,13 @@ class MarbleViewController: NSViewController {
         let colourData = NSData(bytes: colours, length: MemoryLayout<float3>.size * colours.count)
         let colourSource = SCNGeometrySource(data: colourData as Data, semantic: .color, vectorCount: colours.count, usesFloatComponents: true, componentsPerVector: 3, bytesPerComponent: MemoryLayout<Float>.size, dataOffset: 0, dataStride: MemoryLayout<float3>.size)
 
+        var sources = [positionSource]
+        if !wireframe {
+            sources.append(colourSource)
+        }
+
         let edgeElement = SCNGeometryElement(indices: indices, primitiveType: .triangles)
-        let geometry = SCNGeometry(sources: [positionSource, colourSource], elements: [edgeElement])
+        let geometry = SCNGeometry(sources: sources, elements: [edgeElement])
         return geometry
     }
 
