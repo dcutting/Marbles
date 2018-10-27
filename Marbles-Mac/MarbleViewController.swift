@@ -11,13 +11,13 @@ let persistence = 0.5
 let lacunarity = 2.0
 let amplitude: Double = Double(radius / 10.0)
 let levels = 0
-let iciness: CGFloat = 10000.0
+let iciness: FP = 0.4
 
 let wireframe = false
 let smoothing = 0
 let diameter: CGFloat = 10000.0
 let radius: CGFloat = diameter / 2.0
-let halfAmplitude: Double = amplitude / 2.0
+let mountainHeight: Double = amplitude / 2.0
 
 class MarbleViewController: NSViewController {
 
@@ -84,7 +84,7 @@ class MarbleViewController: NSViewController {
         scnView.allowsCameraControl = true
         scnView.backgroundColor = .black
         scnView.showsStatistics = true
-        scnView.defaultCameraController.interactionMode = .fly
+//        scnView.defaultCameraController.interactionMode = .fly
         scnView.cameraControlConfiguration.flyModeVelocity = 0.5
         if wireframe {
             scnView.debugOptions = SCNDebugOptions([.renderAsWireframe])
@@ -99,7 +99,7 @@ class MarbleViewController: NSViewController {
 //        boxNode.position = SCNVector3(radius, 0.0, 0.0)
         scene.rootNode.addChildNode(boxNode)
 
-//        makeWater()
+        makeWater()
 //        makeClouds()
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             self.makeLODTerrain()
@@ -133,7 +133,7 @@ class MarbleViewController: NSViewController {
         let noise = GradientNoise3D(amplitude: 0.08, frequency: 100.0, seed: 31390)
         let icosa = MDLMesh.newIcosahedron(withRadius: Float(radius), inwardNormals: false, allocator: nil)
         let shape = MDLMesh.newSubdividedMesh(icosa, submeshIndex: 0, subdivisionLevels: 3)!
-        let water = makeCrinkly(mdlMesh: shape, noise: noise, levels: 0, smoothing: 1, offset: 0.2, assignColours: false)
+        let water = makeCrinkly(mdlMesh: shape, noise: noise, levels: 0, smoothing: 1, offset: 0.0, assignColours: false)
         let waterMaterial = SCNMaterial()
         waterMaterial.diffuse.contents = NSColor.blue
         waterMaterial.specular.contents = NSColor.white
@@ -244,7 +244,7 @@ class MarbleViewController: NSViewController {
     }
 
     private func makeLODGeometry(positions: [FP3], near: CGFloat, far: CGFloat) -> SCNGeometry {
-        let (l1Positions, l1Edges) = subdivideTriangle(vertices: positions, subdivisionLevels: 0)
+        let (l1Positions, l1Edges) = subdivideTriangle(vertices: positions, subdivisionLevels: 6)
         let rootGeo = makeGeometry(positions: l1Positions, indices: l1Edges)
         let midGeo = makeGeometry(positions: l1Positions, indices: l1Edges)
         let lFar = SCNLevelOfDetail(geometry: nil, worldSpaceDistance: far)
@@ -254,8 +254,8 @@ class MarbleViewController: NSViewController {
     }
 
     private func makeLODTerrain(parentNode: SCNNode, vertices: [FP3], far: CGFloat) {
-        let nextFar: CGFloat = (far-radius)/2.0 + radius
-        guard far > radius+5 else { return }
+        let nextFar: CGFloat = (far-radius)/2.0 + radius    // TODO: wrong.
+        guard far > radius*1.5 else { return }
         let subv = sphericallySubdivide(vertices: vertices, radius: FP(radius))
         var didRecurse = false
         terrainQueue.async {
@@ -266,7 +266,7 @@ class MarbleViewController: NSViewController {
                 let node = SCNNode(geometry: geometryB)
                 childNodes.append(node)
                 if !didRecurse {
-                    didRecurse = true
+//                    didRecurse = true
                     self.makeLODTerrain(parentNode: node, vertices: subfacev, far: nextFar)
                 }
             }
@@ -428,17 +428,26 @@ class MarbleViewController: NSViewController {
         return makeGeometry(positions: positions, indices: Array(indices.joined()))
     }
 
+    private func scaledUnitClamp(_ v: FP, min: FP) -> FP {
+        return v * (1-min) + min
+    }
+
     private func makeGeometry(positions: [FP3], indices: [UInt32]) -> SCNGeometry {
         var colours = [float3]()
         var vertices = [SCNVector3]()
         for p in positions {
             let pn = normalize(p) * FP(radius)
-            let delta = length(p - pn)
-            let bsq = halfAmplitude / 2.0//(FP(diameter)-abs(p.y))/FP(iciness/diameter)
+            let delta = length(p) - length(pn)
+            let distanceFromEquator: FP = abs(p.y)/FP(radius)
+            let dryness: FP = 1 - iciness
+            let bsq = FP(mountainHeight * 1.5) * (1 - distanceFromEquator * iciness) * dryness
             if FP(delta) > bsq {
                 colours.append([1.0, 1.0, 1.0])
             } else {
-                let colour = Double(delta) / halfAmplitude
+                var colour = Double(delta) / mountainHeight
+                colour = scaledUnitClamp(colour, min: 0.15)
+
+                print(delta, colour)
                 colours.append([0.0, Float(colour), 0.0])
             }
             let v = SCNVector3(p[0], p[1], p[2])
@@ -602,12 +611,12 @@ class MarbleViewController: NSViewController {
             bytes.storeBytes(of: point.x, toByteOffset: index, as: Float.self)
             bytes.storeBytes(of: point.y, toByteOffset: index+4, as: Float.self)
             bytes.storeBytes(of: point.z, toByteOffset: index+8, as: Float.self)
-            if Float(delta) > (Float(diameter)-abs(point.y))/Float(iciness/diameter) {
-                colors.append([1.0, 1.0, 1.0])
-            } else {
-                let colour = Double(delta) / halfAmplitude
+//            if Float(delta) > (Float(diameter)-abs(point.y))/Float(iciness/diameter) {
+//                colors.append([1.0, 1.0, 1.0])
+//            } else {
+                let colour = Double(delta) / mountainHeight
                 colors.append([0.0, Float(colour), 0.0])
-            }
+//            }
         }
 
         let colourData = NSData(bytes: colors, length: MemoryLayout<float3>.size * colors.count)
