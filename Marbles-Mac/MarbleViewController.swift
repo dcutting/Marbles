@@ -254,9 +254,8 @@ class MarbleViewController: NSViewController {
     }
 
     private func makeLODTerrain(parentNode: SCNNode, vertices: [FP3], far: CGFloat) {
-        let nextFar: CGFloat = 0.8*(far - radius) + radius
-        print(far)
-        guard far > radius+1 else { return }
+        let nextFar: CGFloat = (far-radius)/2.0 + radius
+        guard far > radius+5 else { return }
         let subv = sphericallySubdivide(vertices: vertices, radius: FP(radius))
         var didRecurse = false
         terrainQueue.async {
