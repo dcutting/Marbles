@@ -99,7 +99,7 @@ class MarbleViewController: NSViewController {
 //        boxNode.position = SCNVector3(radius, 0.0, 0.0)
         scene.rootNode.addChildNode(boxNode)
 
-        makeWater()
+//        makeWater()
 //        makeClouds()
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             self.makeLODTerrain()
@@ -232,7 +232,7 @@ class MarbleViewController: NSViewController {
 
     private func makeLODTerrain() {
         scene.rootNode.addChildNode(terrainNode)
-        let distance: CGFloat = radius * 10
+        let distance: CGFloat = radius * 2.0
         for faceIndex in 0..<faces.count {
             let face = faces[faceIndex]
             let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
@@ -244,7 +244,7 @@ class MarbleViewController: NSViewController {
     }
 
     private func makeLODGeometry(positions: [FP3], near: CGFloat, far: CGFloat) -> SCNGeometry {
-        let (l1Positions, l1Edges) = subdivideTriangle(vertices: positions, subdivisionLevels: 5)
+        let (l1Positions, l1Edges) = subdivideTriangle(vertices: positions, subdivisionLevels: 0)
         let rootGeo = makeGeometry(positions: l1Positions, indices: l1Edges)
         let midGeo = makeGeometry(positions: l1Positions, indices: l1Edges)
         let lFar = SCNLevelOfDetail(geometry: nil, worldSpaceDistance: far)
@@ -254,22 +254,22 @@ class MarbleViewController: NSViewController {
     }
 
     private func makeLODTerrain(parentNode: SCNNode, vertices: [FP3], far: CGFloat) {
-        let farDiv: CGFloat = 2.0
+        let farDiv: CGFloat = 0.8
         print(far)
-        guard far > 4000 else { return }
+        guard far > radius else { return }
         let subv = sphericallySubdivide(vertices: vertices, radius: FP(radius))
-//        var didRecurse = false
+        var didRecurse = false
         terrainQueue.async {
             var childNodes = [SCNNode]()
             for subface in self.subdividedTriangleEdges {
                 let subfacev = [subv[Int(subface[0])], subv[Int(subface[1])], subv[Int(subface[2])]]
-                let geometryB = self.makeLODGeometry(positions: subfacev, near: far / farDiv, far: far)
+                let geometryB = self.makeLODGeometry(positions: subfacev, near: far * farDiv, far: far)
                 let node = SCNNode(geometry: geometryB)
                 childNodes.append(node)
-//                if !didRecurse {
+                if !didRecurse {
 //                    didRecurse = true
-                    self.makeLODTerrain(parentNode: node, vertices: subfacev, far: far / farDiv)
-//                }
+                    self.makeLODTerrain(parentNode: node, vertices: subfacev, far: far * farDiv)
+                }
             }
             DispatchQueue.main.async {
                 childNodes.forEach { parentNode.addChildNode($0) }
