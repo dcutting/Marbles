@@ -133,7 +133,7 @@ class MarbleViewController: NSViewController {
         let noise = GradientNoise3D(amplitude: 0.08, frequency: 100.0, seed: 31390)
         let icosa = MDLMesh.newIcosahedron(withRadius: Float(radius), inwardNormals: false, allocator: nil)
         let shape = MDLMesh.newSubdividedMesh(icosa, submeshIndex: 0, subdivisionLevels: 3)!
-        let water = makeCrinkly(mdlMesh: shape, noise: noise, levels: 0, smoothing: 1, offset: 0.0, assignColours: false)
+        let water = makeCrinkly(mdlMesh: shape, noise: noise, levels: 0, smoothing: 1, offset: radius/150.0, assignColours: false)
         let waterMaterial = SCNMaterial()
         waterMaterial.diffuse.contents = NSColor.blue
         waterMaterial.specular.contents = NSColor.white
@@ -244,7 +244,7 @@ class MarbleViewController: NSViewController {
     }
 
     private func makeLODGeometry(positions: [FP3], near: CGFloat, far: CGFloat) -> SCNGeometry {
-        let (l1Positions, l1Edges) = subdivideTriangle(vertices: positions, subdivisionLevels: 6)
+        let (l1Positions, l1Edges) = subdivideTriangle(vertices: positions, subdivisionLevels: 7)
         let rootGeo = makeGeometry(positions: l1Positions, indices: l1Edges)
         let midGeo = makeGeometry(positions: l1Positions, indices: l1Edges)
         let lFar = SCNLevelOfDetail(geometry: nil, worldSpaceDistance: far)
@@ -443,6 +443,10 @@ class MarbleViewController: NSViewController {
             let bsq = FP(mountainHeight * 1.5) * (1 - distanceFromEquator * iciness) * dryness
             if FP(delta) > bsq {
                 colours.append([1.0, 1.0, 1.0])
+            } else if FP(delta) >= 0.0 && FP(delta) < mountainHeight / 10.0 {
+                colours.append([1.0, 1.0, 0.0])
+            } else if FP(delta) < 0.0 {
+                colours.append([1.0, 0.0, 0.0])
             } else {
                 var colour = Double(delta) / mountainHeight
                 colour = scaledUnitClamp(colour, min: 0.15)
