@@ -14,7 +14,7 @@ let levels = 0
 let iciness: FP = 0.4
 let brilliance: Float = 1.0
 
-let wireframe = true
+let wireframe = false
 let smoothing = 0
 let diameter: CGFloat = 10000.0
 let radius: CGFloat = diameter / 2.0
@@ -184,7 +184,8 @@ class MarbleViewController: NSViewController {
         for faceIndex in 0..<faces.count {
             let face = faces[faceIndex]
             let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
-            let geometry = makeGeometry(positions: vertices, indices: [0, 1, 2])
+            let colours = findColours(for: vertices)
+            let geometry = makeGeometry(positions: vertices, colours: colours, indices: [0, 1, 2])
             let node = SCNNode(geometry: geometry)
             self.terrainNode.addChildNode(node)
             updateRoot(faceIndex: faceIndex, node: node)
@@ -196,7 +197,7 @@ class MarbleViewController: NSViewController {
         let item = DispatchWorkItem {
             let face = self.faces[faceIndex]
             let vertices = [self.positions[Int(face[0])], self.positions[Int(face[1])], self.positions[Int(face[2])]]
-            let geom = self.makeGeometry(faceIndex: faceIndex, corners: vertices, maxEdgeLength: 200.0)
+            let geom = self.makeGeometry(faceIndex: faceIndex, corners: vertices, maxEdgeLength: 400.0)
             DispatchQueue.main.async {
 //                print("[\(faceIndex)] updated geometry: \(self.counter)")
                 self.counter += 1
@@ -210,17 +211,18 @@ class MarbleViewController: NSViewController {
     }
 
     private func makeGeometry(faceIndex: Int, corners: [FP3], maxEdgeLength: FP) -> SCNGeometry {
-        let (vertices, edges) = makeGeometrySources(faceIndex: faceIndex, name: "", corners: corners, maxEdgeLengthSq: maxEdgeLength * maxEdgeLength, depth: 0)
+        let (vertices, colours, edges) = makeGeometrySources(faceIndex: faceIndex, name: "", corners: corners, maxEdgeLengthSq: maxEdgeLength * maxEdgeLength, depth: 0)
 //        print(vertices)
-        return makeGeometry(positions: vertices, indices: Array(edges.joined()))
+        return makeGeometry(positions: vertices, colours: colours, indices: Array(edges.joined()))
     }
 
     let subdividedTriangleEdges: [[UInt32]] = [[0, 3, 5], [3, 1, 4], [3, 4, 5], [5, 4, 2]]
 
-    private func makeGeometrySources(faceIndex: Int, name: String, corners: [FP3], maxEdgeLengthSq: FP, depth: UInt32) -> ([FP3], [[UInt32]]) {
+    private func makeGeometrySources(faceIndex: Int, name: String, corners: [FP3], maxEdgeLengthSq: FP, depth: UInt32) -> ([FP3], [float3], [[UInt32]]) {
         // make vertices and edges from initial corners such that no projected edge is longer
         // than maxEdgeLength
         var positions = [FP3]()
+        var colours = [float3]()
         var edges = [[UInt32]]()
         let subv = sphericallySubdivide(vertices: corners, radius: FP(radius))
         var offset: UInt32 = 0
@@ -255,6 +257,7 @@ class MarbleViewController: NSViewController {
         }
         if subdivide && depth < maxDepth {
             var newpositions = [[FP3]](repeating: [], count: 4)
+            var newcolours = [[float3]](repeating: [], count: 4)
             var newindices = [[[UInt32]]](repeating: [], count: 4)
             for i in 0..<subdividedTriangleEdges.count {
                 let index = subdividedTriangleEdges[i]
@@ -262,8 +265,9 @@ class MarbleViewController: NSViewController {
                 let vy = subv[Int(index[1])]
                 let vz = subv[Int(index[2])]
                 let subname = name + "\(i)"
-                let (iv, ii) = makeGeometrySources(faceIndex: faceIndex, name: subname, corners: [vx, vy, vz], maxEdgeLengthSq: maxEdgeLengthSq, depth: depth+1)
+                let (iv, ic, ii) = makeGeometrySources(faceIndex: faceIndex, name: subname, corners: [vx, vy, vz], maxEdgeLengthSq: maxEdgeLengthSq, depth: depth+1)
                 newpositions[i] = iv
+                newcolours[i] = ic
                 newindices[i] = ii
             }
             for i in 0..<4 {
@@ -272,23 +276,27 @@ class MarbleViewController: NSViewController {
                     edges.map { edge in edge + offset }
                 }
                 offset += UInt32(newpositions[i].count)
+                colours.append(contentsOf: newcolours[i])
                 edges.append(contentsOf: offsetEdges)
             }
         } else {
-            if let (cv, ci) = cachedPatches[faceIndex][name] {
+            if let (cv, cc, ci) = cachedPatches[faceIndex][name] {
 //                print("cache hit \(name)")
                 positions.append(contentsOf: cv)
+                colours.append(contentsOf: cc)
                 edges.append(contentsOf: ci)
             } else {
-                print("miss \(name)")
+//                print("miss \(name)")
                 let sphericalisedCorners = sphericalise(vertices: corners, radius: FP(radius))
+                let sphericalisedColours = findColours(for: sphericalisedCorners)
                 positions.append(contentsOf: sphericalisedCorners)
+                colours.append(contentsOf: sphericalisedColours)
                 edges.append([0, 1, 2])
                 let item = DispatchWorkItem {
                     guard nil == self.cachedPatches[faceIndex][name] else { return }
-                    let (subv, subii) = self.subdivideTriangle(vertices: corners, subdivisionLevels: 0)
+                    let (subv, subc, subii) = self.subdivideTriangle(vertices: corners, subdivisionLevels: 5)
                     DispatchQueue.main.async {
-                        self.cachedPatches[faceIndex][name] = (subv, subii)
+                        self.cachedPatches[faceIndex][name] = (subv, subc, subii)
                     }
                 }
                 let pointer = Unmanaged.passUnretained(item).toOpaque()
@@ -296,10 +304,10 @@ class MarbleViewController: NSViewController {
                 patchQueue.async(execute: item)
             }
         }
-        return (positions, edges)
+        return (positions, colours, edges)
     }
 
-    var cachedPatches = [[String: ([FP3], [[UInt32]])]](repeating: [:], count: 20)
+    var cachedPatches = [[String: ([FP3], [float3], [[UInt32]])]](repeating: [:], count: 20)
 
     private func intersectsScreen(_ a: SCNVector3, _ b: SCNVector3, _ c: SCNVector3) -> Bool {
         let minX = min(a.x, b.x, c.x)
@@ -312,18 +320,16 @@ class MarbleViewController: NSViewController {
         return overlapsX && overlapsY
     }
 
-    private func makeGeometry(positions: [FP3], indices: [[UInt32]]) -> SCNGeometry {
-        return makeGeometry(positions: positions, indices: Array(indices.joined()))
+    private func makeGeometry(positions: [FP3], colours: [float3], indices: [[UInt32]]) -> SCNGeometry {
+        return makeGeometry(positions: positions, colours: colours, indices: Array(indices.joined()))
     }
 
     private func adjusted(colour: float3) -> float3 {
         return colour * brilliance
     }
 
-    private func makeGeometry(positions: [FP3], indices: [UInt32]) -> SCNGeometry {
-        let start = DispatchTime.now()
+    private func findColours(for positions: [FP3]) -> [float3] {
         var colours = [float3]()
-        var vertices = [SCNVector3]()
         for p in positions {
             let pn = normalize(p) * FP(radius)
             let delta = length(p) - length(pn)
@@ -345,9 +351,12 @@ class MarbleViewController: NSViewController {
                 // Forest
                 colours.append(adjusted(colour: [0.0, heightColour, 0.0]))
             }
-            let v = SCNVector3(p[0], p[1], p[2])
-            vertices.append(v)
         }
+        return colours
+    }
+
+    private func makeGeometry(positions: [FP3], colours: [float3], indices: [UInt32]) -> SCNGeometry {
+        let vertices = positions.map { SCNVector3($0[0], $0[1], $0[2])}
         let positionSource = SCNGeometrySource(vertices: vertices)
 
         let colourData = NSData(bytes: colours, length: MemoryLayout<float3>.size * colours.count)
@@ -359,10 +368,11 @@ class MarbleViewController: NSViewController {
         }
 
         let edgeElement = SCNGeometryElement(indices: indices, primitiveType: .triangles)
+        let start = DispatchTime.now()
         let geometry = SCNGeometry(sources: sources, elements: [edgeElement])
         let stop = DispatchTime.now()
         let elapsed = stop.uptimeNanoseconds - start.uptimeNanoseconds
-        print("   \(elapsed)")
+//        print("   \(elapsed)")
         return geometry
     }
 
@@ -407,7 +417,7 @@ class MarbleViewController: NSViewController {
         return an * (radius + delta)
     }
 
-    private func subdivideTriangle(vertices: [FP3], subdivisionLevels: UInt32) -> ([FP3], [[UInt32]]) {
+    private func subdivideTriangle(vertices: [FP3], subdivisionLevels: UInt32) -> ([FP3], [float3], [[UInt32]]) {
 
         let a = spherical(vertices[0], radius: FP(radius), noise: terrainNoise)
         let b = spherical(vertices[1], radius: FP(radius), noise: terrainNoise)
@@ -447,7 +457,9 @@ class MarbleViewController: NSViewController {
             next += 1
         }
 
-        return (points, faces)
+        let colours = findColours(for: points)
+
+        return (points, colours, faces)
     }
 }
 
