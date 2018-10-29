@@ -14,7 +14,7 @@ let levels = 0
 let iciness: FP = 0.4
 let brilliance: Float = 1.0
 
-let wireframe = false
+let wireframe = true
 let smoothing = 0
 let diameter: CGFloat = 10000.0
 let radius: CGFloat = diameter / 2.0
@@ -27,7 +27,7 @@ class MarbleViewController: NSViewController {
     let terrainNoise: Noise
     let allocator = MDLMeshBufferDataAllocator()
     let terrainQueues = [DispatchQueue](repeating: DispatchQueue(label: "terrain", qos: .background, attributes: .concurrent), count: 20)
-    let patchQueue = DispatchQueue(label: "patch", qos: .userInteractive, attributes: .concurrent)
+    let patchQueue = DispatchQueue(label: "patch", qos: .background, attributes: .concurrent)
 
     var counter = 0
 
@@ -249,12 +249,14 @@ class MarbleViewController: NSViewController {
                 break
             }
         }
-        if subdivide && depth < 50 {
+        let maxDepth = 50
+        if depth >= maxDepth {
+            print("hit max depth \(maxDepth)")
+        }
+        if subdivide && depth < maxDepth {
             var newpositions = [[FP3]](repeating: [], count: 4)
             var newindices = [[[UInt32]]](repeating: [], count: 4)
-//            DispatchQueue.concurrentPerform(iterations: subdividedTriangleEdges.count) { i in
             for i in 0..<subdividedTriangleEdges.count {
-//            for index in subindices {
                 let index = subdividedTriangleEdges[i]
                 let vx = subv[Int(index[0])]
                 let vy = subv[Int(index[1])]
@@ -278,12 +280,13 @@ class MarbleViewController: NSViewController {
                 positions.append(contentsOf: cv)
                 edges.append(contentsOf: ci)
             } else {
-//                print("miss \(name)")
-                positions.append(contentsOf: subv)
-                edges.append(contentsOf: subdividedTriangleEdges)
+                print("miss \(name)")
+                let sphericalisedCorners = sphericalise(vertices: corners, radius: FP(radius))
+                positions.append(contentsOf: sphericalisedCorners)
+                edges.append([0, 1, 2])
                 let item = DispatchWorkItem {
                     guard nil == self.cachedPatches[faceIndex][name] else { return }
-                    let (subv, subii) = self.subdivideTriangle(vertices: corners, subdivisionLevels: 6)
+                    let (subv, subii) = self.subdivideTriangle(vertices: corners, subdivisionLevels: 0)
                     DispatchQueue.main.async {
                         self.cachedPatches[faceIndex][name] = (subv, subii)
                     }
@@ -303,7 +306,7 @@ class MarbleViewController: NSViewController {
         let maxX = max(a.x, b.x, c.x)
         let minY = min(a.y, b.y, c.y)
         let maxY = max(a.y, b.y, c.y)
-        let inset: CGFloat = 0.0//h / 4.0
+        let inset: CGFloat = 0.0
         let overlapsX = minX <= (w + inset) && maxX >= (0 - inset)
         let overlapsY = minY <= (h + inset) && maxY >= (0 - inset)
         return overlapsX && overlapsY
@@ -318,6 +321,7 @@ class MarbleViewController: NSViewController {
     }
 
     private func makeGeometry(positions: [FP3], indices: [UInt32]) -> SCNGeometry {
+        let start = DispatchTime.now()
         var colours = [float3]()
         var vertices = [SCNVector3]()
         for p in positions {
@@ -356,7 +360,20 @@ class MarbleViewController: NSViewController {
 
         let edgeElement = SCNGeometryElement(indices: indices, primitiveType: .triangles)
         let geometry = SCNGeometry(sources: sources, elements: [edgeElement])
+        let stop = DispatchTime.now()
+        let elapsed = stop.uptimeNanoseconds - start.uptimeNanoseconds
+        print("   \(elapsed)")
         return geometry
+    }
+
+    private func sphericalise(vertices: [FP3], radius: FP) -> [FP3] {
+        let a = vertices[0]
+        let b = vertices[1]
+        let c = vertices[2]
+        let `as` = spherical(a, radius: radius, noise: terrainNoise)
+        let bs = spherical(b, radius: radius, noise: terrainNoise)
+        let cs = spherical(c, radius: radius, noise: terrainNoise)
+        return [`as`, bs, cs]
     }
 
     private func sphericallySubdivide(vertices: [FP3], radius: FP) -> [FP3] {
