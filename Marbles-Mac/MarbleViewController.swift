@@ -5,7 +5,7 @@ import SceneKit.ModelIO
 import ModelIO
 
 let seed = 315
-let octaves = 15
+let octaves = 10
 let frequency: Double = Double(1.0 / diameter * 2.0)
 let persistence = 0.5
 let lacunarity = 2.0
@@ -26,8 +26,7 @@ class MarbleViewController: NSViewController {
     let terrainNode = SCNNode()
     let terrainNoise: Noise
     let allocator = MDLMeshBufferDataAllocator()
-    let terrainQueues = [DispatchQueue](repeating: DispatchQueue(label: "terrain", qos: DispatchQoS.background, attributes: .concurrent), count: 20)
-    let terrainQueue = DispatchQueue(label: "terrain", qos: .default, attributes: .concurrent)
+    let terrainQueues = [DispatchQueue](repeating: DispatchQueue(label: "terrain", qos: .background, attributes: .concurrent), count: 20)
     let patchQueue = DispatchQueue(label: "patch", qos: .userInteractive, attributes: .concurrent)
 
     var counter = 0
@@ -101,12 +100,8 @@ class MarbleViewController: NSViewController {
 
 //        makeWater()
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-//            self.makeLODTerrain()
             self.makeTerrain()
         }
-//        Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { _ in
-//            self.updateLevelOfDetail()
-//        }
 
         let clickGesture = NSClickGestureRecognizer(target: self, action: #selector(handleClick(_:)))
         var gestureRecognizers = scnView.gestureRecognizers
@@ -116,9 +111,8 @@ class MarbleViewController: NSViewController {
 
     @objc func handleClick(_ gestureRecognizer: NSGestureRecognizer) {
         dispatchWorkItems.allObjects.forEach { object in
-//            let pointer = object as! UnsafeRawPointer
-//            let item = Unmanaged<DispatchWorkItem>.fromOpaque(pointer).takeUnretainedValue()
-            let item = object as! DispatchWorkItem
+            let pointer = object as! UnsafeRawPointer
+            let item = Unmanaged<DispatchWorkItem>.fromOpaque(pointer).takeUnretainedValue()
             item.cancel()
         }
         for _ in 0..<dispatchWorkItems.count {
@@ -141,8 +135,6 @@ class MarbleViewController: NSViewController {
 //        let waterNode = SCNNode(geometry: water)
 //        scene.rootNode.addChildNode(waterNode)
 //    }
-
-    var faceIndex = 0
 
     let phi: FP = 1.6180339887498948482
 
@@ -206,7 +198,7 @@ class MarbleViewController: NSViewController {
             let vertices = [self.positions[Int(face[0])], self.positions[Int(face[1])], self.positions[Int(face[2])]]
             let geom = self.makeGeometry(faceIndex: faceIndex, corners: vertices, maxEdgeLength: 200.0)
             DispatchQueue.main.async {
-                print("[\(faceIndex)] updated geometry: \(self.counter)")
+//                print("[\(faceIndex)] updated geometry: \(self.counter)")
                 self.counter += 1
                 node.geometry = geom
                 self.updateRoot(faceIndex: faceIndex, node: node)
@@ -282,16 +274,16 @@ class MarbleViewController: NSViewController {
             }
         } else {
             if let (cv, ci) = cachedPatches[faceIndex][name] {
-                print("cache hit \(name)")
+//                print("cache hit \(name)")
                 positions.append(contentsOf: cv)
                 edges.append(contentsOf: ci)
             } else {
-                print("miss \(name)")
+//                print("miss \(name)")
                 positions.append(contentsOf: subv)
                 edges.append(contentsOf: subdividedTriangleEdges)
                 let item = DispatchWorkItem {
                     guard nil == self.cachedPatches[faceIndex][name] else { return }
-                    let (subv, subii) = self.subdivideTriangle(vertices: corners, subdivisionLevels: 4)
+                    let (subv, subii) = self.subdivideTriangle(vertices: corners, subdivisionLevels: 6)
                     DispatchQueue.main.async {
                         self.cachedPatches[faceIndex][name] = (subv, subii)
                     }
@@ -319,10 +311,6 @@ class MarbleViewController: NSViewController {
 
     private func makeGeometry(positions: [FP3], indices: [[UInt32]]) -> SCNGeometry {
         return makeGeometry(positions: positions, indices: Array(indices.joined()))
-    }
-
-    private func scaledUnitClamp(_ v: FP, min: FP, max: FP = 1.0) -> FP {
-        return v * (max-min) + min
     }
 
     private func adjusted(colour: float3) -> float3 {
@@ -371,12 +359,6 @@ class MarbleViewController: NSViewController {
         return geometry
     }
 
-    private func pow(_ base: UInt32, _ power: UInt32) -> UInt32 {
-        var answer: UInt32 = 1
-        for _ in 0..<power { answer *= base }
-        return answer
-    }
-
     private func sphericallySubdivide(vertices: [FP3], radius: FP) -> [FP3] {
 
         let a = vertices[0]
@@ -395,15 +377,6 @@ class MarbleViewController: NSViewController {
         let cas = spherical(ca, radius: radius, noise: terrainNoise)
 
         return [`as`, bs, cs, abs, bcs, cas]
-    }
-
-    private func midway(_ a: FP3, _ b: FP3) -> FP3 {
-
-        let abx = (a.x + b.x) / 2.0
-        let aby = (a.y + b.y) / 2.0
-        let abz = (a.z + b.z) / 2.0
-
-        return [abx, aby, abz]
     }
 
     private func spherical(_ a: FP3, radius: FP, noise: Noise) -> FP3 {
