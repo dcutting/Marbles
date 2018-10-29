@@ -134,7 +134,7 @@ class MarbleViewController: NSViewController {
         let noise = GradientNoise3D(amplitude: 0.08, frequency: 100.0, seed: 31390)
         let icosa = MDLMesh.newIcosahedron(withRadius: Float(radius), inwardNormals: false, allocator: nil)
         let shape = MDLMesh.newSubdividedMesh(icosa, submeshIndex: 0, subdivisionLevels: 3)!
-        let water = makeCrinkly(mdlMesh: shape, noise: noise, levels: 0, smoothing: 1, offset: radius/150.0, assignColours: false)
+        let water = makeCrinkly(mdlMesh: shape, noise: noise, levels: 0, smoothing: 1, offset: radius/100.0, assignColours: false)
         let waterMaterial = SCNMaterial()
         waterMaterial.diffuse.contents = NSColor.blue
         waterMaterial.specular.contents = NSColor.white
@@ -445,16 +445,20 @@ class MarbleViewController: NSViewController {
             let delta = length(p) - length(pn)
             let distanceFromEquator: FP = abs(p.y)/FP(radius)
             let dryness: FP = 1 - iciness
-            let bsq = FP(mountainHeight * 1.5) * (1 - distanceFromEquator * iciness) * dryness
+            let snowLine = FP(mountainHeight * 1.5) * (1 - distanceFromEquator * iciness) * dryness
             let rawHeightColour = FP(delta) / mountainHeight
             let heightColour = Float(scaledUnitClamp(rawHeightColour, min: 0.15))
-            if FP(delta) > bsq {
+            if FP(delta) > snowLine {
+                // Ice
                 colours.append(adjusted(colour: [1.0, 1.0, 1.0]))
             } else if FP(delta) >= 0.0 && FP(delta) < mountainHeight / 10.0 {
+                // Beach
                 colours.append(adjusted(colour: [1.0, 1.0, 0.0]))
             } else if FP(delta) < 0.0 {
+                // Error
                 colours.append(adjusted(colour: [1.0, 0.0, 0.0]))
             } else {
+                // Forest
                 colours.append(adjusted(colour: [0.0, heightColour, 0.0]))
             }
             let v = SCNVector3(p[0], p[1], p[2])
