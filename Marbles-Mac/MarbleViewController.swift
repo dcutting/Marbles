@@ -12,12 +12,13 @@ let lacunarity = 2.0
 let amplitude: Double = Double(radius / 10.0)
 let levels = 0
 let iciness: FP = 0.4
+let brilliance: Float = 1.0
 
 let wireframe = false
 let smoothing = 0
 let diameter: CGFloat = 10000.0
 let radius: CGFloat = diameter / 2.0
-let mountainHeight: Double = amplitude / 2.0
+let mountainHeight: FP = amplitude / 2.0
 
 class MarbleViewController: NSViewController {
 
@@ -244,7 +245,7 @@ class MarbleViewController: NSViewController {
     }
 
     private func makeLODGeometry(positions: [FP3], near: CGFloat, far: CGFloat) -> SCNGeometry {
-        let (l1Positions, l1Edges) = subdivideTriangle(vertices: positions, subdivisionLevels: 7)
+        let (l1Positions, l1Edges) = subdivideTriangle(vertices: positions, subdivisionLevels: 5)
         let rootGeo = makeGeometry(positions: l1Positions, indices: l1Edges)
         let midGeo = makeGeometry(positions: l1Positions, indices: l1Edges)
         let lFar = SCNLevelOfDetail(geometry: nil, worldSpaceDistance: far)
@@ -428,8 +429,12 @@ class MarbleViewController: NSViewController {
         return makeGeometry(positions: positions, indices: Array(indices.joined()))
     }
 
-    private func scaledUnitClamp(_ v: FP, min: FP) -> FP {
-        return v * (1-min) + min
+    private func scaledUnitClamp(_ v: FP, min: FP, max: FP = 1.0) -> FP {
+        return v * (max-min) + min
+    }
+
+    private func adjusted(colour: float3) -> float3 {
+        return colour * brilliance
     }
 
     private func makeGeometry(positions: [FP3], indices: [UInt32]) -> SCNGeometry {
@@ -441,18 +446,16 @@ class MarbleViewController: NSViewController {
             let distanceFromEquator: FP = abs(p.y)/FP(radius)
             let dryness: FP = 1 - iciness
             let bsq = FP(mountainHeight * 1.5) * (1 - distanceFromEquator * iciness) * dryness
+            let rawHeightColour = FP(delta) / mountainHeight
+            let heightColour = Float(scaledUnitClamp(rawHeightColour, min: 0.15))
             if FP(delta) > bsq {
-                colours.append([1.0, 1.0, 1.0])
+                colours.append(adjusted(colour: [1.0, 1.0, 1.0]))
             } else if FP(delta) >= 0.0 && FP(delta) < mountainHeight / 10.0 {
-                colours.append([1.0, 1.0, 0.0])
+                colours.append(adjusted(colour: [1.0, 1.0, 0.0]))
             } else if FP(delta) < 0.0 {
-                colours.append([1.0, 0.0, 0.0])
+                colours.append(adjusted(colour: [1.0, 0.0, 0.0]))
             } else {
-                var colour = Double(delta) / mountainHeight
-                colour = scaledUnitClamp(colour, min: 0.15)
-
-                print(delta, colour)
-                colours.append([0.0, Float(colour), 0.0])
+                colours.append(adjusted(colour: [0.0, heightColour, 0.0]))
             }
             let v = SCNVector3(p[0], p[1], p[2])
             vertices.append(v)
