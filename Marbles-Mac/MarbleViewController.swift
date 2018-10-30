@@ -4,15 +4,19 @@ import SceneKit
 import SceneKit.ModelIO
 import ModelIO
 
-let seed = 31129
+let seed = 71929
 let octaves = 12
 let frequency: Double = Double(1.0 / diameter * 2.0)
-let persistence = 0.55
-let lacunarity = 2.2
-let amplitude: Double = Double(radius / 10.0)
+let persistence = 0.47
+let lacunarity = 1.9
+let amplitude: Double = Double(radius / 8.0)
 let levels = 0
-let iciness: FP = 0.4
+let iciness: FP = 0.5
 let brilliance: Float = 1.0
+let maxEdgeLength = 400.0
+let lowSubdivisions: UInt32 = 3
+let highSubdivisions: UInt32 = 6
+let maxDepth = 50
 
 let wireframe = false
 let smoothing = 0
@@ -200,12 +204,12 @@ class MarbleViewController: NSViewController {
         let item = DispatchWorkItem {
             let face = self.faces[faceIndex]
             let vertices = [self.positions[Int(face[0])], self.positions[Int(face[1])], self.positions[Int(face[2])]]
-            let geom = self.makeGeometry(faceIndex: faceIndex, corners: vertices, maxEdgeLength: 400.0)
+            let geom = self.makeGeometry(faceIndex: faceIndex, corners: vertices, maxEdgeLength: maxEdgeLength)
             DispatchQueue.main.async {
 //                print("[\(faceIndex)] updated geometry: \(self.counter)")
                 self.counter += 1
                 node.geometry = geom
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                     self.updateRoot(faceIndex: faceIndex, node: node)
                 }
             }
@@ -263,7 +267,6 @@ class MarbleViewController: NSViewController {
             }
         }
 //    }
-        let maxDepth = 50
         if depth >= maxDepth {
             print("hit max depth \(maxDepth)")
             return (positions, colours, edges)
@@ -305,8 +308,8 @@ class MarbleViewController: NSViewController {
                 positions.append(contentsOf: sphericalisedCorners)
                 colours.append(contentsOf: sphericalisedColours)
                 edges.append([0, 1, 2])
-                let itemLow = makePatchItem(subdivisions: 4, low: true, corners: corners, faceIndex: faceIndex, name: name)
-                let itemHigh = makePatchItem(subdivisions: 7, low: false, corners: corners, faceIndex: faceIndex, name: name)
+                let itemLow = makePatchItem(subdivisions: lowSubdivisions, low: true, corners: corners, faceIndex: faceIndex, name: name)
+                let itemHigh = makePatchItem(subdivisions: highSubdivisions, low: false, corners: corners, faceIndex: faceIndex, name: name)
                 lowCount.incrementAndGet()
                 lowQueue.async(execute: itemLow)
                 highCount.incrementAndGet()
