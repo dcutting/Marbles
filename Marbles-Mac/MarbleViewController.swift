@@ -26,16 +26,17 @@ class MarbleViewController: NSViewController {
     let terrainNode = SCNNode()
     let terrainNoise: Noise
     let terrainQueues = [DispatchQueue](repeating: DispatchQueue(label: "terrain", qos: .userInteractive, attributes: .concurrent), count: 20)
-    let triQueue = DispatchQueue(label: "patch", qos: .default, attributes: .concurrent)
+    let lowQueue = DispatchQueue(label: "lowPatch", qos: .userInitiated, attributes: .concurrent)
+    let highQueue = DispatchQueue(label: "highPatch", qos: .default, attributes: .concurrent)
     var dispatchWorkItems = NSPointerArray.weakObjects()
     var counter = 0
     var w: CGFloat!
     var h: CGFloat!
-    let atomicCount = AtomicInteger()
+    let lowCount = AtomicInteger()
+    let highCount = AtomicInteger()
 
     let subdividedTriangleEdges: [[UInt32]] = [[0, 3, 5], [3, 1, 4], [3, 4, 5], [5, 4, 2]]
     var cachedPatches = [[String: (UInt32, [FP3], [float3], [[UInt32]])]](repeating: [:], count: 20)
-    //    var cachedPatchDepths = [[String: (UInt32, [FP3], [float3], [[UInt32]])]](repeating: [:], count: 20)
 
     let phi: FP = 1.6180339887498948482
 
@@ -251,7 +252,6 @@ class MarbleViewController: NSViewController {
 //        print(p0, p1, p2)
 
         if intersectsScreen(p0, p1, p2) {
-
             let l0 = FP((p0 - p1).lengthSq())
             let l1 = FP((p0 - p2).lengthSq())
             let l2 = FP((p1 - p2).lengthSq())
@@ -306,12 +306,12 @@ class MarbleViewController: NSViewController {
                 positions.append(contentsOf: sphericalisedCorners)
                 colours.append(contentsOf: sphericalisedColours)
                 edges.append([0, 1, 2])
-                let itemLow = makePatchItem(subdivisions: 2, corners: corners, faceIndex: faceIndex, name: name)
-                let itemHigh = makePatchItem(subdivisions: 7, corners: corners, faceIndex: faceIndex, name: name)
-                atomicCount.incrementAndGet()
-                triQueue.async(execute: itemLow)
-                atomicCount.incrementAndGet()
-                triQueue.async(execute: itemHigh)
+                let itemLow = makePatchItem(subdivisions: 4, low: true, corners: corners, faceIndex: faceIndex, name: name)
+                let itemHigh = makePatchItem(subdivisions: 7, low: false, corners: corners, faceIndex: faceIndex, name: name)
+                lowCount.incrementAndGet()
+                lowQueue.async(execute: itemLow)
+                highCount.incrementAndGet()
+                highQueue.async(execute: itemHigh)
 //                let pointerLow = Unmanaged.passUnretained(itemLow).toOpaque()
 //                dispatchWorkItems.addPointer(pointerLow)
 //                let pointerHigh = Unmanaged.passUnretained(itemHigh).toOpaque()
@@ -321,18 +321,28 @@ class MarbleViewController: NSViewController {
         return (positions, colours, edges)
     }
 
-    private func makePatchItem(subdivisions: UInt32, corners: [FP3], faceIndex: Int, name: String) -> DispatchWorkItem {
+    private func makePatchItem(subdivisions: UInt32, low: Bool, corners: [FP3], faceIndex: Int, name: String) -> DispatchWorkItem {
         let item = DispatchWorkItem {
-            if let item = self.cachedPatches[faceIndex][name] {
+            if let item = self.cachedPatches[faceIndex][name] {//TODO: race cpndition
                 if item.0 >= subdivisions {
-                    let c = self.atomicCount.decrementAndGet()
-//                    print("\(c): bail")
+                    let c: Int
+                    if low {
+                        c = self.lowCount.decrementAndGet()
+                    } else {
+                        c = self.highCount.decrementAndGet()
+                    }
+                    print("\(self.lowCount.get()), \(self.highCount.get()): bail")
                     return
                 }
             }
             let (subv, subc, subii) = self.subdivideTriangle(vertices: corners, subdivisionLevels: subdivisions)
-            let c = self.atomicCount.decrementAndGet()
-//            print(c)
+            let c: Int
+            if low {
+                c = self.lowCount.decrementAndGet()
+            } else {
+                c = self.highCount.decrementAndGet()
+            }
+            print("\(self.lowCount.get()), \(self.highCount.get()): bail")
             DispatchQueue.main.async {
                 self.cachedPatches[faceIndex][name] = (subdivisions, subv, subc, subii)
             }
@@ -345,13 +355,11 @@ class MarbleViewController: NSViewController {
         let maxX = max(a.x, b.x, c.x)
         let minY = min(a.y, b.y, c.y)
         let maxY = max(a.y, b.y, c.y)
-        let minZ = min(a.z, b.z, c.z)
-        let maxZ = max(a.z, b.z, c.z)
         let inset: CGFloat = 0.0
         let overlapsX = minX <= (w + inset) && maxX >= (0 - inset)
         let overlapsY = minY <= (h + inset) && maxY >= (0 - inset)
-        let inView = true//maxX
-        return overlapsX && overlapsY && inView
+        // TODO: clip those facing away from screen?
+        return overlapsX && overlapsY
     }
 
     private func makeGeometry(positions: [FP3], colours: [float3], indices: [[UInt32]]) -> SCNGeometry {
