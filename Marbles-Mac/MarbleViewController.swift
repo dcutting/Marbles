@@ -4,11 +4,11 @@ import SceneKit
 import SceneKit.ModelIO
 import ModelIO
 
-let seed = 315
-let octaves = 10
+let seed = 3159
+let octaves = 8
 let frequency: Double = Double(1.0 / diameter * 2.0)
-let persistence = 0.5
-let lacunarity = 2.0
+let persistence = 0.55
+let lacunarity = 2.2
 let amplitude: Double = Double(radius / 10.0)
 let levels = 0
 let iciness: FP = 0.4
@@ -133,7 +133,7 @@ class MarbleViewController: NSViewController {
         scnView.backgroundColor = .black
         scnView.showsStatistics = true
 //        scnView.defaultCameraController.interactionMode = .fly
-        scnView.cameraControlConfiguration.flyModeVelocity = 0.5
+        scnView.cameraControlConfiguration.flyModeVelocity = 50
         if wireframe {
             scnView.debugOptions = SCNDebugOptions([.renderAsWireframe])
         }
@@ -201,7 +201,7 @@ class MarbleViewController: NSViewController {
         let item = DispatchWorkItem {
             let face = self.faces[faceIndex]
             let vertices = [self.positions[Int(face[0])], self.positions[Int(face[1])], self.positions[Int(face[2])]]
-            let geom = self.makeGeometry(faceIndex: faceIndex, corners: vertices, maxEdgeLength: 500.0)
+            let geom = self.makeGeometry(faceIndex: faceIndex, corners: vertices, maxEdgeLength: 400.0)
             DispatchQueue.main.async {
 //                print("[\(faceIndex)] updated geometry: \(self.counter)")
                 self.counter += 1
@@ -379,16 +379,17 @@ class MarbleViewController: NSViewController {
             let dryness: FP = 1 - iciness
             let snowLine = FP(mountainHeight * 1.5) * (1 - distanceFromEquator * iciness) * dryness
             let rawHeightColour = FP(delta) / mountainHeight
-            let heightColour = Float(scaledUnitClamp(rawHeightColour, min: 0.15))
+            let heightColour = Float(scaledUnitClamp(rawHeightColour, min: 0.05))
+            let depthColour = Float(scaledUnitClamp(rawHeightColour, min: 0.1, max: 0.3))
             if FP(delta) > snowLine {
                 // Ice
                 colours.append(adjusted(colour: [1.0, 1.0, 1.0]))
-            } else if FP(delta) >= 0.0 && FP(delta) < mountainHeight / 10.0 {
+            } else if FP(delta) >= 0.0 && FP(delta) < mountainHeight * 0.05 && distanceFromEquator < 0.3 {
                 // Beach
-                colours.append(adjusted(colour: [1.0, 1.0, 0.0]))
+                colours.append(adjusted(colour: [0.7, 0.7, 0.0]))
             } else if FP(delta) < 0.0 {
                 // Error
-                colours.append(adjusted(colour: [1.0, 0.0, 0.0]))
+                colours.append(adjusted(colour: [0.0, 0.0, depthColour]))
             } else {
                 // Forest
                 colours.append(adjusted(colour: [0.0, heightColour, 0.0]))
