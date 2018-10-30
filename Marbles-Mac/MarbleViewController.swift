@@ -56,7 +56,7 @@ class MarbleViewController: NSViewController {
     ]
 
     lazy var positions: [FP3] = platonicPositions.map { p in
-        p// * FP(radius)
+        p
     }
 
     let faces: [[UInt32]] = [
@@ -169,20 +169,19 @@ class MarbleViewController: NSViewController {
         dispatchWorkItems.compact()
     }
 
-//    private func makeWater() {
-//        let noise = GradientNoise3D(amplitude: 0.08, frequency: 100.0, seed: 31390)
-//        let icosa = MDLMesh.newIcosahedron(withRadius: Float(radius), inwardNormals: false, allocator: nil)
-//        let shape = MDLMesh.newSubdividedMesh(icosa, submeshIndex: 0, subdivisionLevels: 3)!
-//        let water = makeCrinkly(mdlMesh: shape, noise: noise, levels: 0, smoothing: 1, offset: radius/100.0, assignColours: false)
-//        let waterMaterial = SCNMaterial()
-//        waterMaterial.diffuse.contents = NSColor.blue
-//        waterMaterial.specular.contents = NSColor.white
-//        waterMaterial.shininess = 0.5
-//        waterMaterial.locksAmbientWithDiffuse = true
-//        water.materials = [waterMaterial]
-//        let waterNode = SCNNode(geometry: water)
-//        scene.rootNode.addChildNode(waterNode)
-//    }
+    private func makeWater() {
+        let icosa = MDLMesh.newIcosahedron(withRadius: Float(radius * 1.34), inwardNormals: false, allocator: nil)
+        let shape = MDLMesh.newSubdividedMesh(icosa, submeshIndex: 0, subdivisionLevels: 6)!
+        let water = SCNGeometry(mdlMesh: shape)
+        let waterMaterial = SCNMaterial()
+        waterMaterial.diffuse.contents = NSColor.blue
+        waterMaterial.specular.contents = NSColor.white
+        waterMaterial.shininess = 0.5
+        waterMaterial.locksAmbientWithDiffuse = true
+        water.materials = [waterMaterial]
+        let waterNode = SCNNode(geometry: water)
+        scene.rootNode.addChildNode(waterNode)
+    }
 
     private func makeTerrain() {
         for faceIndex in 0..<faces.count {
@@ -380,7 +379,7 @@ class MarbleViewController: NSViewController {
             let snowLine = FP(mountainHeight * 1.5) * (1 - distanceFromEquator * iciness) * dryness
             let rawHeightColour = FP(delta) / mountainHeight
             let heightColour = Float(scaledUnitClamp(rawHeightColour, min: 0.05))
-            let depthColour = Float(scaledUnitClamp(rawHeightColour, min: 0.1, max: 0.3))
+            let depthColour = Float(scaledUnitClamp(rawHeightColour, min: 0.05, max: 0.2))
             if FP(delta) > snowLine {
                 // Ice
                 colours.append(adjusted(colour: [1.0, 1.0, 1.0]))
@@ -402,11 +401,11 @@ class MarbleViewController: NSViewController {
         let vertices = positions.map { SCNVector3($0[0], $0[1], $0[2])}
         let positionSource = SCNGeometrySource(vertices: vertices)
 
-        let colourData = NSData(bytes: colours, length: MemoryLayout<float3>.size * colours.count)
-        let colourSource = SCNGeometrySource(data: colourData as Data, semantic: .color, vectorCount: colours.count, usesFloatComponents: true, componentsPerVector: 3, bytesPerComponent: MemoryLayout<Float>.size, dataOffset: 0, dataStride: MemoryLayout<float3>.size)
-
         var sources = [positionSource]
+
         if !wireframe {
+            let colourData = NSData(bytes: colours, length: MemoryLayout<float3>.size * colours.count)
+            let colourSource = SCNGeometrySource(data: colourData as Data, semantic: .color, vectorCount: colours.count, usesFloatComponents: true, componentsPerVector: 3, bytesPerComponent: MemoryLayout<Float>.size, dataOffset: 0, dataStride: MemoryLayout<float3>.size)
             sources.append(colourSource)
         }
 
