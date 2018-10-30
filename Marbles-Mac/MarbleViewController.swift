@@ -4,8 +4,8 @@ import SceneKit
 import SceneKit.ModelIO
 import ModelIO
 
-let seed = 3159
-let octaves = 8
+let seed = 31129
+let octaves = 12
 let frequency: Double = Double(1.0 / diameter * 2.0)
 let persistence = 0.55
 let lacunarity = 2.2
@@ -107,7 +107,7 @@ class MarbleViewController: NSViewController {
         lightNode.light = light
         lightNode.look(at: SCNVector3())
         lightNode.position = SCNVector3(x: 0, y: 10*diameter, z: 10*diameter)
-//        lightNode.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: 20)))
+        lightNode.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: 100)))
         scene.rootNode.addChildNode(lightNode)
 
         let ambientLight = SCNLight()
