@@ -25,22 +25,67 @@ class MarbleViewController: NSViewController {
     let scene = SCNScene()
     let terrainNode = SCNNode()
     let terrainNoise: Noise
-    let allocator = MDLMeshBufferDataAllocator()
-    let terrainQueues = [DispatchQueue](repeating: DispatchQueue(label: "terrain", qos: .background, attributes: .concurrent), count: 20)
-    let patchQueue = DispatchQueue(label: "patch", qos: .background, attributes: .concurrent)
-
-    var counter = 0
-
+    let terrainQueues = [DispatchQueue](repeating: DispatchQueue(label: "terrain", qos: .userInteractive, attributes: .concurrent), count: 20)
+    let triQueue = DispatchQueue(label: "patch", qos: .default, attributes: .concurrent)
     var dispatchWorkItems = NSPointerArray.weakObjects()
+    var counter = 0
+    var w: CGFloat!
+    var h: CGFloat!
+    let atomicCount = AtomicInteger()
+
+    let subdividedTriangleEdges: [[UInt32]] = [[0, 3, 5], [3, 1, 4], [3, 4, 5], [5, 4, 2]]
+    var cachedPatches = [[String: (UInt32, [FP3], [float3], [[UInt32]])]](repeating: [:], count: 20)
+    //    var cachedPatchDepths = [[String: (UInt32, [FP3], [float3], [[UInt32]])]](repeating: [:], count: 20)
+
+    let phi: FP = 1.6180339887498948482
+
+    lazy var platonicPositions: [FP3] = [
+        [1, phi, 0],
+        [-1, phi, 0],
+        [1, -phi, 0],
+        [-1, -phi, 0],
+        [0, 1, phi],
+        [0, -1, phi],
+        [0, 1, -phi],
+        [0, -1, -phi],
+        [phi, 0, 1],
+        [-phi, 0, 1],
+        [phi, 0, -1],
+        [-phi, 0, -1]
+    ]
+
+    lazy var positions: [FP3] = platonicPositions.map { p in
+        p// * FP(radius)
+    }
+
+    let faces: [[UInt32]] = [
+        [4, 5, 8],
+        [4, 9, 5],
+        [4, 8, 0],
+        [4, 1, 9],
+        [0, 1, 4],
+        [1, 11, 9],
+        [9, 11, 3],
+        [1, 6, 11],
+        [0, 6, 1],
+        [5, 9, 3],
+        [10, 0, 8],
+        [10, 6, 0],
+        [11, 7, 3],
+        [5, 2, 8],
+        [10, 8, 2],
+        [10, 2, 7],
+        [6, 7, 11],
+        [6, 10, 7],
+        [5, 3, 2],
+        [2, 3, 7]
+    ]
 
     required init?(coder: NSCoder) {
         let sourceNoise = GradientNoise3D(amplitude: amplitude, frequency: frequency, seed: seed)
         terrainNoise = FBM(sourceNoise, octaves: octaves, persistence: persistence, lacunarity: lacunarity)
         super.init(coder: coder)
     }
-
-    var w: CGFloat!
-    var h: CGFloat!
 
     override func viewDidLayout() {
         super.viewDidLayout()
@@ -73,6 +118,8 @@ class MarbleViewController: NSViewController {
 
         let camera = SCNCamera()
         camera.automaticallyAdjustsZRange = true
+//        camera.zFar = FP(diameter * 5)
+//        camera.zNear = 1.0
         let cameraNode = SCNNode()
         cameraNode.position = SCNVector3(x: 0.0, y: 0.0, z: diameter * 1.2)
         cameraNode.camera = camera
@@ -136,50 +183,6 @@ class MarbleViewController: NSViewController {
 //        scene.rootNode.addChildNode(waterNode)
 //    }
 
-    let phi: FP = 1.6180339887498948482
-
-    lazy var platonicPositions: [FP3] = [
-        [1, phi, 0],
-        [-1, phi, 0],
-        [1, -phi, 0],
-        [-1, -phi, 0],
-        [0, 1, phi],
-        [0, -1, phi],
-        [0, 1, -phi],
-        [0, -1, -phi],
-        [phi, 0, 1],
-        [-phi, 0, 1],
-        [phi, 0, -1],
-        [-phi, 0, -1]
-    ]
-
-    lazy var positions: [FP3] = platonicPositions.map { p in
-        p// * FP(radius)
-    }
-
-    let faces: [[UInt32]] = [
-        [4, 5, 8],
-        [4, 9, 5],
-        [4, 8, 0],
-        [4, 1, 9],
-        [0, 1, 4],
-        [1, 11, 9],
-        [9, 11, 3],
-        [1, 6, 11],
-        [0, 6, 1],
-        [5, 9, 3],
-        [10, 0, 8],
-        [10, 6, 0],
-        [11, 7, 3],
-        [5, 2, 8],
-        [10, 8, 2],
-        [10, 2, 7],
-        [6, 7, 11],
-        [6, 10, 7],
-        [5, 3, 2],
-        [2, 3, 7]
-    ]
-
     private func makeTerrain() {
         for faceIndex in 0..<faces.count {
             let face = faces[faceIndex]
@@ -197,12 +200,14 @@ class MarbleViewController: NSViewController {
         let item = DispatchWorkItem {
             let face = self.faces[faceIndex]
             let vertices = [self.positions[Int(face[0])], self.positions[Int(face[1])], self.positions[Int(face[2])]]
-            let geom = self.makeGeometry(faceIndex: faceIndex, corners: vertices, maxEdgeLength: 400.0)
+            let geom = self.makeGeometry(faceIndex: faceIndex, corners: vertices, maxEdgeLength: 500.0)
             DispatchQueue.main.async {
 //                print("[\(faceIndex)] updated geometry: \(self.counter)")
                 self.counter += 1
                 node.geometry = geom
-                self.updateRoot(faceIndex: faceIndex, node: node)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                    self.updateRoot(faceIndex: faceIndex, node: node)
+                }
             }
         }
         let pointer = Unmanaged.passUnretained(item).toOpaque()
@@ -216,8 +221,6 @@ class MarbleViewController: NSViewController {
         return makeGeometry(positions: vertices, colours: colours, indices: Array(edges.joined()))
     }
 
-    let subdividedTriangleEdges: [[UInt32]] = [[0, 3, 5], [3, 1, 4], [3, 4, 5], [5, 4, 2]]
-
     private func makeGeometrySources(faceIndex: Int, name: String, corners: [FP3], maxEdgeLengthSq: FP, depth: UInt32) -> ([FP3], [float3], [[UInt32]]) {
         // make vertices and edges from initial corners such that no projected edge is longer
         // than maxEdgeLength
@@ -229,33 +232,45 @@ class MarbleViewController: NSViewController {
         var subdivide = false
         let scnView = view as! SCNView
 
-        for index in subdividedTriangleEdges {
-            let vx = subv[Int(index[0])]
-            let vy = subv[Int(index[1])]
-            let vz = subv[Int(index[2])]
-            let px = scnView.projectPoint(SCNVector3(vx))
-            let py = scnView.projectPoint(SCNVector3(vy))
-            let pz = scnView.projectPoint(SCNVector3(vz))
+        let sphericalisedCorners = sphericalise(vertices: corners, radius: FP(radius))
 
-            guard intersectsScreen(px, py, pz) else { continue }
+//        for index in subdividedTriangleEdges {
+//            let v0 = subv[Int(index[0])]
+//            let v1 = subv[Int(index[1])]
+//            let v2 = subv[Int(index[2])]
+            let v0 = sphericalisedCorners[0]
+            let v1 = sphericalisedCorners[1]
+            let v2 = sphericalisedCorners[2]
+            let p0 = scnView.projectPoint(SCNVector3(v0))
+            let p1 = scnView.projectPoint(SCNVector3(v1))
+            let p2 = scnView.projectPoint(SCNVector3(v2))
 
-            let lx = FP((px - py).lengthSq())
-            let ly = FP((px - pz).lengthSq())
-            let lz = FP((py - pz).lengthSq())
-//            print()
-//            print(vx, vy, vz)
-//            print(px, py, pz)
-//            print(lx, ly, lz)
-            if (lx > maxEdgeLengthSq || ly > maxEdgeLengthSq || lz > maxEdgeLengthSq) {
+//        print()
+//        print(maxEdgeLengthSq)
+//        print(v0, v1, v2)
+//        print(p0, p1, p2)
+
+        if intersectsScreen(p0, p1, p2) {
+
+            let l0 = FP((p0 - p1).lengthSq())
+            let l1 = FP((p0 - p2).lengthSq())
+            let l2 = FP((p1 - p2).lengthSq())
+//            print(l0, l1, l2)
+            let dumbLength: FP = 1000000000
+            if (l0 > maxEdgeLengthSq || l1 > maxEdgeLengthSq || l2 > maxEdgeLengthSq) &&
+                (l0 < dumbLength && l1 < dumbLength && l2 < dumbLength) {
                 subdivide = true
-                break
+//                break
             }
         }
+//    }
         let maxDepth = 50
         if depth >= maxDepth {
             print("hit max depth \(maxDepth)")
+            return (positions, colours, edges)
+            // TODO: hitting max depth seems to cause massive number of patch dispatch items
         }
-        if subdivide && depth < maxDepth {
+        if subdivide {
             var newpositions = [[FP3]](repeating: [], count: 4)
             var newcolours = [[float3]](repeating: [], count: 4)
             var newindices = [[[UInt32]]](repeating: [], count: 4)
@@ -280,44 +295,63 @@ class MarbleViewController: NSViewController {
                 edges.append(contentsOf: offsetEdges)
             }
         } else {
-            if let (cv, cc, ci) = cachedPatches[faceIndex][name] {
+            if let (depth, cv, cc, ci) = cachedPatches[faceIndex][name] {
 //                print("cache hit \(name)")
                 positions.append(contentsOf: cv)
                 colours.append(contentsOf: cc)
                 edges.append(contentsOf: ci)
             } else {
 //                print("miss \(name)")
-                let sphericalisedCorners = sphericalise(vertices: corners, radius: FP(radius))
                 let sphericalisedColours = findColours(for: sphericalisedCorners)
                 positions.append(contentsOf: sphericalisedCorners)
                 colours.append(contentsOf: sphericalisedColours)
                 edges.append([0, 1, 2])
-                let item = DispatchWorkItem {
-                    guard nil == self.cachedPatches[faceIndex][name] else { return }
-                    let (subv, subc, subii) = self.subdivideTriangle(vertices: corners, subdivisionLevels: 5)
-                    DispatchQueue.main.async {
-                        self.cachedPatches[faceIndex][name] = (subv, subc, subii)
-                    }
-                }
-                let pointer = Unmanaged.passUnretained(item).toOpaque()
-                dispatchWorkItems.addPointer(pointer)
-                patchQueue.async(execute: item)
+                let itemLow = makePatchItem(subdivisions: 2, corners: corners, faceIndex: faceIndex, name: name)
+                let itemHigh = makePatchItem(subdivisions: 7, corners: corners, faceIndex: faceIndex, name: name)
+                atomicCount.incrementAndGet()
+                triQueue.async(execute: itemLow)
+                atomicCount.incrementAndGet()
+                triQueue.async(execute: itemHigh)
+//                let pointerLow = Unmanaged.passUnretained(itemLow).toOpaque()
+//                dispatchWorkItems.addPointer(pointerLow)
+//                let pointerHigh = Unmanaged.passUnretained(itemHigh).toOpaque()
+//                dispatchWorkItems.addPointer(pointerHigh)
             }
         }
         return (positions, colours, edges)
     }
 
-    var cachedPatches = [[String: ([FP3], [float3], [[UInt32]])]](repeating: [:], count: 20)
+    private func makePatchItem(subdivisions: UInt32, corners: [FP3], faceIndex: Int, name: String) -> DispatchWorkItem {
+        let item = DispatchWorkItem {
+            if let item = self.cachedPatches[faceIndex][name] {
+                if item.0 >= subdivisions {
+                    let c = self.atomicCount.decrementAndGet()
+//                    print("\(c): bail")
+                    return
+                }
+            }
+            let (subv, subc, subii) = self.subdivideTriangle(vertices: corners, subdivisionLevels: subdivisions)
+            let c = self.atomicCount.decrementAndGet()
+//            print(c)
+            DispatchQueue.main.async {
+                self.cachedPatches[faceIndex][name] = (subdivisions, subv, subc, subii)
+            }
+        }
+        return item
+    }
 
     private func intersectsScreen(_ a: SCNVector3, _ b: SCNVector3, _ c: SCNVector3) -> Bool {
         let minX = min(a.x, b.x, c.x)
         let maxX = max(a.x, b.x, c.x)
         let minY = min(a.y, b.y, c.y)
         let maxY = max(a.y, b.y, c.y)
+        let minZ = min(a.z, b.z, c.z)
+        let maxZ = max(a.z, b.z, c.z)
         let inset: CGFloat = 0.0
         let overlapsX = minX <= (w + inset) && maxX >= (0 - inset)
         let overlapsY = minY <= (h + inset) && maxY >= (0 - inset)
-        return overlapsX && overlapsY
+        let inView = true//maxX
+        return overlapsX && overlapsY && inView
     }
 
     private func makeGeometry(positions: [FP3], colours: [float3], indices: [[UInt32]]) -> SCNGeometry {
@@ -479,3 +513,41 @@ class MarbleViewController: NSViewController {
  want visible differences asap, but prioritise everything at same subdivision level over distance from camera ("breadth-first")
 
  */
+
+public class AtomicInteger {
+
+    private let lock = DispatchSemaphore(value: 1)
+    private var value = 0
+
+    // You need to lock on the value when reading it too since
+    // there are no volatile variables in Swift as of today.
+    public func get() -> Int {
+
+        lock.wait()
+        defer { lock.signal() }
+        return value
+    }
+
+    public func set(_ newValue: Int) {
+
+        lock.wait()
+        defer { lock.signal() }
+        value = newValue
+    }
+
+    public func incrementAndGet() -> Int {
+
+        lock.wait()
+        defer { lock.signal() }
+        value += 1
+        return value
+    }
+
+    public func decrementAndGet() -> Int {
+
+        lock.wait()
+        defer { lock.signal() }
+        value -= 1
+        return value
+    }
+}
