@@ -4,43 +4,32 @@ import SceneKit
 import SceneKit.ModelIO
 import ModelIO
 
-let seed = 71929
-let octaves = 12
-let frequency: Double = Double(1.0 / diameter * 2.0)
-let persistence = 0.47
-let lacunarity = 1.9
-let amplitude: Double = Double(radius / 8.0)
-let levels = 0
-let iciness: FP = 0.5
-let brilliance: Float = 1.0
 let maxEdgeLength = 400.0
-let lowSubdivisions: UInt32 = 3
+let lowSubdivisions: UInt32 = 2
 let highSubdivisions: UInt32 = 6
 let maxDepth = 50
-
+let updateInterval = 0.1
 let wireframe = false
 let smoothing = 0
-let diameter: CGFloat = 10000.0
-let radius: CGFloat = diameter / 2.0
-let mountainHeight: FP = amplitude / 2.0
 
 class MarbleViewController: NSViewController {
 
     let scene = SCNScene()
     let terrainNode = SCNNode()
-    let terrainNoise: Noise
     let terrainQueues = [DispatchQueue](repeating: DispatchQueue(label: "terrain", qos: .userInteractive, attributes: .concurrent), count: 20)
     let lowQueue = DispatchQueue(label: "lowPatch", qos: .userInitiated, attributes: .concurrent)
     let highQueue = DispatchQueue(label: "highPatch", qos: .default, attributes: .concurrent)
-    var dispatchWorkItems = NSPointerArray.weakObjects()
-    var counter = 0
     var w: CGFloat!
     var h: CGFloat!
     let lowCount = AtomicInteger()
     let highCount = AtomicInteger()
-
-    let subdividedTriangleEdges: [[UInt32]] = [[0, 3, 5], [3, 1, 4], [3, 4, 5], [5, 4, 2]]
-    var cachedPatches = [[String: (UInt32, [FP3], [float3], [[UInt32]])]](repeating: [:], count: 20)
+    var patchCache = PatchCache()
+    lazy var patchCalculator: PatchCalculator = {
+        let noise = makeNoise(radius: radius)
+        var config = PatchCalculator.Config(noise: noise)
+        config.radius = radius
+        return PatchCalculator(config: config)
+    }()
 
     let phi: FP = 1.6180339887498948482
 
@@ -86,22 +75,22 @@ class MarbleViewController: NSViewController {
         [2, 3, 7]
     ]
 
-    required init?(coder: NSCoder) {
-        let sourceNoise = GradientNoise3D(amplitude: amplitude, frequency: frequency, seed: seed)
-        terrainNoise = FBM(sourceNoise, octaves: octaves, persistence: persistence, lacunarity: lacunarity)
-        super.init(coder: coder)
-    }
+    let radius: FP = 10000
 
-    override func viewDidLayout() {
-        super.viewDidLayout()
-        let scnView = self.view as! SCNView
-        w = scnView.bounds.width
-        h = scnView.bounds.height
-        print(w,h)
+    private func makeNoise(radius: FP) -> Noise {
+        var config = FractalNoiseConfig()
+        config.amplitude = Double(radius / 8.0)
+        config.frequency = Double(1.0 / radius * 4.0)
+        config.seed = 71929
+        config.octaves = 20
+        config.persistence = 0.47
+        config.lacunarity = 1.9
+        return makeFractalNoise(config: config)
     }
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        updateBounds()
 
         scene.background.contents = NSImage(named: "tycho")!
 
@@ -110,8 +99,7 @@ class MarbleViewController: NSViewController {
         let lightNode = SCNNode()
         lightNode.light = light
         lightNode.look(at: SCNVector3())
-        lightNode.position = SCNVector3(x: 0, y: 10*diameter, z: 10*diameter)
-        lightNode.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: 100)))
+//        lightNode.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: 100)))
         scene.rootNode.addChildNode(lightNode)
 
         let ambientLight = SCNLight()
@@ -123,10 +111,8 @@ class MarbleViewController: NSViewController {
 
         let camera = SCNCamera()
         camera.automaticallyAdjustsZRange = true
-//        camera.zFar = FP(diameter * 5)
-//        camera.zNear = 1.0
         let cameraNode = SCNNode()
-        cameraNode.position = SCNVector3(x: 0.0, y: 0.0, z: diameter * 1.2)
+        cameraNode.position = SCNVector3(x: 0.0, y: 0.0, z: CGFloat(radius * 2.5))
         cameraNode.camera = camera
         cameraNode.look(at: SCNVector3())
         scene.rootNode.addChildNode(cameraNode)
@@ -141,9 +127,6 @@ class MarbleViewController: NSViewController {
         if wireframe {
             scnView.debugOptions = SCNDebugOptions([.renderAsWireframe])
         }
-        w = scnView.bounds.width
-        h = scnView.bounds.height
-        print(w,h)
 
         // Marker
         let box = SCNBox(width: 100.0, height: 100.0, length: 100.0, chamferRadius: 0.0)
@@ -161,195 +144,136 @@ class MarbleViewController: NSViewController {
         scnView.gestureRecognizers = gestureRecognizers
     }
 
-    @objc func handleClick(_ gestureRecognizer: NSGestureRecognizer) {
-        dispatchWorkItems.allObjects.forEach { object in
-            let pointer = object as! UnsafeRawPointer
-            let item = Unmanaged<DispatchWorkItem>.fromOpaque(pointer).takeUnretainedValue()
-            item.cancel()
-        }
-        for _ in 0..<dispatchWorkItems.count {
-            dispatchWorkItems.removePointer(at: 0)
-        }
-        dispatchWorkItems.compact()
+    override func viewDidLayout() {
+        super.viewDidLayout()
+        updateBounds()
     }
 
-    private func makeWater() {
-        let icosa = MDLMesh.newIcosahedron(withRadius: Float(radius * 1.34), inwardNormals: false, allocator: nil)
-        let shape = MDLMesh.newSubdividedMesh(icosa, submeshIndex: 0, subdivisionLevels: 6)!
-        let water = SCNGeometry(mdlMesh: shape)
-        let waterMaterial = SCNMaterial()
-        waterMaterial.diffuse.contents = NSColor.blue
-        waterMaterial.specular.contents = NSColor.white
-        waterMaterial.shininess = 0.5
-        waterMaterial.locksAmbientWithDiffuse = true
-        water.materials = [waterMaterial]
-        let waterNode = SCNNode(geometry: water)
-        scene.rootNode.addChildNode(waterNode)
+    private func updateBounds() {
+        w = view.bounds.width
+        h = view.bounds.height
+        print(w,h)
     }
+
+    @objc func handleClick(_ gestureRecognizer: NSGestureRecognizer) {
+    }
+
+//    private func makeWater() {
+//        let icosa = MDLMesh.newIcosahedron(withRadius: Float(radius * 1.34), inwardNormals: false, allocator: nil)
+//        let shape = MDLMesh.newSubdividedMesh(icosa, submeshIndex: 0, subdivisionLevels: 6)!
+//        let water = SCNGeometry(mdlMesh: shape)
+//        let waterMaterial = SCNMaterial()
+//        waterMaterial.diffuse.contents = NSColor.blue
+//        waterMaterial.specular.contents = NSColor.white
+//        waterMaterial.shininess = 0.5
+//        waterMaterial.locksAmbientWithDiffuse = true
+//        water.materials = [waterMaterial]
+//        let waterNode = SCNNode(geometry: water)
+//        scene.rootNode.addChildNode(waterNode)
+//    }
 
     private func makeTerrain() {
-        for faceIndex in 0..<faces.count {
+        for faceIndex in 0..<1{//faces.count {
             let face = faces[faceIndex]
             let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
-            let colours = findColours(for: vertices)
-            let geometry = makeGeometry(positions: vertices, colours: colours, indices: [0, 1, 2])
-            let node = SCNNode(geometry: geometry)
-            self.terrainNode.addChildNode(node)
-            updateRoot(faceIndex: faceIndex, node: node)
+            patchCalculator.calculate("", vertices: vertices, subdivisions: 0) { patch in
+                let geometry = makeGeometry(patch: patch, asWireframe: wireframe)
+                let node = SCNNode(geometry: geometry)
+                self.terrainNode.addChildNode(node)
+                self.terrainQueues[faceIndex].async {
+                    self.refreshGeometry(faceIndex: faceIndex, node: node)
+                }
+            }
         }
         self.scene.rootNode.addChildNode(terrainNode)
     }
 
-    private func updateRoot(faceIndex: Int, node: SCNNode) {
-        let item = DispatchWorkItem {
-            let face = self.faces[faceIndex]
-            let vertices = [self.positions[Int(face[0])], self.positions[Int(face[1])], self.positions[Int(face[2])]]
-            let geom = self.makeGeometry(faceIndex: faceIndex, corners: vertices, maxEdgeLength: maxEdgeLength)
-            DispatchQueue.main.async {
-//                print("[\(faceIndex)] updated geometry: \(self.counter)")
-                self.counter += 1
-                node.geometry = geom
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                    self.updateRoot(faceIndex: faceIndex, node: node)
-                }
+    private func refreshGeometry(faceIndex: Int, node: SCNNode) {
+        let face = self.faces[faceIndex]
+        let vertices = [self.positions[Int(face[0])], self.positions[Int(face[1])], self.positions[Int(face[2])]]
+        let geom = self.makeAdaptiveGeometry(faceIndex: faceIndex, corners: vertices, maxEdgeLength: maxEdgeLength)
+        DispatchQueue.main.async {
+            node.geometry = geom
+            self.terrainQueues[faceIndex].asyncAfter(deadline: .now() + updateInterval) {
+                self.refreshGeometry(faceIndex: faceIndex, node: node)
             }
         }
-        let pointer = Unmanaged.passUnretained(item).toOpaque()
-        dispatchWorkItems.addPointer(pointer)
-        self.terrainQueues[faceIndex].async(execute: item)
     }
 
-    private func makeGeometry(faceIndex: Int, corners: [FP3], maxEdgeLength: FP) -> SCNGeometry {
-        let (vertices, colours, edges) = makeGeometrySources(faceIndex: faceIndex, name: "", corners: corners, maxEdgeLengthSq: maxEdgeLength * maxEdgeLength, depth: 0)
-//        print(vertices)
-        return makeGeometry(positions: vertices, colours: colours, indices: Array(edges.joined()))
+    private func makeAdaptiveGeometry(faceIndex: Int, corners: [FP3], maxEdgeLength: FP) -> SCNGeometry {
+        let patch = makeAdaptivePatch(name: "", corners: corners, maxEdgeLengthSq: maxEdgeLength * maxEdgeLength, patchCache: patchCache, depth: 0)
+        return makeGeometry(patch: patch, asWireframe: wireframe)
     }
 
-    private func makeGeometrySources(faceIndex: Int, name: String, corners: [FP3], maxEdgeLengthSq: FP, depth: UInt32) -> ([FP3], [float3], [[UInt32]]) {
-        // make vertices and edges from initial corners such that no projected edge is longer
-        // than maxEdgeLength
-        var positions = [FP3]()
-        var colours = [float3]()
-        var edges = [[UInt32]]()
-        let subv = sphericallySubdivide(vertices: corners, radius: FP(radius))
-        var offset: UInt32 = 0
-        var subdivide = false
+    private func makeAdaptivePatch(name: String, corners: [FP3], maxEdgeLengthSq: FP, patchCache: PatchCache, depth: UInt32) -> Patch {
+
+        if depth >= maxDepth {
+            print("hit max depth \(maxDepth)")
+            return Patch(vertices: [], colours: [], indices: [])
+        }
+
+        let sphericalisedCorners = patchCalculator.sphericalise(vertices: corners)
+
+        let v0 = sphericalisedCorners[0]
+        let v1 = sphericalisedCorners[1]
+        let v2 = sphericalisedCorners[2]
+
         let scnView = view as! SCNView
+        let p0 = scnView.projectPoint(SCNVector3(v0))
+        let p1 = scnView.projectPoint(SCNVector3(v1))
+        let p2 = scnView.projectPoint(SCNVector3(v2))
 
-        let sphericalisedCorners = sphericalise(vertices: corners, radius: FP(radius))
-
-//        for index in subdividedTriangleEdges {
-//            let v0 = subv[Int(index[0])]
-//            let v1 = subv[Int(index[1])]
-//            let v2 = subv[Int(index[2])]
-            let v0 = sphericalisedCorners[0]
-            let v1 = sphericalisedCorners[1]
-            let v2 = sphericalisedCorners[2]
-            let p0 = scnView.projectPoint(SCNVector3(v0))
-            let p1 = scnView.projectPoint(SCNVector3(v1))
-            let p2 = scnView.projectPoint(SCNVector3(v2))
-
-//        print()
-//        print(maxEdgeLengthSq)
-//        print(v0, v1, v2)
-//        print(p0, p1, p2)
-
+        var subdivide = false
         if intersectsScreen(p0, p1, p2) {
             let l0 = FP((p0 - p1).lengthSq())
             let l1 = FP((p0 - p2).lengthSq())
             let l2 = FP((p1 - p2).lengthSq())
-//            print(l0, l1, l2)
-            let dumbLength: FP = 1000000000
+            let dumbLength: FP = 10000000000
             if (l0 > maxEdgeLengthSq || l1 > maxEdgeLengthSq || l2 > maxEdgeLengthSq) &&
                 (l0 < dumbLength && l1 < dumbLength && l2 < dumbLength) {
                 subdivide = true
-//                break
             }
         }
-//    }
-        if depth >= maxDepth {
-            print("hit max depth \(maxDepth)")
-            return (positions, colours, edges)
-            // TODO: hitting max depth seems to cause massive number of patch dispatch items
-        }
+
         if subdivide {
-            var newpositions = [[FP3]](repeating: [], count: 4)
-            var newcolours = [[float3]](repeating: [], count: 4)
-            var newindices = [[[UInt32]]](repeating: [], count: 4)
-            for i in 0..<subdividedTriangleEdges.count {
-                let index = subdividedTriangleEdges[i]
+            let (subv, sube) = patchCalculator.sphericallySubdivide(vertices: corners)
+            var subVertices = [[Patch.Vertex]](repeating: [], count: 4)
+            var subColours = [[Patch.Colour]](repeating: [], count: 4)
+            var subIndices = [[Patch.Index]](repeating: [], count: 4)
+            for i in 0..<sube.count {
+                let index = sube[i]
                 let vx = subv[Int(index[0])]
                 let vy = subv[Int(index[1])]
                 let vz = subv[Int(index[2])]
-                let subname = name + "\(i)"
-                let (iv, ic, ii) = makeGeometrySources(faceIndex: faceIndex, name: subname, corners: [vx, vy, vz], maxEdgeLengthSq: maxEdgeLengthSq, depth: depth+1)
-                newpositions[i] = iv
-                newcolours[i] = ic
-                newindices[i] = ii
+                let subName = name + "\(i)"
+                let subPatch = makeAdaptivePatch(name: subName, corners: [vx, vy, vz], maxEdgeLengthSq: maxEdgeLengthSq, patchCache: patchCache, depth: depth + 1)
+                subVertices[i] = subPatch.vertices
+                subColours[i] = subPatch.colours
+                subIndices[i] = subPatch.indices
             }
+            var vertices = [Patch.Vertex]()
+            var colours = [Patch.Colour]()
+            var indices = [Patch.Index]()
+            var offset: UInt32 = 0
             for i in 0..<4 {
-                positions.append(contentsOf: newpositions[i])
-                let offsetEdges = newindices[i].map { edges in
-                    edges.map { edge in edge + offset }
-                }
-                offset += UInt32(newpositions[i].count)
-                colours.append(contentsOf: newcolours[i])
-                edges.append(contentsOf: offsetEdges)
+                vertices.append(contentsOf: subVertices[i])
+                colours.append(contentsOf: subColours[i])
+                let offsetEdges = subIndices[i].map { index in index + offset }
+                offset += UInt32(subVertices[i].count)
+                indices.append(contentsOf: offsetEdges)
             }
-        } else {
-            if let (depth, cv, cc, ci) = cachedPatches[faceIndex][name] {
-//                print("cache hit \(name)")
-                positions.append(contentsOf: cv)
-                colours.append(contentsOf: cc)
-                edges.append(contentsOf: ci)
-            } else {
-//                print("miss \(name)")
-                let sphericalisedColours = findColours(for: sphericalisedCorners)
-                positions.append(contentsOf: sphericalisedCorners)
-                colours.append(contentsOf: sphericalisedColours)
-                edges.append([0, 1, 2])
-                let itemLow = makePatchItem(subdivisions: lowSubdivisions, low: true, corners: corners, faceIndex: faceIndex, name: name)
-                let itemHigh = makePatchItem(subdivisions: highSubdivisions, low: false, corners: corners, faceIndex: faceIndex, name: name)
-                lowCount.incrementAndGet()
-                lowQueue.async(execute: itemLow)
-                highCount.incrementAndGet()
-                highQueue.async(execute: itemHigh)
-//                let pointerLow = Unmanaged.passUnretained(itemLow).toOpaque()
-//                dispatchWorkItems.addPointer(pointerLow)
-//                let pointerHigh = Unmanaged.passUnretained(itemHigh).toOpaque()
-//                dispatchWorkItems.addPointer(pointerHigh)
-            }
+            return Patch(vertices: vertices, colours: colours, indices: indices)
         }
-        return (positions, colours, edges)
-    }
 
-    private func makePatchItem(subdivisions: UInt32, low: Bool, corners: [FP3], faceIndex: Int, name: String) -> DispatchWorkItem {
-        let item = DispatchWorkItem {
-            if let item = self.cachedPatches[faceIndex][name] {//TODO: race cpndition
-                if item.0 >= subdivisions {
-                    let c: Int
-                    if low {
-                        c = self.lowCount.decrementAndGet()
-                    } else {
-                        c = self.highCount.decrementAndGet()
-                    }
-                    print("\(self.lowCount.get()), \(self.highCount.get()): bail")
-                    return
-                }
-            }
-            let (subv, subc, subii) = self.subdivideTriangle(vertices: corners, subdivisionLevels: subdivisions)
-            let c: Int
-            if low {
-                c = self.lowCount.decrementAndGet()
-            } else {
-                c = self.highCount.decrementAndGet()
-            }
-            print("\(self.lowCount.get()), \(self.highCount.get()): bail")
-            DispatchQueue.main.async {
-                self.cachedPatches[faceIndex][name] = (subdivisions, subv, subc, subii)
-            }
+        if let patch = patchCache.read(name) {
+            return patch
         }
-        return item
+
+        patchCalculator.calculate(name, vertices: corners, subdivisions: lowSubdivisions) { patch in
+            patchCache.write(name, patch: patch)
+        }
+
+        return Patch(vertices: [], colours: [], indices: [])
     }
 
     private func intersectsScreen(_ a: SCNVector3, _ b: SCNVector3, _ c: SCNVector3) -> Bool {
@@ -362,203 +286,5 @@ class MarbleViewController: NSViewController {
         let overlapsY = minY <= (h + inset) && maxY >= (0 - inset)
         // TODO: clip those facing away from screen?
         return overlapsX && overlapsY
-    }
-
-    private func makeGeometry(positions: [FP3], colours: [float3], indices: [[UInt32]]) -> SCNGeometry {
-        return makeGeometry(positions: positions, colours: colours, indices: Array(indices.joined()))
-    }
-
-    private func adjusted(colour: float3) -> float3 {
-        return colour * brilliance
-    }
-
-    private func findColours(for positions: [FP3]) -> [float3] {
-        var colours = [float3]()
-        for p in positions {
-            let pn = normalize(p) * FP(radius)
-            let delta = length(p) - length(pn)
-            let distanceFromEquator: FP = abs(p.y)/FP(radius)
-            let dryness: FP = 1 - iciness
-            let snowLine = FP(mountainHeight * 1.5) * (1 - distanceFromEquator * iciness) * dryness
-            let rawHeightColour = FP(delta) / mountainHeight
-            let heightColour = Float(scaledUnitClamp(rawHeightColour, min: 0.05))
-            let depthColour = Float(scaledUnitClamp(rawHeightColour, min: 0.05, max: 0.2))
-            if FP(delta) > snowLine {
-                // Ice
-                colours.append(adjusted(colour: [1.0, 1.0, 1.0]))
-            } else if FP(delta) >= 0.0 && FP(delta) < mountainHeight * 0.05 && distanceFromEquator < 0.3 {
-                // Beach
-                colours.append(adjusted(colour: [0.7, 0.7, 0.0]))
-            } else if FP(delta) < 0.0 {
-                // Error
-                colours.append(adjusted(colour: [0.0, 0.0, depthColour]))
-            } else {
-                // Forest
-                colours.append(adjusted(colour: [0.0, heightColour, 0.0]))
-            }
-        }
-        return colours
-    }
-
-    private func makeGeometry(positions: [FP3], colours: [float3], indices: [UInt32]) -> SCNGeometry {
-        let vertices = positions.map { SCNVector3($0[0], $0[1], $0[2])}
-        let positionSource = SCNGeometrySource(vertices: vertices)
-
-        var sources = [positionSource]
-
-        if !wireframe {
-            let colourData = NSData(bytes: colours, length: MemoryLayout<float3>.size * colours.count)
-            let colourSource = SCNGeometrySource(data: colourData as Data, semantic: .color, vectorCount: colours.count, usesFloatComponents: true, componentsPerVector: 3, bytesPerComponent: MemoryLayout<Float>.size, dataOffset: 0, dataStride: MemoryLayout<float3>.size)
-            sources.append(colourSource)
-        }
-
-        let edgeElement = SCNGeometryElement(indices: indices, primitiveType: .triangles)
-        let start = DispatchTime.now()
-        let geometry = SCNGeometry(sources: sources, elements: [edgeElement])
-        let stop = DispatchTime.now()
-        let elapsed = stop.uptimeNanoseconds - start.uptimeNanoseconds
-//        print("   \(elapsed)")
-        return geometry
-    }
-
-    private func sphericalise(vertices: [FP3], radius: FP) -> [FP3] {
-        let a = vertices[0]
-        let b = vertices[1]
-        let c = vertices[2]
-        let `as` = spherical(a, radius: radius, noise: terrainNoise)
-        let bs = spherical(b, radius: radius, noise: terrainNoise)
-        let cs = spherical(c, radius: radius, noise: terrainNoise)
-        return [`as`, bs, cs]
-    }
-
-    private func sphericallySubdivide(vertices: [FP3], radius: FP) -> [FP3] {
-
-        let a = vertices[0]
-        let b = vertices[1]
-        let c = vertices[2]
-
-        let ab = midway(a, b)
-        let bc = midway(b, c)
-        let ca = midway(c, a)
-
-        let `as` = spherical(a, radius: radius, noise: terrainNoise)
-        let bs = spherical(b, radius: radius, noise: terrainNoise)
-        let cs = spherical(c, radius: radius, noise: terrainNoise)
-        let abs = spherical(ab, radius: radius, noise: terrainNoise)
-        let bcs = spherical(bc, radius: radius, noise: terrainNoise)
-        let cas = spherical(ca, radius: radius, noise: terrainNoise)
-
-        return [`as`, bs, cs, abs, bcs, cas]
-    }
-
-    private func spherical(_ a: FP3, radius: FP, noise: Noise) -> FP3 {
-        let an = normalize(a)
-        let ans = an * radius
-        var delta = noise.evaluate(Double(ans.x), Double(ans.y), Double(ans.z))
-        if levels > 0 {
-            let ratio = Double(amplitude) / Double(levels)
-            delta = ratio * round(delta / ratio)
-        }
-        return an * (radius + delta)
-    }
-
-    private func subdivideTriangle(vertices: [FP3], subdivisionLevels: UInt32) -> ([FP3], [float3], [[UInt32]]) {
-
-        let a = spherical(vertices[0], radius: FP(radius), noise: terrainNoise)
-        let b = spherical(vertices[1], radius: FP(radius), noise: terrainNoise)
-        let c = spherical(vertices[2], radius: FP(radius), noise: terrainNoise)
-
-        let segments = pow(2, subdivisionLevels)
-
-        let dab = b - a
-        let lab = length(dab)
-        let slab = lab / FP(segments)
-        let vab = normalize(dab) * slab
-
-        let dbc = c - b
-        let lbc = length(dbc)
-        let slbc = lbc / FP(segments)
-        let vbc = normalize(dbc) * slbc
-
-        var next: UInt32 = 0
-        var faces = [[UInt32]]()
-        var points = [FP3]()
-        points.append(a)
-        for j in 1...segments {
-            let p = a + (vab * FP(j))
-            let ps = spherical(p, radius: FP(radius), noise: terrainNoise)
-            points.append(ps)
-            for i in 1...j {
-                let q = p + (vbc * FP(i))
-                let qs = spherical(q, radius: FP(radius), noise: terrainNoise)
-                points.append(qs)
-                if i < j {
-                    faces.append([next, next+j, next+j+1])
-                    faces.append([next, next+j+1, next+1])
-                    next += 1
-                }
-            }
-            faces.append([next, next+j, next+j+1])
-            next += 1
-        }
-
-        let colours = findColours(for: points)
-
-        return (points, colours, faces)
-    }
-}
-
-/*
-
- main loop: when camera/scene stops moving, or once per second, etc.):
-
- cancel everything in priority queue
- bestdepth = calculate number of divisions needed to make nearest triangle less than max edge length
- subdivide all visible triangles to bestdepth
- leaf triangles should show best subdivision patch available (possibly 0, or otherwise cached)
- for those leaves not at max subdivision add them to priority queue in order of distance from camera
-
- priority queue:
-
- ordered by distance from camera and subdivision level?
- want visible differences asap, but prioritise everything at same subdivision level over distance from camera ("breadth-first")
-
- */
-
-public class AtomicInteger {
-
-    private let lock = DispatchSemaphore(value: 1)
-    private var value = 0
-
-    // You need to lock on the value when reading it too since
-    // there are no volatile variables in Swift as of today.
-    public func get() -> Int {
-
-        lock.wait()
-        defer { lock.signal() }
-        return value
-    }
-
-    public func set(_ newValue: Int) {
-
-        lock.wait()
-        defer { lock.signal() }
-        value = newValue
-    }
-
-    public func incrementAndGet() -> Int {
-
-        lock.wait()
-        defer { lock.signal() }
-        value += 1
-        return value
-    }
-
-    public func decrementAndGet() -> Int {
-
-        lock.wait()
-        defer { lock.signal() }
-        value -= 1
-        return value
     }
 }

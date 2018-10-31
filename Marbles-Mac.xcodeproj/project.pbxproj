@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C8027ECE218A1A3C00A99020 /* FractalNoise.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8027ECD218A1A3C00A99020 /* FractalNoise.swift */; };
+		C8027ED0218A581100A99020 /* AtomicInteger.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8027ECF218A581100A99020 /* AtomicInteger.swift */; };
+		C8027ED2218A631200A99020 /* Geometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8027ED1218A631200A99020 /* Geometry.swift */; };
 		C80E460B216177440029A3A0 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80E460A216177440029A3A0 /* AppDelegate.swift */; };
 		C80E460D216177440029A3A0 /* MarbleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80E460C216177440029A3A0 /* MarbleViewController.swift */; };
 		C80E4611216177440029A3A0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C80E4610216177440029A3A0 /* Assets.xcassets */; };
@@ -23,12 +26,18 @@
 		C868AB4321775D38005429D1 /* geometry.shader.geometry in Resources */ = {isa = PBXBuildFile; fileRef = C868AB4221775D38005429D1 /* geometry.shader.geometry */; };
 		C8757C71216BB88C00CDEC74 /* Vector.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB59A216AB39D00B670B2 /* Vector.swift */; };
 		C8757C73216E13CF00CDEC74 /* DiamondSquare.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8757C72216E13CF00CDEC74 /* DiamondSquare.swift */; };
+		C8837A56218A16F100ABE455 /* Patch.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8837A55218A16F100ABE455 /* Patch.swift */; };
+		C8837A5B218A172700ABE455 /* PatchCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8837A5A218A172700ABE455 /* PatchCalculator.swift */; };
+		C8837A5D218A173F00ABE455 /* PatchCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8837A5C218A173F00ABE455 /* PatchCache.swift */; };
 		C88A461121774C8600E50318 /* geometry.shader.fragment in Resources */ = {isa = PBXBuildFile; fileRef = C88A461021774C8600E50318 /* geometry.shader.fragment */; };
 		C8C1B4C221779B9400CDDEDB /* geometry.shader.surface in Resources */ = {isa = PBXBuildFile; fileRef = C8C1B4C121779B9400CDDEDB /* geometry.shader.surface */; };
 		C8C1B4C42177E49600CDDEDB /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8C1B4C32177E49600CDDEDB /* Shaders.metal */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		C8027ECD218A1A3C00A99020 /* FractalNoise.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FractalNoise.swift; sourceTree = "<group>"; };
+		C8027ECF218A581100A99020 /* AtomicInteger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AtomicInteger.swift; sourceTree = "<group>"; };
+		C8027ED1218A631200A99020 /* Geometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Geometry.swift; sourceTree = "<group>"; };
 		C80E4607216177440029A3A0 /* Marbles-Mac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Marbles-Mac.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C80E460A216177440029A3A0 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		C80E460C216177440029A3A0 /* MarbleViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarbleViewController.swift; sourceTree = "<group>"; };
@@ -54,6 +63,9 @@
 		C868AB4821776ACB005429D1 /* sample.geometry */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = sample.geometry; sourceTree = "<group>"; };
 		C868AB4B217776F4005429D1 /* Shader.geometry */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = Shader.geometry; sourceTree = "<group>"; };
 		C8757C72216E13CF00CDEC74 /* DiamondSquare.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiamondSquare.swift; sourceTree = "<group>"; };
+		C8837A55218A16F100ABE455 /* Patch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Patch.swift; sourceTree = "<group>"; };
+		C8837A5A218A172700ABE455 /* PatchCalculator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PatchCalculator.swift; sourceTree = "<group>"; };
+		C8837A5C218A173F00ABE455 /* PatchCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchCache.swift; sourceTree = "<group>"; };
 		C88A461021774C8600E50318 /* geometry.shader.fragment */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = geometry.shader.fragment; sourceTree = "<group>"; };
 		C8C1B4C121779B9400CDDEDB /* geometry.shader.surface */ = {isa = PBXFileReference; lastKnownFileType = text; path = geometry.shader.surface; sourceTree = "<group>"; };
 		C8C1B4C32177E49600CDDEDB /* Shaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shaders.metal; sourceTree = "<group>"; };
@@ -111,6 +123,12 @@
 				C868AB4821776ACB005429D1 /* sample.geometry */,
 				C868AB4B217776F4005429D1 /* Shader.geometry */,
 				C8C1B4C32177E49600CDDEDB /* Shaders.metal */,
+				C8837A55218A16F100ABE455 /* Patch.swift */,
+				C8837A5A218A172700ABE455 /* PatchCalculator.swift */,
+				C8837A5C218A173F00ABE455 /* PatchCache.swift */,
+				C8027ECD218A1A3C00A99020 /* FractalNoise.swift */,
+				C8027ECF218A581100A99020 /* AtomicInteger.swift */,
+				C8027ED1218A631200A99020 /* Geometry.swift */,
 			);
 			path = "Marbles-Mac";
 			sourceTree = "<group>";
@@ -229,17 +247,23 @@
 			files = (
 				C85EB58E2168F62D00B670B2 /* compounds.swift in Sources */,
 				C8757C71216BB88C00CDEC74 /* Vector.swift in Sources */,
+				C8837A56218A16F100ABE455 /* Patch.swift in Sources */,
 				C8C1B4C42177E49600CDDEDB /* Shaders.metal in Sources */,
 				C85EB5822168EC7E00B670B2 /* PerlinMesh.swift in Sources */,
+				C8837A5B218A172700ABE455 /* PatchCalculator.swift in Sources */,
 				C85EB58F2168F62D00B670B2 /* disk.swift in Sources */,
 				C85EB5922168F62D00B670B2 /* noise.swift in Sources */,
 				C85EB5932168F62D00B670B2 /* gradient.swift in Sources */,
 				C8757C73216E13CF00CDEC74 /* DiamondSquare.swift in Sources */,
 				C85EB5902168F62D00B670B2 /* hash.swift in Sources */,
+				C8027ED2218A631200A99020 /* Geometry.swift in Sources */,
 				C84D35E8217484200072DA10 /* Quadtree.swift in Sources */,
 				C85EB5912168F62D00B670B2 /* cell.swift in Sources */,
+				C8027ED0218A581100A99020 /* AtomicInteger.swift in Sources */,
 				C80E460D216177440029A3A0 /* MarbleViewController.swift in Sources */,
+				C8027ECE218A1A3C00A99020 /* FractalNoise.swift in Sources */,
 				C80E460B216177440029A3A0 /* AppDelegate.swift in Sources */,
+				C8837A5D218A173F00ABE455 /* PatchCache.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
