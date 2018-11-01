@@ -79,6 +79,7 @@
 		C8027ED3218A7F3F00A99020 /* Old */ = {
 			isa = PBXGroup;
 			children = (
+				C8027ECF218A581100A99020 /* AtomicInteger.swift */,
 				C86730862179F48100CD8BB0 /* CSG+SceneKit.swift */,
 				C85EB5812168EC7E00B670B2 /* PerlinMesh.swift */,
 				C8757C72216E13CF00CDEC74 /* DiamondSquare.swift */,
@@ -134,7 +135,6 @@
 				C8027ECD218A1A3C00A99020 /* FractalNoise.swift */,
 				C8027ED1218A631200A99020 /* Geometry.swift */,
 				C85EB59A216AB39D00B670B2 /* Vector.swift */,
-				C8027ECF218A581100A99020 /* AtomicInteger.swift */,
 				C85EB5832168F62D00B670B2 /* noise */,
 				C8027ED8218A7F7700A99020 /* Resources */,
 				C8027ED3218A7F3F00A99020 /* Old */,
