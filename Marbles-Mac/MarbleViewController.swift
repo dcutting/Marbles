@@ -15,15 +15,11 @@ let smoothing = 0
 
 class MarbleViewController: NSViewController {
 
+    var screenWidth: CGFloat = 0.0
+    var screenHeight: CGFloat = 0.0
     let scene = SCNScene()
     let terrainNode = SCNNode()
     let terrainQueues = [DispatchQueue](repeating: DispatchQueue(label: "terrain", qos: .userInteractive, attributes: .concurrent), count: 20)
-    let lowQueue = DispatchQueue(label: "lowPatch", qos: .userInitiated, attributes: .concurrent)
-    let highQueue = DispatchQueue(label: "highPatch", qos: .default, attributes: .concurrent)
-    var w: CGFloat!
-    var h: CGFloat!
-    let lowCount = AtomicInteger()
-    let highCount = AtomicInteger()
     var patchCache = PatchCache()
     lazy var fractalNoiseConfig: FractalNoiseConfig = {
         return FractalNoiseConfig(amplitude: Double(radius / 8.0),
@@ -149,9 +145,9 @@ class MarbleViewController: NSViewController {
     }
 
     private func updateBounds() {
-        w = view.bounds.width
-        h = view.bounds.height
-        print(w,h)
+        screenWidth = view.bounds.width
+        screenHeight = view.bounds.height
+        print(screenWidth, screenHeight)
     }
 
     @objc func handleClick(_ gestureRecognizer: NSGestureRecognizer) {
@@ -223,7 +219,7 @@ class MarbleViewController: NSViewController {
         let p2 = scnView.projectPoint(SCNVector3(v2))
 
         var subdivide = false
-        if isIntersecting(p0, p1, p2, width: w, height: h) {
+        if isIntersecting(p0, p1, p2, width: screenWidth, height: screenHeight) {
             let l0 = FP((p0 - p1).lengthSq())
             let l1 = FP((p0 - p2).lengthSq())
             let l2 = FP((p1 - p2).lengthSq())
