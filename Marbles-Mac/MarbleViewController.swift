@@ -7,7 +7,7 @@ import ModelIO
 let maxEdgeLength = 400.0
 let minimumSubdivision: UInt32 = 2
 let lowSubdivisions: UInt32 = 3
-let highSubdivisions: UInt32 = 5
+let highSubdivisions: UInt32 = 6
 let maxDepth = 50
 let updateInterval = 0.1
 let wireframe = false
@@ -30,7 +30,14 @@ class MarbleViewController: NSViewController {
                                   persistence: 0.5,
                                   lacunarity: 2.0)
     }()
-    lazy var patchCalculator: PatchCalculator = {
+    lazy var lowPatchCalculator: PatchCalculator = {
+        let noise = makeFractalNoise(config: fractalNoiseConfig)
+        var config = PatchCalculator.Config(noise: noise)
+        config.radius = radius
+        config.amplitude = fractalNoiseConfig.amplitude
+        return PatchCalculator(config: config)
+    }()
+    lazy var highPatchCalculator: PatchCalculator = {
         let noise = makeFractalNoise(config: fractalNoiseConfig)
         var config = PatchCalculator.Config(noise: noise)
         config.radius = radius
@@ -172,7 +179,7 @@ class MarbleViewController: NSViewController {
         for faceIndex in 0..<faces.count {
             let face = faces[faceIndex]
             let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
-            patchCalculator.calculate("\(faceIndex)-", vertices: vertices, subdivisions: 0) { patch in
+            lowPatchCalculator.calculate("\(faceIndex)-", vertices: vertices, subdivisions: 0) { patch in
                 let geometry = makeGeometry(patch: patch, asWireframe: wireframe)
                 let node = SCNNode(geometry: geometry)
                 self.terrainNode.addChildNode(node)
@@ -208,7 +215,7 @@ class MarbleViewController: NSViewController {
             return Patch(vertices: [], colours: [], indices: [])
         }
 
-        let sphericalisedCorners = patchCalculator.sphericalise(vertices: corners)
+        let sphericalisedCorners = lowPatchCalculator.sphericalise(vertices: corners)
 
         let v0 = sphericalisedCorners[0]
         let v1 = sphericalisedCorners[1]
@@ -232,7 +239,7 @@ class MarbleViewController: NSViewController {
         }
 
         if subdivide {
-            let (subv, sube) = patchCalculator.sphericallySubdivide(vertices: corners)
+            let (subv, sube) = lowPatchCalculator.sphericallySubdivide(vertices: corners)
             var subVertices = [[Patch.Vertex]](repeating: [], count: 4)
             var subColours = [[Patch.Colour]](repeating: [], count: 4)
             var subIndices = [[Patch.Index]](repeating: [], count: 4)
@@ -269,17 +276,17 @@ class MarbleViewController: NSViewController {
             return patch
         }
 
-        if !patchCalculator.isCalculating(name, subdivisions: lowSubdivisions) {
-            patchCalculator.calculate(name, vertices: corners, subdivisions: lowSubdivisions) { patch in
+        if !lowPatchCalculator.isCalculating(name, subdivisions: lowSubdivisions) {
+            lowPatchCalculator.calculate(name, vertices: corners, subdivisions: lowSubdivisions) { patch in
                 self.lowPatchCache.write(name, patch: patch)
-                if !self.patchCalculator.isCalculating(name, subdivisions: highSubdivisions) {
-                    self.patchCalculator.calculate(name, vertices: corners, subdivisions: highSubdivisions) { patch in
+                if !self.highPatchCalculator.isCalculating(name, subdivisions: highSubdivisions) {
+                    self.highPatchCalculator.calculate(name, vertices: corners, subdivisions: highSubdivisions) { patch in
                         self.highPatchCache.write(name, patch: patch)
                     }
                 }
             }
         }
 
-        return patchCalculator.subdivideTriangle(vertices: corners, subdivisionLevels: minimumSubdivision)
+        return lowPatchCalculator.subdivideTriangle(vertices: corners, subdivisionLevels: minimumSubdivision)
     }
 }
