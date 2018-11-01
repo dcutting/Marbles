@@ -24,10 +24,19 @@ class MarbleViewController: NSViewController {
     let lowCount = AtomicInteger()
     let highCount = AtomicInteger()
     var patchCache = PatchCache()
+    lazy var fractalNoiseConfig: FractalNoiseConfig = {
+        return FractalNoiseConfig(amplitude: Double(radius / 8.0),
+                                  frequency: Double(1.0 / radius),
+                                  seed: 729,
+                                  octaves: 10,
+                                  persistence: 0.5,
+                                  lacunarity: 2.0)
+    }()
     lazy var patchCalculator: PatchCalculator = {
-        let noise = makeNoise(radius: radius)
+        let noise = makeFractalNoise(config: fractalNoiseConfig)
         var config = PatchCalculator.Config(noise: noise)
         config.radius = radius
+        config.amplitude = fractalNoiseConfig.amplitude
         return PatchCalculator(config: config)
     }()
 
@@ -76,17 +85,6 @@ class MarbleViewController: NSViewController {
     ]
 
     let radius: FP = 10000
-
-    private func makeNoise(radius: FP) -> Noise {
-        var config = FractalNoiseConfig()
-        config.amplitude = Double(radius / 8.0)
-        config.frequency = Double(1.0 / radius * 4.0)
-        config.seed = 71929
-        config.octaves = 20
-        config.persistence = 0.47
-        config.lacunarity = 1.9
-        return makeFractalNoise(config: config)
-    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -173,10 +171,10 @@ class MarbleViewController: NSViewController {
 //    }
 
     private func makeTerrain() {
-        for faceIndex in 0..<1{//faces.count {
+        for faceIndex in 0..<faces.count {
             let face = faces[faceIndex]
             let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
-            patchCalculator.calculate("", vertices: vertices, subdivisions: 0) { patch in
+            patchCalculator.calculate("\(faceIndex)-", vertices: vertices, subdivisions: 0) { patch in
                 let geometry = makeGeometry(patch: patch, asWireframe: wireframe)
                 let node = SCNNode(geometry: geometry)
                 self.terrainNode.addChildNode(node)
@@ -201,7 +199,7 @@ class MarbleViewController: NSViewController {
     }
 
     private func makeAdaptiveGeometry(faceIndex: Int, corners: [FP3], maxEdgeLength: FP) -> SCNGeometry {
-        let patch = makeAdaptivePatch(name: "", corners: corners, maxEdgeLengthSq: maxEdgeLength * maxEdgeLength, patchCache: patchCache, depth: 0)
+        let patch = makeAdaptivePatch(name: "\(faceIndex)-", corners: corners, maxEdgeLengthSq: maxEdgeLength * maxEdgeLength, patchCache: patchCache, depth: 0)
         return makeGeometry(patch: patch, asWireframe: wireframe)
     }
 

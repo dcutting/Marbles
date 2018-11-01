@@ -1,15 +1,14 @@
 struct FractalNoiseConfig {
-
-    var amplitude: Double = 10.0
-    var frequency: Double = 1.0
-    var seed: Int = 0
-
-    var octaves: Int = 5
-    var persistence: Double = 0.5
-    var lacunarity: Double = 2.0
+    let amplitude: Double
+    let frequency: Double
+    let seed: Int
+    let octaves: Int
+    let persistence: Double
+    let lacunarity: Double
 }
 
 func makeFractalNoise(config: FractalNoiseConfig) -> Noise {
+    print(config.frequency)
     let sourceNoise = GradientNoise3D(amplitude: config.amplitude,
                                       frequency: config.frequency,
                                       seed: config.seed)
