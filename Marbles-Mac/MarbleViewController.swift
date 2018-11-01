@@ -4,7 +4,7 @@ import SceneKit
 import SceneKit.ModelIO
 import ModelIO
 
-let maxEdgeLength = 300.0
+let maxEdgeLength = 200.0
 let minimumSubdivision: UInt32 = 0
 let lowSubdivisions: UInt32 = 4
 let highSubdivisions: UInt32 = lowSubdivisions + 1
@@ -285,22 +285,67 @@ class MarbleViewController: NSViewController {
             }
         }
 
-        if let patch = highPatchCache.read(name) {
-            return patch
-        } else if !highPatchCalculator.isCalculating(name, subdivisions: highSubdivisions) {
-            highPatchCalculator.calculate(name, vertices: corners, subdivisions: highSubdivisions) { patch in
-                self.highPatchCache.write(name, patch: patch)
+        if true {
+            if let bestPatch = stitchSubPatches(name: name) {
+                let okPatch = lowPatchCache.read(name)
+                if okPatch == nil && !lowPatchCalculator.isCalculating(name, subdivisions: lowSubdivisions) {
+                    lowPatchCalculator.calculate(name, vertices: corners, subdivisions: lowSubdivisions) { patch in
+                        self.lowPatchCache.write(name, patch: patch)
+                    }
+                }
+                return bestPatch
             }
         }
 
-        if let patch = lowPatchCache.read(name) {
-            return patch
-        } else if !lowPatchCalculator.isCalculating(name, subdivisions: lowSubdivisions) {
-            lowPatchCalculator.calculate(name, vertices: corners, subdivisions: lowSubdivisions) { patch in
-                self.lowPatchCache.write(name, patch: patch)
+        if let okPatch = lowPatchCache.read(name) {
+            return okPatch
+        } else {
+            if !lowPatchCalculator.isCalculating(name, subdivisions: lowSubdivisions) {
+                lowPatchCalculator.calculate(name, vertices: corners, subdivisions: lowSubdivisions) { patch in
+                    self.lowPatchCache.write(name, patch: patch)
+                }
             }
         }
 
         return nil
+    }
+
+    private func stitchSubPatches(name: String) -> Patch? {
+        for depth: UInt32 in (1..<2).reversed() {
+            let subPatches = findSubPatches(name: name, depth: depth)
+//            print("found \(subPatches.count) stitched patches at depth \(depth)")
+            if pow(4, depth) == subPatches.count {
+                print("found \(subPatches.count) stitched patches at depth \(depth)")
+//                print(" ***")
+                var vertices = [Patch.Vertex]()
+                var colours = [Patch.Colour]()
+                var indices = [Patch.Index]()
+                var offset: UInt32 = 0
+                for subPatch in subPatches {
+                    vertices.append(contentsOf: subPatch.vertices)
+                    colours.append(contentsOf: subPatch.colours)
+                    let offsetEdges = subPatch.indices.map { index in index + offset }
+                    offset += UInt32(subPatch.vertices.count)
+                    indices.append(contentsOf: offsetEdges)
+                }
+                return Patch(vertices: vertices, colours: colours, indices: indices)
+            }
+        }
+        return nil
+    }
+
+    private func findSubPatches(name: String, depth: UInt32) -> [Patch] {
+        if depth == 0 {
+            if let patch = lowPatchCache.read(name) {
+                return [patch]
+            } else {
+                return []
+            }
+        }
+        var subPatches = [Patch]()
+        for subName in [name+"0", name+"1", name+"2", name+"3"] {
+            subPatches.append(contentsOf: findSubPatches(name: subName, depth: depth - 1))
+        }
+        return subPatches
     }
 }
