@@ -7,7 +7,7 @@ import ModelIO
 let maxEdgeLength = 300.0
 let minimumSubdivision: UInt32 = 0
 let lowSubdivisions: UInt32 = 4
-let highSubdivisions: UInt32 = 6
+let highSubdivisions: UInt32 = lowSubdivisions + 1
 let maxDepth = 50
 let updateInterval = 0.1
 let wireframe = false
@@ -26,7 +26,7 @@ class MarbleViewController: NSViewController {
         return FractalNoiseConfig(amplitude: Double(radius / 8.0),
                                   frequency: Double(1.0 / radius),
                                   seed: 729,
-                                  octaves: 10,
+                                  octaves: 15,
                                   persistence: 0.5,
                                   lacunarity: 2.0)
     }()
