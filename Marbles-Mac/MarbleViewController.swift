@@ -7,7 +7,7 @@ import ModelIO
 let maxEdgeLength = 300.0
 let minimumSubdivision: UInt32 = 0
 let lowSubdivisions: UInt32 = 4
-let highSubdivisions: UInt32 = 5
+let highSubdivisions: UInt32 = 6
 let maxDepth = 50
 let updateInterval = 0.1
 let wireframe = false
@@ -287,20 +287,17 @@ class MarbleViewController: NSViewController {
 
         if let patch = highPatchCache.read(name) {
             return patch
+        } else if !highPatchCalculator.isCalculating(name, subdivisions: highSubdivisions) {
+            highPatchCalculator.calculate(name, vertices: corners, subdivisions: highSubdivisions) { patch in
+                self.highPatchCache.write(name, patch: patch)
+            }
         }
 
         if let patch = lowPatchCache.read(name) {
             return patch
-        }
-
-        if !lowPatchCalculator.isCalculating(name, subdivisions: lowSubdivisions) {
+        } else if !lowPatchCalculator.isCalculating(name, subdivisions: lowSubdivisions) {
             lowPatchCalculator.calculate(name, vertices: corners, subdivisions: lowSubdivisions) { patch in
                 self.lowPatchCache.write(name, patch: patch)
-                if !self.highPatchCalculator.isCalculating(name, subdivisions: highSubdivisions) && self.highPatchCache.read(name) == nil {
-                    self.highPatchCalculator.calculate(name, vertices: corners, subdivisions: highSubdivisions) { patch in
-                        self.highPatchCache.write(name, patch: patch)
-                    }
-                }
             }
         }
 
