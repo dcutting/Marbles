@@ -4,10 +4,10 @@ import SceneKit
 import SceneKit.ModelIO
 import ModelIO
 
-let maxEdgeLength = 400.0
-let minimumSubdivision: UInt32 = 2
-let lowSubdivisions: UInt32 = 3
-let highSubdivisions: UInt32 = 6
+let maxEdgeLength = 300.0
+let minimumSubdivision: UInt32 = 0
+let lowSubdivisions: UInt32 = 4
+let highSubdivisions: UInt32 = 5
 let maxDepth = 50
 let updateInterval = 0.1
 let wireframe = false
@@ -204,15 +204,21 @@ class MarbleViewController: NSViewController {
     }
 
     private func makeAdaptiveGeometry(faceIndex: Int, corners: [FP3], maxEdgeLength: FP) -> SCNGeometry {
-        let patch = makeAdaptivePatch(name: "\(faceIndex)-", corners: corners, maxEdgeLengthSq: maxEdgeLength * maxEdgeLength, patchCache: lowPatchCache, depth: 0)
+        let patch = makeAdaptivePatch(name: "\(faceIndex)-",
+            corners: corners,
+            maxEdgeLengthSq: maxEdgeLength * maxEdgeLength,
+            patchCache: lowPatchCache,
+            depth: 0)
+            ?? lowPatchCalculator.subdivideTriangle(vertices: corners,
+                                                    subdivisionLevels: minimumSubdivision)
         return makeGeometry(patch: patch, asWireframe: wireframe)
     }
 
-    private func makeAdaptivePatch(name: String, corners: [FP3], maxEdgeLengthSq: FP, patchCache: PatchCache<Patch>, depth: UInt32) -> Patch {
+    private func makeAdaptivePatch(name: String, corners: [FP3], maxEdgeLengthSq: FP, patchCache: PatchCache<Patch>, depth: UInt32) -> Patch? {
 
         if depth >= maxDepth {
             print("hit max depth \(maxDepth)")
-            return Patch(vertices: [], colours: [], indices: [])
+            return nil
         }
 
         let sphericalisedCorners = lowPatchCalculator.sphericalise(vertices: corners)
@@ -243,29 +249,40 @@ class MarbleViewController: NSViewController {
             var subVertices = [[Patch.Vertex]](repeating: [], count: 4)
             var subColours = [[Patch.Colour]](repeating: [], count: 4)
             var subIndices = [[Patch.Index]](repeating: [], count: 4)
+            var foundAllSubPatches = true
             for i in 0..<sube.count {
                 let index = sube[i]
                 let vx = subv[Int(index[0])]
                 let vy = subv[Int(index[1])]
                 let vz = subv[Int(index[2])]
                 let subName = name + "\(i)"
-                let subPatch = makeAdaptivePatch(name: subName, corners: [vx, vy, vz], maxEdgeLengthSq: maxEdgeLengthSq, patchCache: patchCache, depth: depth + 1)
+                guard let subPatch = makeAdaptivePatch(name: subName,
+                                                 corners: [vx, vy, vz],
+                                                 maxEdgeLengthSq: maxEdgeLengthSq,
+                                                 patchCache: patchCache,
+                                                 depth: depth + 1)
+                    else {
+                        foundAllSubPatches = false
+                        break
+                }
                 subVertices[i] = subPatch.vertices
                 subColours[i] = subPatch.colours
                 subIndices[i] = subPatch.indices
             }
-            var vertices = [Patch.Vertex]()
-            var colours = [Patch.Colour]()
-            var indices = [Patch.Index]()
-            var offset: UInt32 = 0
-            for i in 0..<4 {
-                vertices.append(contentsOf: subVertices[i])
-                colours.append(contentsOf: subColours[i])
-                let offsetEdges = subIndices[i].map { index in index + offset }
-                offset += UInt32(subVertices[i].count)
-                indices.append(contentsOf: offsetEdges)
+            if foundAllSubPatches {
+                var vertices = [Patch.Vertex]()
+                var colours = [Patch.Colour]()
+                var indices = [Patch.Index]()
+                var offset: UInt32 = 0
+                for i in 0..<4 {
+                    vertices.append(contentsOf: subVertices[i])
+                    colours.append(contentsOf: subColours[i])
+                    let offsetEdges = subIndices[i].map { index in index + offset }
+                    offset += UInt32(subVertices[i].count)
+                    indices.append(contentsOf: offsetEdges)
+                }
+                return Patch(vertices: vertices, colours: colours, indices: indices)
             }
-            return Patch(vertices: vertices, colours: colours, indices: indices)
         }
 
         if let patch = highPatchCache.read(name) {
@@ -287,6 +304,6 @@ class MarbleViewController: NSViewController {
             }
         }
 
-        return lowPatchCalculator.subdivideTriangle(vertices: corners, subdivisionLevels: minimumSubdivision)
+        return nil
     }
 }
