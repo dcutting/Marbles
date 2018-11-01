@@ -3,14 +3,12 @@ import SceneKit
 
 class PatchCalculator {
 
+    enum Priority {
+        case low
+        case high
+    }
+
     struct Config {
-
-        enum Priority {
-            case low
-            case high
-        }
-
-        let priority: Priority
 
         let name: String
 
@@ -26,31 +24,33 @@ class PatchCalculator {
         var iciness: FP = 0.4
         var noise: Noise
 
-        init(name: String, priority: Priority, noise: Noise) {
+        init(name: String, noise: Noise) {
             self.name = name
-            self.priority = priority
             self.noise = noise
         }
     }
 
     private let config: Config
-    private let calculator: DispatchQueue
+    private let calculatorLow: DispatchQueue
+    private let calculatorHigh: DispatchQueue
     private let wip = PatchCache<Bool>()
 
     init(config: Config) {
         self.config = config
-        let qos: DispatchQoS
-        if case .low = config.priority {
-            qos = .default
-        } else {
-            qos = .userInitiated
-        }
-        self.calculator = DispatchQueue(label: "calculator", qos: qos, attributes: .concurrent)
+        self.calculatorLow = DispatchQueue(label: "calculator", qos: .default, attributes: .concurrent)
+        self.calculatorHigh = DispatchQueue(label: "calculator", qos: .userInitiated, attributes: .concurrent)
     }
 
-    func calculate(_ name: String, vertices: [Patch.Vertex], subdivisions: UInt32, completion: @escaping (Patch) -> Void) {
+    func calculate(_ name: String, vertices: [Patch.Vertex], subdivisions: UInt32, qos: Priority, completion: @escaping (Patch) -> Void) {
         wip.write("\(name)-\(subdivisions)", patch: true)
-        calculator.async {
+        let queue: DispatchQueue
+        switch qos {
+        case .low:
+            queue = calculatorLow
+        case .high:
+            queue = calculatorHigh
+        }
+        queue.async {
             let patch = self.subdivideTriangle(vertices: vertices, subdivisionLevels: subdivisions)
             completion(patch)
             let count = self.wip.remove("\(name)-\(subdivisions)")
@@ -167,9 +167,9 @@ class PatchCalculator {
             if FP(delta) > snowLine {
                 // Ice
                 colours.append([1.0, 1.0, 1.0])
-            } else if FP(delta) >= 0.0 && FP(delta) < config.mountainHeight * 0.05 && distanceFromEquator < 0.3 {
-                // Beach
-                colours.append([0.7, 0.7, 0.0])
+//            } else if FP(delta) >= 0.0 && FP(delta) < config.mountainHeight * 0.05 && distanceFromEquator < 0.3 {
+//                // Beach
+//                colours.append([0.7, 0.7, 0.0])
             } else if FP(delta) < 0.0 {
                 // Error
                 colours.append([0.0, 0.0, depthColour])

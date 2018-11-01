@@ -5,10 +5,11 @@ import SceneKit.ModelIO
 import ModelIO
 
 let maxEdgeLength = 200.0
-let minimumSubdivision: UInt32 = 0
+let minimumSubdivision: UInt32 = 3
 let lowSubdivisions: UInt32 = 4
 let highSubdivisions: UInt32 = lowSubdivisions + 1
 let maxDepth = 50
+let patchCreationInterval = 2.0
 let updateInterval = 0.1
 let wireframe = false
 let smoothing = 0
@@ -32,18 +33,18 @@ class MarbleViewController: NSViewController {
     }()
     lazy var lowPatchCalculator: PatchCalculator = {
         let noise = makeFractalNoise(config: fractalNoiseConfig)
-        var config = PatchCalculator.Config(name: "low", priority: .high, noise: noise)
+        var config = PatchCalculator.Config(name: "low", noise: noise)
         config.radius = radius
         config.amplitude = fractalNoiseConfig.amplitude
         return PatchCalculator(config: config)
     }()
-    lazy var highPatchCalculator: PatchCalculator = {
-        let noise = makeFractalNoise(config: fractalNoiseConfig)
-        var config = PatchCalculator.Config(name: "high", priority: .low, noise: noise)
-        config.radius = radius
-        config.amplitude = fractalNoiseConfig.amplitude
-        return PatchCalculator(config: config)
-    }()
+//    lazy var highPatchCalculator: PatchCalculator = {
+//        let noise = makeFractalNoise(config: fractalNoiseConfig)
+//        var config = PatchCalculator.Config(name: "high", priority: .low, noise: noise)
+//        config.radius = radius
+//        config.amplitude = fractalNoiseConfig.amplitude
+//        return PatchCalculator(config: config)
+//    }()
 
     let phi: FP = 1.6180339887498948482
 
@@ -179,7 +180,7 @@ class MarbleViewController: NSViewController {
         for faceIndex in 0..<faces.count {
             let face = faces[faceIndex]
             let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
-            lowPatchCalculator.calculate("\(faceIndex)-", vertices: vertices, subdivisions: 0) { patch in
+            lowPatchCalculator.calculate("\(faceIndex)-", vertices: vertices, subdivisions: 0, qos: .high) { patch in
                 let geometry = makeGeometry(patch: patch, asWireframe: wireframe)
                 let node = SCNNode(geometry: geometry)
                 self.terrainNode.addChildNode(node)
@@ -285,38 +286,53 @@ class MarbleViewController: NSViewController {
             }
         }
 
-        if true {
-            if let bestPatch = stitchSubPatches(name: name) {
-                let okPatch = lowPatchCache.read(name)
-                if okPatch == nil && !lowPatchCalculator.isCalculating(name, subdivisions: lowSubdivisions) {
-                    lowPatchCalculator.calculate(name, vertices: corners, subdivisions: lowSubdivisions) { patch in
+        // if can stitch sub patches
+        //   return stitched
+        // else
+        //   async calc sub patches (if not already)
+        //   if cached patch
+        //     return cached
+        //   else
+        //     cache and return sync calc patch
+
+        if let stitchedPatch = stitchSubPatches(name: name) {
+            return stitchedPatch
+        } else {
+            if lastPatchCreation + patchCreationInterval < DispatchTime.now() {
+                let (subv, sube) = lowPatchCalculator.sphericallySubdivide(vertices: corners)
+                for i in 0..<sube.count {
+                    let index = sube[i]
+                    let vx = subv[Int(index[0])]
+                    let vy = subv[Int(index[1])]
+                    let vz = subv[Int(index[2])]
+                    let subName = name + "\(i)"
+                    if !lowPatchCalculator.isCalculating(subName, subdivisions: lowSubdivisions) {
+                        lowPatchCalculator.calculate(subName, vertices: [vx, vy, vz], subdivisions: lowSubdivisions, qos: .low) { patch in
+                            self.lowPatchCache.write(subName, patch: patch)
+                        }
+                    }
+                }
+                lastPatchCreation = .now()
+            }
+            if let cachedPatch = lowPatchCache.read(name) {
+                return cachedPatch
+            } else {
+                if !lowPatchCalculator.isCalculating(name, subdivisions: lowSubdivisions) {
+                    lowPatchCalculator.calculate(name, vertices: corners, subdivisions: lowSubdivisions, qos: .high) { patch in
                         self.lowPatchCache.write(name, patch: patch)
                     }
                 }
-                return bestPatch
+                return nil
             }
         }
-
-        if let okPatch = lowPatchCache.read(name) {
-            return okPatch
-        } else {
-            if !lowPatchCalculator.isCalculating(name, subdivisions: lowSubdivisions) {
-                lowPatchCalculator.calculate(name, vertices: corners, subdivisions: lowSubdivisions) { patch in
-                    self.lowPatchCache.write(name, patch: patch)
-                }
-            }
-        }
-
-        return nil
     }
+
+    var lastPatchCreation = DispatchTime.now()
 
     private func stitchSubPatches(name: String) -> Patch? {
         for depth: UInt32 in (1..<2).reversed() {
             let subPatches = findSubPatches(name: name, depth: depth)
-//            print("found \(subPatches.count) stitched patches at depth \(depth)")
             if pow(4, depth) == subPatches.count {
-                print("found \(subPatches.count) stitched patches at depth \(depth)")
-//                print(" ***")
                 var vertices = [Patch.Vertex]()
                 var colours = [Patch.Colour]()
                 var indices = [Patch.Index]()
