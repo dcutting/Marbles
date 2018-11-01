@@ -17,9 +17,10 @@ class PatchCache<T> {
         }
     }
 
-    func remove(_ name: String) {
-        lock.async(flags: .barrier) {
-            self.cache.removeValue(forKey: name)
+    func remove(_ name: String) -> Int {
+        return lock.sync(flags: .barrier) {
+            cache.removeValue(forKey: name)
+            return cache.count
         }
     }
 

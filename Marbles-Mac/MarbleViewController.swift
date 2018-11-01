@@ -32,14 +32,14 @@ class MarbleViewController: NSViewController {
     }()
     lazy var lowPatchCalculator: PatchCalculator = {
         let noise = makeFractalNoise(config: fractalNoiseConfig)
-        var config = PatchCalculator.Config(noise: noise)
+        var config = PatchCalculator.Config(name: "low", priority: .high, noise: noise)
         config.radius = radius
         config.amplitude = fractalNoiseConfig.amplitude
         return PatchCalculator(config: config)
     }()
     lazy var highPatchCalculator: PatchCalculator = {
         let noise = makeFractalNoise(config: fractalNoiseConfig)
-        var config = PatchCalculator.Config(noise: noise)
+        var config = PatchCalculator.Config(name: "high", priority: .low, noise: noise)
         config.radius = radius
         config.amplitude = fractalNoiseConfig.amplitude
         return PatchCalculator(config: config)
@@ -296,7 +296,7 @@ class MarbleViewController: NSViewController {
         if !lowPatchCalculator.isCalculating(name, subdivisions: lowSubdivisions) {
             lowPatchCalculator.calculate(name, vertices: corners, subdivisions: lowSubdivisions) { patch in
                 self.lowPatchCache.write(name, patch: patch)
-                if !self.highPatchCalculator.isCalculating(name, subdivisions: highSubdivisions) {
+                if !self.highPatchCalculator.isCalculating(name, subdivisions: highSubdivisions) && self.highPatchCache.read(name) == nil {
                     self.highPatchCalculator.calculate(name, vertices: corners, subdivisions: highSubdivisions) { patch in
                         self.highPatchCache.write(name, patch: patch)
                     }

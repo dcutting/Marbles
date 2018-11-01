@@ -4,6 +4,16 @@ import SceneKit
 class PatchCalculator {
 
     struct Config {
+
+        enum Priority {
+            case low
+            case high
+        }
+
+        let priority: Priority
+
+        let name: String
+
         var radius: FP = 10000
         var diameter: FP {
             return radius * 2
@@ -16,17 +26,26 @@ class PatchCalculator {
         var iciness: FP = 0.4
         var noise: Noise
 
-        init(noise: Noise) {
+        init(name: String, priority: Priority, noise: Noise) {
+            self.name = name
+            self.priority = priority
             self.noise = noise
         }
     }
 
     private let config: Config
-    private let calculator = DispatchQueue(label: "calculator", qos: .userInitiated, attributes: .concurrent)
+    private let calculator: DispatchQueue
     private let wip = PatchCache<Bool>()
 
     init(config: Config) {
         self.config = config
+        let qos: DispatchQoS
+        if case .low = config.priority {
+            qos = .default
+        } else {
+            qos = .userInitiated
+        }
+        self.calculator = DispatchQueue(label: "calculator", qos: qos, attributes: .concurrent)
     }
 
     func calculate(_ name: String, vertices: [Patch.Vertex], subdivisions: UInt32, completion: @escaping (Patch) -> Void) {
@@ -34,7 +53,8 @@ class PatchCalculator {
         calculator.async {
             let patch = self.subdivideTriangle(vertices: vertices, subdivisionLevels: subdivisions)
             completion(patch)
-            self.wip.remove("\(name)-\(subdivisions)")
+            let count = self.wip.remove("\(name)-\(subdivisions)")
+            print("\(self.config.name): \(count) in progress")
         }
     }
 
