@@ -23,16 +23,23 @@ class PatchCalculator {
 
     private let config: Config
     private let calculator = DispatchQueue(label: "calculator", qos: .userInitiated, attributes: .concurrent)
+    private let wip = PatchCache<Bool>()
 
     init(config: Config) {
         self.config = config
     }
 
     func calculate(_ name: String, vertices: [Patch.Vertex], subdivisions: UInt32, completion: @escaping (Patch) -> Void) {
+        wip.write("\(name)-\(subdivisions)", patch: true)
         calculator.async {
             let patch = self.subdivideTriangle(vertices: vertices, subdivisionLevels: subdivisions)
             completion(patch)
+            self.wip.remove("\(name)-\(subdivisions)")
         }
+    }
+
+    func isCalculating(_ name: String, subdivisions: UInt32) -> Bool {
+        return wip.read("\(name)-\(subdivisions)") ?? false
     }
 
     func subdivideTriangle(vertices: [Patch.Vertex], subdivisionLevels: UInt32) -> Patch {

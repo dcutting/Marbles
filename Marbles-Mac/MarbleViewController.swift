@@ -7,7 +7,7 @@ import ModelIO
 let maxEdgeLength = 400.0
 let minimumSubdivision: UInt32 = 2
 let lowSubdivisions: UInt32 = 3
-let highSubdivisions: UInt32 = 6
+let highSubdivisions: UInt32 = 5
 let maxDepth = 50
 let updateInterval = 0.1
 let wireframe = false
@@ -20,7 +20,8 @@ class MarbleViewController: NSViewController {
     let scene = SCNScene()
     let terrainNode = SCNNode()
     let terrainQueues = [DispatchQueue](repeating: DispatchQueue(label: "terrain", qos: .userInteractive, attributes: .concurrent), count: 20)
-    var patchCache = PatchCache()
+    var lowPatchCache = PatchCache<Patch>()
+    var highPatchCache = PatchCache<Patch>()
     lazy var fractalNoiseConfig: FractalNoiseConfig = {
         return FractalNoiseConfig(amplitude: Double(radius / 8.0),
                                   frequency: Double(1.0 / radius),
@@ -196,11 +197,11 @@ class MarbleViewController: NSViewController {
     }
 
     private func makeAdaptiveGeometry(faceIndex: Int, corners: [FP3], maxEdgeLength: FP) -> SCNGeometry {
-        let patch = makeAdaptivePatch(name: "\(faceIndex)-", corners: corners, maxEdgeLengthSq: maxEdgeLength * maxEdgeLength, patchCache: patchCache, depth: 0)
+        let patch = makeAdaptivePatch(name: "\(faceIndex)-", corners: corners, maxEdgeLengthSq: maxEdgeLength * maxEdgeLength, patchCache: lowPatchCache, depth: 0)
         return makeGeometry(patch: patch, asWireframe: wireframe)
     }
 
-    private func makeAdaptivePatch(name: String, corners: [FP3], maxEdgeLengthSq: FP, patchCache: PatchCache, depth: UInt32) -> Patch {
+    private func makeAdaptivePatch(name: String, corners: [FP3], maxEdgeLengthSq: FP, patchCache: PatchCache<Patch>, depth: UInt32) -> Patch {
 
         if depth >= maxDepth {
             print("hit max depth \(maxDepth)")
@@ -260,12 +261,23 @@ class MarbleViewController: NSViewController {
             return Patch(vertices: vertices, colours: colours, indices: indices)
         }
 
-        if let patch = patchCache.read(name) {
+        if let patch = highPatchCache.read(name) {
             return patch
         }
 
-        patchCalculator.calculate(name, vertices: corners, subdivisions: lowSubdivisions) { patch in
-            patchCache.write(name, patch: patch)
+        if let patch = lowPatchCache.read(name) {
+            return patch
+        }
+
+        if !patchCalculator.isCalculating(name, subdivisions: lowSubdivisions) {
+            patchCalculator.calculate(name, vertices: corners, subdivisions: lowSubdivisions) { patch in
+                self.lowPatchCache.write(name, patch: patch)
+                if !self.patchCalculator.isCalculating(name, subdivisions: highSubdivisions) {
+                    self.patchCalculator.calculate(name, vertices: corners, subdivisions: highSubdivisions) { patch in
+                        self.highPatchCache.write(name, patch: patch)
+                    }
+                }
+            }
         }
 
         return patchCalculator.subdivideTriangle(vertices: corners, subdivisionLevels: minimumSubdivision)
