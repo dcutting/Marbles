@@ -9,7 +9,7 @@ let lowSubdivisions: UInt32 = 2
 let highSubdivisions: UInt32 = 6
 let maxDepth = 50
 let updateInterval = 0.1
-let wireframe = false
+let wireframe = true
 let smoothing = 0
 
 class MarbleViewController: NSViewController {

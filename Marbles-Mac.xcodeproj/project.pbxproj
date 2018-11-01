@@ -14,8 +14,6 @@
 		C80E460D216177440029A3A0 /* MarbleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80E460C216177440029A3A0 /* MarbleViewController.swift */; };
 		C80E4611216177440029A3A0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C80E4610216177440029A3A0 /* Assets.xcassets */; };
 		C80E4614216177440029A3A0 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C80E4612216177440029A3A0 /* Main.storyboard */; };
-		C84D35E8217484200072DA10 /* Quadtree.swift in Sources */ = {isa = PBXBuildFile; fileRef = C84D35E7217484200072DA10 /* Quadtree.swift */; };
-		C85EB5822168EC7E00B670B2 /* PerlinMesh.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB5812168EC7E00B670B2 /* PerlinMesh.swift */; };
 		C85EB58E2168F62D00B670B2 /* compounds.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB5872168F62D00B670B2 /* compounds.swift */; };
 		C85EB58F2168F62D00B670B2 /* disk.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB5882168F62D00B670B2 /* disk.swift */; };
 		C85EB5902168F62D00B670B2 /* hash.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB5892168F62D00B670B2 /* hash.swift */; };
@@ -23,15 +21,10 @@
 		C85EB5922168F62D00B670B2 /* noise.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB58B2168F62D00B670B2 /* noise.swift */; };
 		C85EB5932168F62D00B670B2 /* gradient.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB58C2168F62D00B670B2 /* gradient.swift */; };
 		C85EB59E216ABC7C00B670B2 /* ModelIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C85EB59D216ABC7C00B670B2 /* ModelIO.framework */; };
-		C868AB4321775D38005429D1 /* geometry.shader.geometry in Resources */ = {isa = PBXBuildFile; fileRef = C868AB4221775D38005429D1 /* geometry.shader.geometry */; };
 		C8757C71216BB88C00CDEC74 /* Vector.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB59A216AB39D00B670B2 /* Vector.swift */; };
-		C8757C73216E13CF00CDEC74 /* DiamondSquare.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8757C72216E13CF00CDEC74 /* DiamondSquare.swift */; };
 		C8837A56218A16F100ABE455 /* Patch.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8837A55218A16F100ABE455 /* Patch.swift */; };
 		C8837A5B218A172700ABE455 /* PatchCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8837A5A218A172700ABE455 /* PatchCalculator.swift */; };
 		C8837A5D218A173F00ABE455 /* PatchCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8837A5C218A173F00ABE455 /* PatchCache.swift */; };
-		C88A461121774C8600E50318 /* geometry.shader.fragment in Resources */ = {isa = PBXBuildFile; fileRef = C88A461021774C8600E50318 /* geometry.shader.fragment */; };
-		C8C1B4C221779B9400CDDEDB /* geometry.shader.surface in Resources */ = {isa = PBXBuildFile; fileRef = C8C1B4C121779B9400CDDEDB /* geometry.shader.surface */; };
-		C8C1B4C42177E49600CDDEDB /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8C1B4C32177E49600CDDEDB /* Shaders.metal */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -83,6 +76,36 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		C8027ED3218A7F3F00A99020 /* Old */ = {
+			isa = PBXGroup;
+			children = (
+				C86730862179F48100CD8BB0 /* CSG+SceneKit.swift */,
+				C85EB5812168EC7E00B670B2 /* PerlinMesh.swift */,
+				C8757C72216E13CF00CDEC74 /* DiamondSquare.swift */,
+				C84D35E7217484200072DA10 /* Quadtree.swift */,
+				C88A461021774C8600E50318 /* geometry.shader.fragment */,
+				C8C1B4C121779B9400CDDEDB /* geometry.shader.surface */,
+				C868AB4221775D38005429D1 /* geometry.shader.geometry */,
+				C868AB4421776440005429D1 /* terrain.geometry */,
+				C868AB46217766BF005429D1 /* noise.geometry */,
+				C868AB4821776ACB005429D1 /* sample.geometry */,
+				C868AB4B217776F4005429D1 /* Shader.geometry */,
+				C8C1B4C32177E49600CDDEDB /* Shaders.metal */,
+			);
+			path = Old;
+			sourceTree = "<group>";
+		};
+		C8027ED8218A7F7700A99020 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				C80E4610216177440029A3A0 /* Assets.xcassets */,
+				C80E4612216177440029A3A0 /* Main.storyboard */,
+				C80E4615216177440029A3A0 /* Info.plist */,
+				C80E4616216177440029A3A0 /* Marbles_Mac.entitlements */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
 		C80E45FE216177440029A3A0 = {
 			isa = PBXGroup;
 			children = (
@@ -103,32 +126,18 @@
 		C80E4609216177440029A3A0 /* Marbles-Mac */ = {
 			isa = PBXGroup;
 			children = (
-				C86730862179F48100CD8BB0 /* CSG+SceneKit.swift */,
-				C85EB5832168F62D00B670B2 /* noise */,
 				C80E460A216177440029A3A0 /* AppDelegate.swift */,
 				C80E460C216177440029A3A0 /* MarbleViewController.swift */,
-				C85EB59A216AB39D00B670B2 /* Vector.swift */,
-				C85EB5812168EC7E00B670B2 /* PerlinMesh.swift */,
-				C8757C72216E13CF00CDEC74 /* DiamondSquare.swift */,
-				C80E4610216177440029A3A0 /* Assets.xcassets */,
-				C80E4612216177440029A3A0 /* Main.storyboard */,
-				C80E4615216177440029A3A0 /* Info.plist */,
-				C80E4616216177440029A3A0 /* Marbles_Mac.entitlements */,
-				C84D35E7217484200072DA10 /* Quadtree.swift */,
-				C88A461021774C8600E50318 /* geometry.shader.fragment */,
-				C8C1B4C121779B9400CDDEDB /* geometry.shader.surface */,
-				C868AB4221775D38005429D1 /* geometry.shader.geometry */,
-				C868AB4421776440005429D1 /* terrain.geometry */,
-				C868AB46217766BF005429D1 /* noise.geometry */,
-				C868AB4821776ACB005429D1 /* sample.geometry */,
-				C868AB4B217776F4005429D1 /* Shader.geometry */,
-				C8C1B4C32177E49600CDDEDB /* Shaders.metal */,
 				C8837A55218A16F100ABE455 /* Patch.swift */,
 				C8837A5A218A172700ABE455 /* PatchCalculator.swift */,
 				C8837A5C218A173F00ABE455 /* PatchCache.swift */,
 				C8027ECD218A1A3C00A99020 /* FractalNoise.swift */,
-				C8027ECF218A581100A99020 /* AtomicInteger.swift */,
 				C8027ED1218A631200A99020 /* Geometry.swift */,
+				C85EB59A216AB39D00B670B2 /* Vector.swift */,
+				C8027ECF218A581100A99020 /* AtomicInteger.swift */,
+				C85EB5832168F62D00B670B2 /* noise */,
+				C8027ED8218A7F7700A99020 /* Resources */,
+				C8027ED3218A7F3F00A99020 /* Old */,
 			);
 			path = "Marbles-Mac";
 			sourceTree = "<group>";
@@ -230,11 +239,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C8C1B4C221779B9400CDDEDB /* geometry.shader.surface in Resources */,
 				C80E4614216177440029A3A0 /* Main.storyboard in Resources */,
 				C80E4611216177440029A3A0 /* Assets.xcassets in Resources */,
-				C88A461121774C8600E50318 /* geometry.shader.fragment in Resources */,
-				C868AB4321775D38005429D1 /* geometry.shader.geometry in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -248,16 +254,12 @@
 				C85EB58E2168F62D00B670B2 /* compounds.swift in Sources */,
 				C8757C71216BB88C00CDEC74 /* Vector.swift in Sources */,
 				C8837A56218A16F100ABE455 /* Patch.swift in Sources */,
-				C8C1B4C42177E49600CDDEDB /* Shaders.metal in Sources */,
-				C85EB5822168EC7E00B670B2 /* PerlinMesh.swift in Sources */,
 				C8837A5B218A172700ABE455 /* PatchCalculator.swift in Sources */,
 				C85EB58F2168F62D00B670B2 /* disk.swift in Sources */,
 				C85EB5922168F62D00B670B2 /* noise.swift in Sources */,
 				C85EB5932168F62D00B670B2 /* gradient.swift in Sources */,
-				C8757C73216E13CF00CDEC74 /* DiamondSquare.swift in Sources */,
 				C85EB5902168F62D00B670B2 /* hash.swift in Sources */,
 				C8027ED2218A631200A99020 /* Geometry.swift in Sources */,
-				C84D35E8217484200072DA10 /* Quadtree.swift in Sources */,
 				C85EB5912168F62D00B670B2 /* cell.swift in Sources */,
 				C8027ED0218A581100A99020 /* AtomicInteger.swift in Sources */,
 				C80E460D216177440029A3A0 /* MarbleViewController.swift in Sources */,
@@ -401,11 +403,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = "Marbles-Mac/Marbles_Mac.entitlements";
+				CODE_SIGN_ENTITLEMENTS = "Marbles-Mac/Resources/Marbles_Mac.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = 3H86HRS574;
-				INFOPLIST_FILE = "Marbles-Mac/Info.plist";
+				INFOPLIST_FILE = "Marbles-Mac/Resources/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -422,11 +424,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = "Marbles-Mac/Marbles_Mac.entitlements";
+				CODE_SIGN_ENTITLEMENTS = "Marbles-Mac/Resources/Marbles_Mac.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = 3H86HRS574;
-				INFOPLIST_FILE = "Marbles-Mac/Info.plist";
+				INFOPLIST_FILE = "Marbles-Mac/Resources/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",

@@ -35,30 +35,6 @@ extension SCNVector3 {
     }
 }
 
-//extension FP3 {
-//
-//    func normalized() -> FP3 {
-//        let l = length(self)
-//        if l > 0 {
-//            return [x / l, y / l, z / l]
-//        } else {
-//            return [0.0, 0.0, 0.0]
-//        }
-//    }
-//}
-//
-//extension float3 {
-//
-//    func normalized() -> float3 {
-//        let l = length(self)
-//        if l > 0 {
-//            return [x / l, y / l, z / l]
-//        } else {
-//            return [0.0, 0.0, 0.0]
-//        }
-//    }
-//}
-
 public func times (left:float3, scalar:Float) -> float3 {
     return [left[0] * scalar, left[1] * scalar, left[2] * scalar]
 }
