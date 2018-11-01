@@ -57,3 +57,14 @@ func midway(_ a: FP3, _ b: FP3) -> FP3 {
 
     return [abx, aby, abz]
 }
+
+func isIntersecting(_ a: SCNVector3, _ b: SCNVector3, _ c: SCNVector3, width: CGFloat, height: CGFloat) -> Bool {
+    let minX = min(a.x, b.x, c.x)
+    let maxX = max(a.x, b.x, c.x)
+    let minY = min(a.y, b.y, c.y)
+    let maxY = max(a.y, b.y, c.y)
+    let overlapsX = minX <= width && maxX >= 0
+    let overlapsY = minY <= height && maxY >= 0
+    // TODO: clip those facing away from screen?
+    return overlapsX && overlapsY
+}

@@ -5,11 +5,12 @@ import SceneKit.ModelIO
 import ModelIO
 
 let maxEdgeLength = 400.0
-let lowSubdivisions: UInt32 = 2
+let minimumSubdivision: UInt32 = 2
+let lowSubdivisions: UInt32 = 3
 let highSubdivisions: UInt32 = 6
 let maxDepth = 50
 let updateInterval = 0.1
-let wireframe = true
+let wireframe = false
 let smoothing = 0
 
 class MarbleViewController: NSViewController {
@@ -222,7 +223,7 @@ class MarbleViewController: NSViewController {
         let p2 = scnView.projectPoint(SCNVector3(v2))
 
         var subdivide = false
-        if intersectsScreen(p0, p1, p2) {
+        if isIntersecting(p0, p1, p2, width: w, height: h) {
             let l0 = FP((p0 - p1).lengthSq())
             let l1 = FP((p0 - p2).lengthSq())
             let l2 = FP((p1 - p2).lengthSq())
@@ -271,18 +272,6 @@ class MarbleViewController: NSViewController {
             patchCache.write(name, patch: patch)
         }
 
-        return Patch(vertices: [], colours: [], indices: [])
-    }
-
-    private func intersectsScreen(_ a: SCNVector3, _ b: SCNVector3, _ c: SCNVector3) -> Bool {
-        let minX = min(a.x, b.x, c.x)
-        let maxX = max(a.x, b.x, c.x)
-        let minY = min(a.y, b.y, c.y)
-        let maxY = max(a.y, b.y, c.y)
-        let inset: CGFloat = 0.0
-        let overlapsX = minX <= (w + inset) && maxX >= (0 - inset)
-        let overlapsY = minY <= (h + inset) && maxY >= (0 - inset)
-        // TODO: clip those facing away from screen?
-        return overlapsX && overlapsY
+        return patchCalculator.subdivideTriangle(vertices: corners, subdivisionLevels: minimumSubdivision)
     }
 }
