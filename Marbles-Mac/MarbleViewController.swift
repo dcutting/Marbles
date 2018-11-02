@@ -11,6 +11,7 @@ let highSubdivisions: UInt32 = lowSubdivisions + 1
 let maxDepth = 50
 let updateInterval = 0.5
 let wireframe = false
+let flySpeed = 1000.0
 
 class MarbleViewController: NSViewController {
 
@@ -125,7 +126,7 @@ class MarbleViewController: NSViewController {
         scnView.allowsCameraControl = true
         scnView.backgroundColor = .black
         scnView.showsStatistics = true
-//        scnView.defaultCameraController.interactionMode = .fly
+        scnView.defaultCameraController.interactionMode = .fly
         scnView.cameraControlConfiguration.flyModeVelocity = 50
         if wireframe {
             scnView.debugOptions = SCNDebugOptions([.renderAsWireframe])
@@ -192,6 +193,11 @@ class MarbleViewController: NSViewController {
     }
 
     private func refreshGeometry(faceIndex: Int, node: SCNNode) {
+        let scnView = view as! SCNView
+        let distance = scnView.defaultCameraController.pointOfView!.position.length()
+        let newVelocity = ((FP(distance) - radius) / radius) * flySpeed
+        print(distance, newVelocity)
+        scnView.cameraControlConfiguration.flyModeVelocity = CGFloat(newVelocity)
         let face = self.faces[faceIndex]
         let vertices = [self.positions[Int(face[0])], self.positions[Int(face[1])], self.positions[Int(face[2])]]
         let geom = self.makeAdaptiveGeometry(faceIndex: faceIndex, corners: vertices, maxEdgeLength: maxEdgeLength)
