@@ -6,11 +6,11 @@ import ModelIO
 
 let maxEdgeLength = 175.0
 let minimumSubdivision: UInt32 = 3
-let lowSubdivisions: UInt32 = 3
+let lowSubdivisions: UInt32 = 0
 let highSubdivisions: UInt32 = lowSubdivisions + 1
 let maxDepth = 50
 let updateInterval = 0.5
-let wireframe = false
+let wireframe = true
 let flySpeed = 1000.0
 
 class MarbleViewController: NSViewController {
@@ -125,7 +125,7 @@ class MarbleViewController: NSViewController {
         scnView.allowsCameraControl = true
         scnView.backgroundColor = .black
         scnView.showsStatistics = true
-        scnView.defaultCameraController.interactionMode = .fly
+//        scnView.defaultCameraController.interactionMode = .fly
         scnView.cameraControlConfiguration.flyModeVelocity = 50
         if wireframe {
             scnView.debugOptions = SCNDebugOptions([.renderAsWireframe])
@@ -159,6 +159,9 @@ class MarbleViewController: NSViewController {
     }
 
     @objc func handleClick(_ gestureRecognizer: NSGestureRecognizer) {
+        let scnView = view as! SCNView
+        let mode = scnView.defaultCameraController.interactionMode
+        scnView.defaultCameraController.interactionMode = mode == .fly ? .orbitCenteredArcball : .fly
     }
 
 //    private func makeWater() {
@@ -225,13 +228,17 @@ class MarbleViewController: NSViewController {
             return nil
         }
 
+        let scnView = view as! SCNView
+        let cameraPosition = scnView.defaultCameraController.pointOfView!.position
+        let distanceSq = cameraPosition.lengthSq()
+        guard (SCNVector3(corners[0]) - cameraPosition).lengthSq() < distanceSq else { return nil }
+
         let sphericalisedCorners = lowPatchCalculator.sphericalise(vertices: corners)
 
         let v0 = sphericalisedCorners[0]
         let v1 = sphericalisedCorners[1]
         let v2 = sphericalisedCorners[2]
 
-        let scnView = view as! SCNView
         let p0 = scnView.projectPoint(SCNVector3(v0))
         let p1 = scnView.projectPoint(SCNVector3(v1))
         let p2 = scnView.projectPoint(SCNVector3(v2))
@@ -241,10 +248,12 @@ class MarbleViewController: NSViewController {
             let l0 = FP((p0 - p1).lengthSq())
             let l1 = FP((p0 - p2).lengthSq())
             let l2 = FP((p1 - p2).lengthSq())
-            let dumbLength: FP = 1000000000000
+            let dumbLength: FP = 100000000000000
             if l0 > maxEdgeLengthSq || l1 > maxEdgeLengthSq || l2 > maxEdgeLengthSq {
                 if l0 < dumbLength && l1 < dumbLength && l2 < dumbLength {
                     subdivide = true
+                } else {
+//                    print("dumb:", name, l0, l1, l2)
                 }
             }
         }
@@ -327,8 +336,6 @@ class MarbleViewController: NSViewController {
             }
         }
     }
-
-    var lastPatchCreation = DispatchTime.now()
 
     private func stitchSubPatches(name: String) -> Patch? {
         for depth: UInt32 in (1..<2).reversed() {

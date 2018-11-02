@@ -1,6 +1,11 @@
 import Foundation
 import SceneKit
 
+struct PatchOp {
+    let op: () -> Void
+    let name: String
+}
+
 class PatchCalculator {
 
     enum Priority {
@@ -34,35 +39,69 @@ class PatchCalculator {
     }
 
     private let config: Config
-    private let calculatorLow: DispatchQueue
-    private let calculatorHigh: DispatchQueue
-    private let operationQueue: NSOperationStack
-    private var currentPriority = 0
+    private let lowRingBuffer: RingBuffer<PatchOp>
+//    private let highRingBuffer: RingBuffer<PatchOp>
+    private let reader: DispatchQueue
+    private let lowCalculator: DispatchQueue
+//    private let highCalculator: DispatchQueue
     private let wip = PatchCache<Bool>()
 
     init(config: Config) {
         self.config = config
-        self.calculatorLow = DispatchQueue(label: "calculator", qos: .default, attributes: .concurrent)
-        self.calculatorHigh = DispatchQueue(label: "calculator", qos: .userInitiated, attributes: .concurrent)
-        operationQueue = NSOperationStack()
-        operationQueue.qualityOfService = .background
+        self.lowRingBuffer = RingBuffer(size: 600)
+//        self.highRingBuffer = RingBuffer(size: 600)
+        self.reader = DispatchQueue(label: "reader", qos: .userInitiated, attributes: [])
+        self.lowCalculator = DispatchQueue(label: "calculator", qos: .default, attributes: .concurrent)
+//        self.highCalculator = DispatchQueue(label: "calculator", qos: .userInitiated, attributes: .concurrent)
+        pollRingBuffer()
+    }
+
+    private func pollRingBuffer() {
+        reader.asyncAfter(deadline: .now() + 0.01) {
+//            print("checking")
+            while true {
+//                guard let op = self.highRingBuffer.read() else { break }
+//                self.highCalculator.async(execute: op.op)
+//            }
+//            for _ in 0..<100 {
+                guard let op = self.lowRingBuffer.read() else { break }
+//                print("read")
+                self.lowCalculator.async(execute: op.op)
+            }
+//            print(self.highRingBuffer.count(), self.lowRingBuffer.count())
+            self.pollRingBuffer()
+        }
     }
 
     func calculate(_ name: String, vertices: [Patch.Vertex], subdivisions: UInt32, qos: Priority, completion: @escaping (Patch) -> Void) {
-        wip.write("\(name)-\(subdivisions)", patch: true)
-        let op = {
+        let opName = "\(name)-\(subdivisions)"
+        wip.write(opName, patch: true)
+        let op = PatchOp(op: {
             let patch = self.subdivideTriangle(vertices: vertices, subdivisionLevels: subdivisions)
             completion(patch)
-            let count = self.wip.remove("\(name)-\(subdivisions)")
-            print("\(self.config.name): \(count) in progress")
+//            print("done")
+            let count = self.wip.remove(opName)
+//            print("low: \(count) in progress")
+        }, name: opName)
+
+        var lowBumped: PatchOp?
+//        var highBumped: PatchOp?
+//        switch qos {
+//        case .low:
+            lowBumped = lowRingBuffer.append(op)
+//        case .high:
+//            highBumped = highRingBuffer.append(op)
+//        }
+        if let bumped = lowBumped {
+            let count = self.wip.remove(bumped.name)
+//            print("low: \(count) in progress: bumped")
+//            print("bumped")
         }
-        switch qos {
-        case .low:
-//            operationQueue.addOperationAtFrontOfQueue(op)
-            calculatorLow.async(execute: op)
-        case .high:
-            calculatorHigh.async(execute: op)
-        }
+//        if let bumped = highBumped {
+//            let count = self.wip.remove(bumped.name)
+////            print("high: \(count) in progress")
+////            print("bumped")
+//        }
     }
 
     func isCalculating(_ name: String, subdivisions: UInt32) -> Bool {

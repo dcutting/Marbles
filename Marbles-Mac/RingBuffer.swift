@@ -14,13 +14,11 @@ class RingBuffer<T> {
     }
 
     func read() -> T? {
-        return lock.sync {
+        return lock.sync(flags: .barrier) {
             guard let op = buffer[head] else { return nil }
             buffer[head] = nil
             head = (head + 1) % size
-            if head == tail {
-                tail = (tail + 1) % size
-            }
+            print("read: \(head), \(tail), \(_count)")
             return op
         }
     }
@@ -29,18 +27,23 @@ class RingBuffer<T> {
         return lock.sync(flags: .barrier) {
             self.buffer[self.tail] = op
             self.tail = (self.tail + 1) % self.size
-//            print(head, tail)
+            var bumped: T?
             if self.tail == self.head {
                 self.head = (self.head + 1) % self.size
-                return self.buffer[self.tail]
+                bumped = self.buffer[self.tail]
             }
-            return nil
+//            print("append: \(head), \(tail), \(_count)")
+            return bumped
         }
     }
 
     func count() -> Int {
         return lock.sync {
-            return tail < head ? tail - head + size : tail - head
+            return _count
         }
+    }
+
+    private var _count: Int {
+        return tail < head ? tail - head + size : tail - head
     }
 }
