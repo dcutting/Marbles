@@ -18,5 +18,6 @@ func makeGeometry(patch: Patch, asWireframe: Bool) -> SCNGeometry {
         sources.append(coloursSource)
     }
     let indicesElement = SCNGeometryElement(indices: patch.indices, primitiveType: .triangles)
-    return SCNGeometry(sources: sources, elements: [indicesElement])
+    let geometry = SCNGeometry(sources: sources, elements: [indicesElement])
+    return geometry
 }

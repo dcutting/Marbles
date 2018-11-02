@@ -36,28 +36,32 @@ class PatchCalculator {
     private let config: Config
     private let calculatorLow: DispatchQueue
     private let calculatorHigh: DispatchQueue
+    private let operationQueue: NSOperationStack
+    private var currentPriority = 0
     private let wip = PatchCache<Bool>()
 
     init(config: Config) {
         self.config = config
         self.calculatorLow = DispatchQueue(label: "calculator", qos: .default, attributes: .concurrent)
         self.calculatorHigh = DispatchQueue(label: "calculator", qos: .userInitiated, attributes: .concurrent)
+        operationQueue = NSOperationStack()
+        operationQueue.qualityOfService = .background
     }
 
     func calculate(_ name: String, vertices: [Patch.Vertex], subdivisions: UInt32, qos: Priority, completion: @escaping (Patch) -> Void) {
         wip.write("\(name)-\(subdivisions)", patch: true)
-        let queue: DispatchQueue
-        switch qos {
-        case .low:
-            queue = calculatorLow
-        case .high:
-            queue = calculatorHigh
-        }
-        queue.async {
+        let op = {
             let patch = self.subdivideTriangle(vertices: vertices, subdivisionLevels: subdivisions)
             completion(patch)
             let count = self.wip.remove("\(name)-\(subdivisions)")
             print("\(self.config.name): \(count) in progress")
+        }
+        switch qos {
+        case .low:
+//            operationQueue.addOperationAtFrontOfQueue(op)
+            calculatorLow.async(execute: op)
+        case .high:
+            calculatorHigh.async(execute: op)
         }
     }
 
@@ -177,7 +181,7 @@ class PatchCalculator {
 //            } else if FP(delta) >= 0.0 && FP(delta) < config.mountainHeight * 0.05 && distanceFromEquator < 0.3 {
 //                // Beach
 //                colours.append([0.7, 0.7, 0.0])
-            } else if FP(delta) < 0.0 {
+            } else if FP(delta) <= 1.0 {
                 // Error
                 colours.append([0.0, 0.0, depthColour])
             } else {

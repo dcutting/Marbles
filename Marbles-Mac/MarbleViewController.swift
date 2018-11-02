@@ -4,14 +4,13 @@ import SceneKit
 import SceneKit.ModelIO
 import ModelIO
 
-let maxEdgeLength = 200.0
+let maxEdgeLength = 175.0
 let minimumSubdivision: UInt32 = 3
 let lowSubdivisions: UInt32 = 4
 let highSubdivisions: UInt32 = lowSubdivisions + 1
 let maxDepth = 50
-let updateInterval = 0.1
+let updateInterval = 0.5
 let wireframe = false
-let smoothing = 0
 
 class MarbleViewController: NSViewController {
 
@@ -24,8 +23,8 @@ class MarbleViewController: NSViewController {
     var highPatchCache = PatchCache<Patch>()
     lazy var fractalNoiseConfig: FractalNoiseConfig = {
         return FractalNoiseConfig(amplitude: Double(radius / 8.0),
-                                  frequency: Double(1.0 / radius),
-                                  seed: 729,
+                                  frequency: Double(1.5 / radius),
+                                  seed: 7291123124,
                                   octaves: 15,
                                   persistence: 0.5,
                                   lacunarity: 2.0)
@@ -35,6 +34,7 @@ class MarbleViewController: NSViewController {
         var config = PatchCalculator.Config(name: "low", noise: noise)
         config.radius = radius
         config.amplitude = fractalNoiseConfig.amplitude
+        config.levels = 6
         return PatchCalculator(config: config)
     }()
 //    lazy var highPatchCalculator: PatchCalculator = {

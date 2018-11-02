@@ -25,6 +25,7 @@
 		C8837A56218A16F100ABE455 /* Patch.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8837A55218A16F100ABE455 /* Patch.swift */; };
 		C8837A5B218A172700ABE455 /* PatchCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8837A5A218A172700ABE455 /* PatchCalculator.swift */; };
 		C8837A5D218A173F00ABE455 /* PatchCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8837A5C218A173F00ABE455 /* PatchCache.swift */; };
+		C8DBE410218BD21900581CBE /* NSOperationStack.m in Sources */ = {isa = PBXBuildFile; fileRef = C8DBE40F218BD21900581CBE /* NSOperationStack.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -62,6 +63,9 @@
 		C88A461021774C8600E50318 /* geometry.shader.fragment */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = geometry.shader.fragment; sourceTree = "<group>"; };
 		C8C1B4C121779B9400CDDEDB /* geometry.shader.surface */ = {isa = PBXFileReference; lastKnownFileType = text; path = geometry.shader.surface; sourceTree = "<group>"; };
 		C8C1B4C32177E49600CDDEDB /* Shaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shaders.metal; sourceTree = "<group>"; };
+		C8DBE40D218BD21800581CBE /* Marbles-Mac-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Marbles-Mac-Bridging-Header.h"; sourceTree = "<group>"; };
+		C8DBE40E218BD21900581CBE /* NSOperationStack.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NSOperationStack.h; sourceTree = "<group>"; };
+		C8DBE40F218BD21900581CBE /* NSOperationStack.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = NSOperationStack.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -138,6 +142,9 @@
 				C85EB5832168F62D00B670B2 /* noise */,
 				C8027ED8218A7F7700A99020 /* Resources */,
 				C8027ED3218A7F3F00A99020 /* Old */,
+				C8DBE40E218BD21900581CBE /* NSOperationStack.h */,
+				C8DBE40F218BD21900581CBE /* NSOperationStack.m */,
+				C8DBE40D218BD21800581CBE /* Marbles-Mac-Bridging-Header.h */,
 			);
 			path = "Marbles-Mac";
 			sourceTree = "<group>";
@@ -212,7 +219,7 @@
 				TargetAttributes = {
 					C80E4606216177440029A3A0 = {
 						CreatedOnToolsVersion = 10.0;
-						LastSwiftMigration = 1000;
+						LastSwiftMigration = 1010;
 					};
 				};
 			};
@@ -256,6 +263,7 @@
 				C8837A56218A16F100ABE455 /* Patch.swift in Sources */,
 				C8837A5B218A172700ABE455 /* PatchCalculator.swift in Sources */,
 				C85EB58F2168F62D00B670B2 /* disk.swift in Sources */,
+				C8DBE410218BD21900581CBE /* NSOperationStack.m in Sources */,
 				C85EB5922168F62D00B670B2 /* noise.swift in Sources */,
 				C85EB5932168F62D00B670B2 /* gradient.swift in Sources */,
 				C85EB5902168F62D00B670B2 /* hash.swift in Sources */,
@@ -414,6 +422,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "io.cutting.Marbles-Mac";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "Marbles-Mac/Marbles-Mac-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 4.2;
 			};
@@ -435,6 +444,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "io.cutting.Marbles-Mac";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "Marbles-Mac/Marbles-Mac-Bridging-Header.h";
 				SWIFT_VERSION = 4.2;
 			};
 			name = Release;
