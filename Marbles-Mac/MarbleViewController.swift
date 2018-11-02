@@ -9,7 +9,6 @@ let minimumSubdivision: UInt32 = 3
 let lowSubdivisions: UInt32 = 4
 let highSubdivisions: UInt32 = lowSubdivisions + 1
 let maxDepth = 50
-let patchCreationInterval = 2.0
 let updateInterval = 0.1
 let wireframe = false
 let smoothing = 0
@@ -298,21 +297,18 @@ class MarbleViewController: NSViewController {
         if let stitchedPatch = stitchSubPatches(name: name) {
             return stitchedPatch
         } else {
-            if lastPatchCreation + patchCreationInterval < DispatchTime.now() {
-                let (subv, sube) = lowPatchCalculator.sphericallySubdivide(vertices: corners)
-                for i in 0..<sube.count {
-                    let index = sube[i]
-                    let vx = subv[Int(index[0])]
-                    let vy = subv[Int(index[1])]
-                    let vz = subv[Int(index[2])]
-                    let subName = name + "\(i)"
-                    if !lowPatchCalculator.isCalculating(subName, subdivisions: lowSubdivisions) {
-                        lowPatchCalculator.calculate(subName, vertices: [vx, vy, vz], subdivisions: lowSubdivisions, qos: .low) { patch in
-                            self.lowPatchCache.write(subName, patch: patch)
-                        }
+            let (subv, sube) = lowPatchCalculator.sphericallySubdivide(vertices: corners)
+            for i in 0..<sube.count {
+                let index = sube[i]
+                let vx = subv[Int(index[0])]
+                let vy = subv[Int(index[1])]
+                let vz = subv[Int(index[2])]
+                let subName = name + "\(i)"
+                if !lowPatchCalculator.isCalculating(subName, subdivisions: lowSubdivisions) {
+                    lowPatchCalculator.calculate(subName, vertices: [vx, vy, vz], subdivisions: lowSubdivisions, qos: .low) { patch in
+                        self.lowPatchCache.write(subName, patch: patch)
                     }
                 }
-                lastPatchCreation = .now()
             }
             if let cachedPatch = lowPatchCache.read(name) {
                 return cachedPatch
