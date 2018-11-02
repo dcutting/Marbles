@@ -170,7 +170,7 @@ class PatchCalculator {
             let rawHeightColour = FP(delta) / config.mountainHeight
             let rawDepthColour = 1 + (FP(delta) / config.oceanDepth)
             let heightColour = Float(scaledUnitClamp(rawHeightColour, min: 0.05))
-            let depthColour = Float(scaledUnitClamp(rawDepthColour, min: 0.2, max: 0.9))
+            let depthColour = Float(scaledUnitClamp(rawDepthColour, min: 0.3, max: 0.7))
             if FP(delta) > snowLine {
                 // Ice
                 colours.append([1.0, 1.0, 1.0])
