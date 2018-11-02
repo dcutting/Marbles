@@ -20,6 +20,9 @@ class PatchCalculator {
         var mountainHeight: FP {
             return amplitude / 2.0
         }
+        var oceanDepth: FP {
+            return amplitude / 20.0
+        }
         var levels: UInt32 = 0
         var iciness: FP = 0.4
         var noise: Noise
@@ -115,6 +118,9 @@ class PatchCalculator {
             let ratio = Double(config.amplitude) / Double(config.levels)
             delta = ratio * round(delta / ratio)
         }
+        if delta < 0.0 {
+            delta = (delta / config.mountainHeight) * config.oceanDepth
+        }
         return an * (config.radius + delta)
     }
 
@@ -162,8 +168,9 @@ class PatchCalculator {
             let dryness: FP = 1 - config.iciness
             let snowLine = FP(config.mountainHeight * 1.5) * (1 - distanceFromEquator * config.iciness) * dryness
             let rawHeightColour = FP(delta) / config.mountainHeight
+            let rawDepthColour = 1 + (FP(delta) / config.oceanDepth)
             let heightColour = Float(scaledUnitClamp(rawHeightColour, min: 0.05))
-            let depthColour = Float(scaledUnitClamp(rawHeightColour, min: 0.05, max: 0.2))
+            let depthColour = Float(scaledUnitClamp(rawDepthColour, min: 0.2, max: 0.9))
             if FP(delta) > snowLine {
                 // Ice
                 colours.append([1.0, 1.0, 1.0])
