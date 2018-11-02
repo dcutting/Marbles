@@ -6,7 +6,7 @@ import ModelIO
 
 let maxEdgeLength = 175.0
 let minimumSubdivision: UInt32 = 3
-let lowSubdivisions: UInt32 = 4
+let lowSubdivisions: UInt32 = 3
 let highSubdivisions: UInt32 = lowSubdivisions + 1
 let maxDepth = 50
 let updateInterval = 0.5
@@ -35,7 +35,6 @@ class MarbleViewController: NSViewController {
         var config = PatchCalculator.Config(name: "low", noise: noise)
         config.radius = radius
         config.amplitude = fractalNoiseConfig.amplitude
-        config.levels = 6
         return PatchCalculator(config: config)
     }()
 //    lazy var highPatchCalculator: PatchCalculator = {
@@ -196,7 +195,6 @@ class MarbleViewController: NSViewController {
         let scnView = view as! SCNView
         let distance = scnView.defaultCameraController.pointOfView!.position.length()
         let newVelocity = ((FP(distance) - radius) / radius) * flySpeed
-        print(distance, newVelocity)
         scnView.cameraControlConfiguration.flyModeVelocity = CGFloat(newVelocity)
         let face = self.faces[faceIndex]
         let vertices = [self.positions[Int(face[0])], self.positions[Int(face[1])], self.positions[Int(face[2])]]
@@ -243,10 +241,11 @@ class MarbleViewController: NSViewController {
             let l0 = FP((p0 - p1).lengthSq())
             let l1 = FP((p0 - p2).lengthSq())
             let l2 = FP((p1 - p2).lengthSq())
-            let dumbLength: FP = 10000000000
-            if (l0 > maxEdgeLengthSq || l1 > maxEdgeLengthSq || l2 > maxEdgeLengthSq) &&
-                (l0 < dumbLength && l1 < dumbLength && l2 < dumbLength) {
-                subdivide = true
+            let dumbLength: FP = 1000000000000
+            if l0 > maxEdgeLengthSq || l1 > maxEdgeLengthSq || l2 > maxEdgeLengthSq {
+                if l0 < dumbLength && l1 < dumbLength && l2 < dumbLength {
+                    subdivide = true
+                }
             }
         }
 
