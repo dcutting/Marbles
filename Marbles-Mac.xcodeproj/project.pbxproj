@@ -14,6 +14,7 @@
 		C80E460D216177440029A3A0 /* MarbleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80E460C216177440029A3A0 /* MarbleViewController.swift */; };
 		C80E4611216177440029A3A0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C80E4610216177440029A3A0 /* Assets.xcassets */; };
 		C80E4614216177440029A3A0 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C80E4612216177440029A3A0 /* Main.storyboard */; };
+		C816FAD9218CAA9400839795 /* RingBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C816FAD8218CAA9400839795 /* RingBuffer.swift */; };
 		C85EB58E2168F62D00B670B2 /* compounds.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB5872168F62D00B670B2 /* compounds.swift */; };
 		C85EB58F2168F62D00B670B2 /* disk.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB5882168F62D00B670B2 /* disk.swift */; };
 		C85EB5902168F62D00B670B2 /* hash.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB5892168F62D00B670B2 /* hash.swift */; };
@@ -39,6 +40,7 @@
 		C80E4613216177440029A3A0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		C80E4615216177440029A3A0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C80E4616216177440029A3A0 /* Marbles_Mac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Marbles_Mac.entitlements; sourceTree = "<group>"; };
+		C816FAD8218CAA9400839795 /* RingBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RingBuffer.swift; sourceTree = "<group>"; };
 		C84D35E7217484200072DA10 /* Quadtree.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Quadtree.swift; sourceTree = "<group>"; };
 		C85EB5812168EC7E00B670B2 /* PerlinMesh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PerlinMesh.swift; sourceTree = "<group>"; };
 		C85EB5852168F62D00B670B2 /* cell_meta.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = cell_meta.swift; sourceTree = "<group>"; };
@@ -136,6 +138,7 @@
 				C8837A55218A16F100ABE455 /* Patch.swift */,
 				C8837A5A218A172700ABE455 /* PatchCalculator.swift */,
 				C8837A5C218A173F00ABE455 /* PatchCache.swift */,
+				C816FAD8218CAA9400839795 /* RingBuffer.swift */,
 				C8027ECD218A1A3C00A99020 /* FractalNoise.swift */,
 				C8027ED1218A631200A99020 /* Geometry.swift */,
 				C85EB59A216AB39D00B670B2 /* Vector.swift */,
@@ -260,6 +263,7 @@
 			files = (
 				C85EB58E2168F62D00B670B2 /* compounds.swift in Sources */,
 				C8757C71216BB88C00CDEC74 /* Vector.swift in Sources */,
+				C816FAD9218CAA9400839795 /* RingBuffer.swift in Sources */,
 				C8837A56218A16F100ABE455 /* Patch.swift in Sources */,
 				C8837A5B218A172700ABE455 /* PatchCalculator.swift in Sources */,
 				C85EB58F2168F62D00B670B2 /* disk.swift in Sources */,
