@@ -42,20 +42,46 @@ let earthConfig = PlanetConfig(seed: 729123134,
                                radius: 10000.0,
                                frequencyFactor: 1.5,
                                mountainHeightFraction: 0.125,
+                               hasWater: true,
                                levels: 0,
                                iciness: 0.4,
                                octaves: 12,
                                persistence: 0.52,
                                lacunarity: 2.0,
-                               waterLevel: 0.0)
+                               groundColourScale: RGBColourScale(
+                                red: ColourScale(0.0, 0.0),
+                                green: ColourScale(0.0, 1.0),
+                                blue: ColourScale(0.0, 0.0))
+)
 
 let vestaConfig = PlanetConfig(seed: 729134,
                                radius: 1000.0,
                                frequencyFactor: 0.5,
                                mountainHeightFraction: 0.3,
+                               hasWater: false,
                                levels: 0,
                                iciness: 0.0,
                                octaves: 12,
                                persistence: 0.3,
                                lacunarity: 3.0,
-                               waterLevel: -10000.0)
+                               groundColourScale: RGBColourScale(
+                                red: ColourScale(0.3, 0.3),
+                                green: ColourScale(0.3, 0.3),
+                                blue: ColourScale(0.3, 0.3))
+)
+
+let marsConfig = PlanetConfig(seed: 729134,
+                               radius: 1000.0,
+                               frequencyFactor: 1.2,
+                               mountainHeightFraction: 0.05,
+                               hasWater: false,
+                               levels: 0,
+                               iciness: 0.2,
+                               octaves: 12,
+                               persistence: 0.46,
+                               lacunarity: 2.0,
+                               groundColourScale: RGBColourScale(
+                                red: ColourScale(0.3, 1.0),
+                                green: ColourScale(0.05, 0.05),
+                                blue: ColourScale(0.05, 0.05))
+)

@@ -23,7 +23,7 @@ class MarbleViewController: NSViewController {
     var highPatchCache = PatchCache<Patch>()
     var lowPatchCalculator: PatchCalculator!
 
-    var planet: PlanetConfig = vestaConfig
+    var planet: PlanetConfig = marsConfig
 
     override func viewDidLoad() {
         super.viewDidLoad()

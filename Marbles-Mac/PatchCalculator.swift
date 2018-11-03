@@ -151,7 +151,7 @@ class PatchCalculator {
             let ratio = Double(config.amplitude) / Double(config.levels)
             delta = ratio * round(delta / ratio)
         }
-        if delta < config.waterLevel {
+        if config.hasWater && delta < 0.0 {
             delta = (delta / config.mountainHeight) * config.oceanDepth
         }
         return an * (config.radius + delta)
@@ -200,20 +200,26 @@ class PatchCalculator {
             let distanceFromEquator: FP = abs(p.y)/config.radius
             let dryness: FP = 1 - config.iciness
             let snowLine = FP(config.mountainHeight * 1.5) * (1 - distanceFromEquator * config.iciness) * dryness
-            let rawHeightColour = FP(delta) / config.mountainHeight
+            let rawHeightColour: FP
+            if config.hasWater {
+                rawHeightColour = FP(delta) / config.mountainHeight
+            } else {
+                rawHeightColour = FP(delta + config.mountainHeight) / (config.mountainHeight * 2.0)
+            }
             let rawDepthColour = 1 + (FP(delta) / config.oceanDepth)
-            let heightColour = Float(scaledUnitClamp(rawHeightColour, min: 0.05))
             let depthColour = Float(scaledUnitClamp(rawDepthColour, min: 0.3, max: 0.7))
             if FP(delta) > snowLine {
                 // Ice
                 colours.append([1.0, 1.0, 1.0])
-            } else if FP(delta) <= config.waterLevel {
+            } else if config.hasWater && FP(delta) <= 0.0 {
                 // Water
                 colours.append([0.0, 0.0, depthColour])
             } else {
-                // Forest
-                colours.append([0.3, 0.3, 0.3])
-//                colours.append([0.0, heightColour, 0.0])
+                // Ground
+                let r = scaledUnitClamp(rawHeightColour, min: config.groundColourScale.red.min, max: config.groundColourScale.red.max)
+                let g = scaledUnitClamp(rawHeightColour, min: config.groundColourScale.green.min, max: config.groundColourScale.green.max)
+                let b = scaledUnitClamp(rawHeightColour, min: config.groundColourScale.blue.min, max: config.groundColourScale.blue.max)
+                colours.append([Float(r), Float(g), Float(b)])
             }
         }
         return colours
