@@ -4,7 +4,7 @@ import SceneKit
 import SceneKit.ModelIO
 import ModelIO
 
-let maxEdgeLength = 120.0
+let maxEdgeLength = 90.0
 let minimumSubdivision: UInt32 = 0
 let lowSubdivisions: UInt32 = 4
 let highSubdivisions: UInt32 = lowSubdivisions + 1
@@ -23,7 +23,7 @@ class MarbleViewController: NSViewController {
     var highPatchCache = PatchCache<Patch>()
     var lowPatchCalculator: PatchCalculator!
 
-    var planet: PlanetConfig = marsConfig
+    var planet: PlanetConfig = earthConfig
 
     override func viewDidLoad() {
         super.viewDidLoad()

@@ -22,9 +22,11 @@ class PatchCalculator {
     private let wip = PatchCache<Bool>()
     private let slowWip = PatchCache<Bool>()
 
+    private let ringBufferSize = 10
+
     init(config: PlanetConfig) {
         self.config = config
-        self.lowRingBuffer = RingBuffer(size: 20)
+        self.lowRingBuffer = RingBuffer(size: ringBufferSize)
         self.reader = DispatchQueue(label: "reader", qos: .userInitiated, attributes: [])
         self.slow = DispatchQueue(label: "slow", qos: .default, attributes: .concurrent)
         self.fast = DispatchQueue(label: "fast", qos: .userInteractive, attributes: .concurrent)
@@ -39,7 +41,7 @@ class PatchCalculator {
 //                self.highCalculator.async(execute: op.op)
 //            }
             let wipCount = self.slowWip.count()
-            let toDo = 20 - wipCount
+            let toDo = self.ringBufferSize - wipCount
             if toDo > 0 {
                 for _ in 0..<toDo {
                     guard let op = self.lowRingBuffer.read() else { break }

@@ -41,7 +41,7 @@ let faces: [[UInt32]] = [
 let earthConfig = PlanetConfig(seed: 729123134,
                                radius: 10000.0,
                                frequencyFactor: 1.5,
-                               mountainHeightFraction: 0.125,
+                               mountainHeightFraction: 0.05,
                                hasWater: true,
                                levels: 0,
                                iciness: 0.4,
@@ -54,7 +54,7 @@ let earthConfig = PlanetConfig(seed: 729123134,
                                 blue: ColourScale(0.0, 0.0))
 )
 
-let vestaConfig = PlanetConfig(seed: 729134,
+let vestaConfig = PlanetConfig(seed: 719134,
                                radius: 1000.0,
                                frequencyFactor: 0.5,
                                mountainHeightFraction: 0.3,
@@ -65,9 +65,9 @@ let vestaConfig = PlanetConfig(seed: 729134,
                                persistence: 0.3,
                                lacunarity: 3.0,
                                groundColourScale: RGBColourScale(
-                                red: ColourScale(0.3, 0.3),
-                                green: ColourScale(0.3, 0.3),
-                                blue: ColourScale(0.3, 0.3))
+                                red: ColourScale(0.2, 0.7),
+                                green: ColourScale(0.2, 0.7),
+                                blue: ColourScale(0.2, 0.7))
 )
 
 let marsConfig = PlanetConfig(seed: 729134,
