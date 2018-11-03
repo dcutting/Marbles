@@ -42,32 +42,37 @@ class PatchCalculator {
     private let lowRingBuffer: RingBuffer<PatchOp>
 //    private let highRingBuffer: RingBuffer<PatchOp>
     private let reader: DispatchQueue
-    private let lowCalculator: DispatchQueue
-//    private let highCalculator: DispatchQueue
+    private let slow: DispatchQueue
+    private let fast: DispatchQueue
     private let wip = PatchCache<Bool>()
+    private let slowWip = PatchCache<Bool>()
 
     init(config: Config) {
         self.config = config
-        self.lowRingBuffer = RingBuffer(size: 600)
-//        self.highRingBuffer = RingBuffer(size: 600)
+        self.lowRingBuffer = RingBuffer(size: 20)
         self.reader = DispatchQueue(label: "reader", qos: .userInitiated, attributes: [])
-        self.lowCalculator = DispatchQueue(label: "calculator", qos: .default, attributes: .concurrent)
-//        self.highCalculator = DispatchQueue(label: "calculator", qos: .userInitiated, attributes: .concurrent)
+        self.slow = DispatchQueue(label: "slow", qos: .default, attributes: .concurrent)
+        self.fast = DispatchQueue(label: "fast", qos: .userInteractive, attributes: .concurrent)
         pollRingBuffer()
     }
 
     private func pollRingBuffer() {
-        reader.asyncAfter(deadline: .now() + 0.01) {
+        reader.asyncAfter(deadline: .now() + 0.1) {
 //            print("checking")
-            while true {
+//            while true {
 //                guard let op = self.highRingBuffer.read() else { break }
 //                self.highCalculator.async(execute: op.op)
 //            }
-//            for _ in 0..<100 {
-                guard let op = self.lowRingBuffer.read() else { break }
-//                print("read")
-                self.lowCalculator.async(execute: op.op)
+            let wipCount = self.slowWip.count()
+            let toDo = 20 - wipCount
+            if toDo > 0 {
+                for _ in 0..<toDo {
+                    guard let op = self.lowRingBuffer.read() else { break }
+//                    print("read read read read read")
+                    self.slow.async(execute: op.op)
+                }
             }
+            print(self.slowWip.count())
 //            print(self.highRingBuffer.count(), self.lowRingBuffer.count())
             self.pollRingBuffer()
         }
@@ -77,23 +82,33 @@ class PatchCalculator {
         let opName = "\(name)-\(subdivisions)"
         wip.write(opName, patch: true)
         let op = PatchOp(op: {
+            self.slowWip.write(opName, patch: true)
             let patch = self.subdivideTriangle(vertices: vertices, subdivisionLevels: subdivisions)
             completion(patch)
 //            print("done")
             let count = self.wip.remove(opName)
+            self.slowWip.remove(opName)
 //            print("low: \(count) in progress")
         }, name: opName)
 
         var lowBumped: PatchOp?
 //        var highBumped: PatchOp?
-//        switch qos {
-//        case .low:
+
+        switch qos {
+        case .low:
             lowBumped = lowRingBuffer.append(op)
-//        case .high:
-//            highBumped = highRingBuffer.append(op)
-//        }
+        case .high:
+            fast.async {
+                let patch = self.subdivideTriangle(vertices: vertices, subdivisionLevels: subdivisions)
+                completion(patch)
+                //            print("done")
+                let count = self.wip.remove(opName)
+            }
+        }
+
         if let bumped = lowBumped {
             let count = self.wip.remove(bumped.name)
+            _ = self.slowWip.remove(bumped.name)
 //            print("low: \(count) in progress: bumped")
 //            print("bumped")
         }

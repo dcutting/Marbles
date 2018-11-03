@@ -4,13 +4,13 @@ import SceneKit
 import SceneKit.ModelIO
 import ModelIO
 
-let maxEdgeLength = 175.0
-let minimumSubdivision: UInt32 = 3
-let lowSubdivisions: UInt32 = 0
+let maxEdgeLength = 120.0
+let minimumSubdivision: UInt32 = 0
+let lowSubdivisions: UInt32 = 4
 let highSubdivisions: UInt32 = lowSubdivisions + 1
 let maxDepth = 50
 let updateInterval = 0.5
-let wireframe = true
+let wireframe = false
 let flySpeed = 1000.0
 
 class MarbleViewController: NSViewController {
@@ -25,15 +25,16 @@ class MarbleViewController: NSViewController {
     lazy var fractalNoiseConfig: FractalNoiseConfig = {
         return FractalNoiseConfig(amplitude: Double(radius / 8.0),
                                   frequency: Double(1.5 / radius),
-                                  seed: 7291123124,
-                                  octaves: 15,
-                                  persistence: 0.5,
+                                  seed: 729123134,
+                                  octaves: 12,
+                                  persistence: 0.52,
                                   lacunarity: 2.0)
     }()
     lazy var lowPatchCalculator: PatchCalculator = {
         let noise = makeFractalNoise(config: fractalNoiseConfig)
         var config = PatchCalculator.Config(name: "low", noise: noise)
         config.radius = radius
+//        config.levels = 7
         config.amplitude = fractalNoiseConfig.amplitude
         return PatchCalculator(config: config)
     }()
@@ -124,7 +125,7 @@ class MarbleViewController: NSViewController {
         scnView.scene = scene
         scnView.allowsCameraControl = true
         scnView.backgroundColor = .black
-        scnView.showsStatistics = true
+//        scnView.showsStatistics = true
 //        scnView.defaultCameraController.interactionMode = .fly
         scnView.cameraControlConfiguration.flyModeVelocity = 50
         if wireframe {
@@ -231,7 +232,11 @@ class MarbleViewController: NSViewController {
         let scnView = view as! SCNView
         let cameraPosition = scnView.defaultCameraController.pointOfView!.position
         let distanceSq = cameraPosition.lengthSq()
-        guard (SCNVector3(corners[0]) - cameraPosition).lengthSq() < distanceSq else { return nil }
+        let aD = (SCNVector3(corners[0]) - cameraPosition).lengthSq() < distanceSq
+        let bD = (SCNVector3(corners[1]) - cameraPosition).lengthSq() < distanceSq
+        let cD = (SCNVector3(corners[2]) - cameraPosition).lengthSq() < distanceSq
+        guard aD || bD || cD else { return nil }
+        // TODO doesn't work for low angle vistas
 
         let sphericalisedCorners = lowPatchCalculator.sphericalise(vertices: corners)
 
