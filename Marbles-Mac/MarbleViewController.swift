@@ -1,29 +1,23 @@
 import AppKit
-import QuartzCore
 import SceneKit
-import SceneKit.ModelIO
-import ModelIO
 
 let maxEdgeLength = 90.0
-let minimumSubdivision: UInt32 = 0
 let lowSubdivisions: UInt32 = 4
-let highSubdivisions: UInt32 = lowSubdivisions + 1
 let maxDepth = 50
 let updateInterval = 0.5
 let wireframe = false
 
 class MarbleViewController: NSViewController {
 
+    var planet: PlanetConfig = earthConfig
+
     var screenWidth: CGFloat = 0.0
     var screenHeight: CGFloat = 0.0
     let scene = SCNScene()
     let terrainNode = SCNNode()
-    let terrainQueues = [DispatchQueue](repeating: DispatchQueue(label: "terrain", qos: .userInteractive, attributes: .concurrent), count: 20)
+    let terrainQueues = [DispatchQueue](repeating: DispatchQueue(label: "terrain", qos: .userInteractive, attributes: .concurrent), count: faces.count)
     var lowPatchCache = PatchCache<Patch>()
-    var highPatchCache = PatchCache<Patch>()
     var lowPatchCalculator: PatchCalculator!
-
-    var planet: PlanetConfig = earthConfig
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -38,7 +32,7 @@ class MarbleViewController: NSViewController {
         let lightNode = SCNNode()
         lightNode.light = light
         lightNode.look(at: SCNVector3())
-//        lightNode.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: 100)))
+        lightNode.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: 100)))
         scene.rootNode.addChildNode(lightNode)
 
         let ambientLight = SCNLight()
@@ -60,8 +54,6 @@ class MarbleViewController: NSViewController {
         scnView.scene = scene
         scnView.allowsCameraControl = true
         scnView.backgroundColor = .black
-//        scnView.showsStatistics = true
-//        scnView.defaultCameraController.interactionMode = .fly
         scnView.cameraControlConfiguration.flyModeVelocity = 50
         if wireframe {
             scnView.debugOptions = SCNDebugOptions([.renderAsWireframe])
@@ -72,7 +64,6 @@ class MarbleViewController: NSViewController {
         let boxNode = SCNNode(geometry: box)
         scene.rootNode.addChildNode(boxNode)
 
-//        makeWater()
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             self.makeTerrain()
         }
@@ -99,20 +90,6 @@ class MarbleViewController: NSViewController {
         let mode = scnView.defaultCameraController.interactionMode
         scnView.defaultCameraController.interactionMode = mode == .fly ? .orbitCenteredArcball : .fly
     }
-
-//    private func makeWater() {
-//        let icosa = MDLMesh.newIcosahedron(withRadius: Float(radius * 1.34), inwardNormals: false, allocator: nil)
-//        let shape = MDLMesh.newSubdividedMesh(icosa, submeshIndex: 0, subdivisionLevels: 6)!
-//        let water = SCNGeometry(mdlMesh: shape)
-//        let waterMaterial = SCNMaterial()
-//        waterMaterial.diffuse.contents = NSColor.blue
-//        waterMaterial.specular.contents = NSColor.white
-//        waterMaterial.shininess = 0.5
-//        waterMaterial.locksAmbientWithDiffuse = true
-//        water.materials = [waterMaterial]
-//        let waterNode = SCNNode(geometry: water)
-//        scene.rootNode.addChildNode(waterNode)
-//    }
 
     private func makeTerrain() {
         for faceIndex in 0..<faces.count {
@@ -153,7 +130,7 @@ class MarbleViewController: NSViewController {
             patchCache: lowPatchCache,
             depth: 0)
             ?? lowPatchCalculator.subdivideTriangle(vertices: corners,
-                                                    subdivisionLevels: minimumSubdivision)
+                                                    subdivisionLevels: lowSubdivisions)
         return makeGeometry(patch: patch, asWireframe: wireframe)
     }
 
@@ -238,15 +215,6 @@ class MarbleViewController: NSViewController {
                 return Patch(vertices: vertices, colours: colours, indices: indices)
             }
         }
-
-        // if can stitch sub patches
-        //   return stitched
-        // else
-        //   async calc sub patches (if not already)
-        //   if cached patch
-        //     return cached
-        //   else
-        //     cache and return sync calc patch
 
         if let stitchedPatch = stitchSubPatches(name: name) {
             return stitchedPatch

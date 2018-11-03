@@ -15,7 +15,6 @@ class PatchCalculator {
 
     private var config: PlanetConfig
     private let lowRingBuffer: RingBuffer<PatchOp>
-//    private let highRingBuffer: RingBuffer<PatchOp>
     private let reader: DispatchQueue
     private let slow: DispatchQueue
     private let fast: DispatchQueue
@@ -35,22 +34,15 @@ class PatchCalculator {
 
     private func pollRingBuffer() {
         reader.asyncAfter(deadline: .now() + 0.1) {
-//            print("checking")
-//            while true {
-//                guard let op = self.highRingBuffer.read() else { break }
-//                self.highCalculator.async(execute: op.op)
-//            }
             let wipCount = self.slowWip.count()
             let toDo = self.ringBufferSize - wipCount
             if toDo > 0 {
                 for _ in 0..<toDo {
                     guard let op = self.lowRingBuffer.read() else { break }
-//                    print("read read read read read")
                     self.slow.async(execute: op.op)
                 }
             }
             print(self.slowWip.count())
-//            print(self.highRingBuffer.count(), self.lowRingBuffer.count())
             self.pollRingBuffer()
         }
     }
@@ -62,14 +54,11 @@ class PatchCalculator {
             self.slowWip.write(opName, patch: true)
             let patch = self.subdivideTriangle(vertices: vertices, subdivisionLevels: subdivisions)
             completion(patch)
-//            print("done")
-            let count = self.wip.remove(opName)
-            self.slowWip.remove(opName)
-//            print("low: \(count) in progress")
+            _ = self.wip.remove(opName)
+            _ = self.slowWip.remove(opName)
         }, name: opName)
 
         var lowBumped: PatchOp?
-//        var highBumped: PatchOp?
 
         switch qos {
         case .low:
@@ -78,22 +67,14 @@ class PatchCalculator {
             fast.async {
                 let patch = self.subdivideTriangle(vertices: vertices, subdivisionLevels: subdivisions)
                 completion(patch)
-                //            print("done")
-                let count = self.wip.remove(opName)
+                _ = self.wip.remove(opName)
             }
         }
 
         if let bumped = lowBumped {
-            let count = self.wip.remove(bumped.name)
+            _ = self.wip.remove(bumped.name)
             _ = self.slowWip.remove(bumped.name)
-//            print("low: \(count) in progress: bumped")
-//            print("bumped")
         }
-//        if let bumped = highBumped {
-//            let count = self.wip.remove(bumped.name)
-////            print("high: \(count) in progress")
-////            print("bumped")
-//        }
     }
 
     func isCalculating(_ name: String, subdivisions: UInt32) -> Bool {
