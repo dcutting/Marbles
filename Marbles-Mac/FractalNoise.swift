@@ -8,6 +8,7 @@ struct PlanetConfig {
     let octaves: Int
     let persistence: Double
     let lacunarity: Double
+    let waterLevel: Double
 
     let diameter: Double
     let mountainHeight: Double
@@ -16,7 +17,7 @@ struct PlanetConfig {
     let oceanDepth: Double
     let noise: Noise
 
-    init(seed: Int, radius: Double, frequencyFactor: Double, mountainHeightFraction: Double, levels: Int, iciness: Double, octaves: Int, persistence: Double, lacunarity: Double) {
+    init(seed: Int, radius: Double, frequencyFactor: Double, mountainHeightFraction: Double, levels: Int, iciness: Double, octaves: Int, persistence: Double, lacunarity: Double, waterLevel: Double) {
         self.seed = seed
         self.radius = radius
         self.frequencyFactor = frequencyFactor
@@ -26,6 +27,7 @@ struct PlanetConfig {
         self.octaves = octaves
         self.persistence = persistence
         self.lacunarity = lacunarity
+        self.waterLevel = waterLevel
 
         self.diameter = radius * 2
         self.mountainHeight = radius * mountainHeightFraction

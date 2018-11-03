@@ -151,7 +151,7 @@ class PatchCalculator {
             let ratio = Double(config.amplitude) / Double(config.levels)
             delta = ratio * round(delta / ratio)
         }
-        if delta < 0.0 {
+        if delta < config.waterLevel {
             delta = (delta / config.mountainHeight) * config.oceanDepth
         }
         return an * (config.radius + delta)
@@ -207,15 +207,13 @@ class PatchCalculator {
             if FP(delta) > snowLine {
                 // Ice
                 colours.append([1.0, 1.0, 1.0])
-//            } else if FP(delta) >= 0.0 && FP(delta) < config.mountainHeight * 0.05 && distanceFromEquator < 0.3 {
-//                // Beach
-//                colours.append([0.7, 0.7, 0.0])
-            } else if FP(delta) <= 1.0 {
-                // Error
+            } else if FP(delta) <= config.waterLevel {
+                // Water
                 colours.append([0.0, 0.0, depthColour])
             } else {
                 // Forest
-                colours.append([0.0, heightColour, 0.0])
+                colours.append([0.3, 0.3, 0.3])
+//                colours.append([0.0, heightColour, 0.0])
             }
         }
         return colours

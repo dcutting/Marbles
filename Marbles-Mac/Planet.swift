@@ -46,4 +46,16 @@ let earthConfig = PlanetConfig(seed: 729123134,
                                iciness: 0.4,
                                octaves: 12,
                                persistence: 0.52,
-                               lacunarity: 2.0)
+                               lacunarity: 2.0,
+                               waterLevel: 0.0)
+
+let vestaConfig = PlanetConfig(seed: 729134,
+                               radius: 1000.0,
+                               frequencyFactor: 0.5,
+                               mountainHeightFraction: 0.3,
+                               levels: 0,
+                               iciness: 0.0,
+                               octaves: 12,
+                               persistence: 0.3,
+                               lacunarity: 3.0,
+                               waterLevel: -10000.0)
