@@ -1,0 +1,49 @@
+let phi: FP = 1.6180339887498948482
+
+let positions: [FP3] = [
+    [1, phi, 0],
+    [-1, phi, 0],
+    [1, -phi, 0],
+    [-1, -phi, 0],
+    [0, 1, phi],
+    [0, -1, phi],
+    [0, 1, -phi],
+    [0, -1, -phi],
+    [phi, 0, 1],
+    [-phi, 0, 1],
+    [phi, 0, -1],
+    [-phi, 0, -1]
+]
+
+let faces: [[UInt32]] = [
+    [4, 5, 8],
+    [4, 9, 5],
+    [4, 8, 0],
+    [4, 1, 9],
+    [0, 1, 4],
+    [1, 11, 9],
+    [9, 11, 3],
+    [1, 6, 11],
+    [0, 6, 1],
+    [5, 9, 3],
+    [10, 0, 8],
+    [10, 6, 0],
+    [11, 7, 3],
+    [5, 2, 8],
+    [10, 8, 2],
+    [10, 2, 7],
+    [6, 7, 11],
+    [6, 10, 7],
+    [5, 3, 2],
+    [2, 3, 7]
+]
+
+let earthConfig = PlanetConfig(seed: 729123134,
+                               radius: 10000.0,
+                               frequencyFactor: 1.5,
+                               mountainHeightFraction: 0.125,
+                               levels: 0,
+                               iciness: 0.4,
+                               octaves: 12,
+                               persistence: 0.52,
+                               lacunarity: 2.0)

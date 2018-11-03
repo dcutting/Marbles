@@ -22,22 +22,8 @@ class MarbleViewController: NSViewController {
     let terrainQueues = [DispatchQueue](repeating: DispatchQueue(label: "terrain", qos: .userInteractive, attributes: .concurrent), count: 20)
     var lowPatchCache = PatchCache<Patch>()
     var highPatchCache = PatchCache<Patch>()
-    lazy var fractalNoiseConfig: FractalNoiseConfig = {
-        return FractalNoiseConfig(amplitude: Double(radius / 8.0),
-                                  frequency: Double(1.5 / radius),
-                                  seed: 729123134,
-                                  octaves: 12,
-                                  persistence: 0.52,
-                                  lacunarity: 2.0)
-    }()
-    lazy var lowPatchCalculator: PatchCalculator = {
-        let noise = makeFractalNoise(config: fractalNoiseConfig)
-        var config = PatchCalculator.Config(name: "low", noise: noise)
-        config.radius = radius
-//        config.levels = 7
-        config.amplitude = fractalNoiseConfig.amplitude
-        return PatchCalculator(config: config)
-    }()
+    var lowPatchCalculator: PatchCalculator!
+    var radius: FP!
 //    lazy var highPatchCalculator: PatchCalculator = {
 //        let noise = makeFractalNoise(config: fractalNoiseConfig)
 //        var config = PatchCalculator.Config(name: "high", priority: .low, noise: noise)
@@ -46,55 +32,12 @@ class MarbleViewController: NSViewController {
 //        return PatchCalculator(config: config)
 //    }()
 
-    let phi: FP = 1.6180339887498948482
-
-    lazy var platonicPositions: [FP3] = [
-        [1, phi, 0],
-        [-1, phi, 0],
-        [1, -phi, 0],
-        [-1, -phi, 0],
-        [0, 1, phi],
-        [0, -1, phi],
-        [0, 1, -phi],
-        [0, -1, -phi],
-        [phi, 0, 1],
-        [-phi, 0, 1],
-        [phi, 0, -1],
-        [-phi, 0, -1]
-    ]
-
-    lazy var positions: [FP3] = platonicPositions.map { p in
-        p
-    }
-
-    let faces: [[UInt32]] = [
-        [4, 5, 8],
-        [4, 9, 5],
-        [4, 8, 0],
-        [4, 1, 9],
-        [0, 1, 4],
-        [1, 11, 9],
-        [9, 11, 3],
-        [1, 6, 11],
-        [0, 6, 1],
-        [5, 9, 3],
-        [10, 0, 8],
-        [10, 6, 0],
-        [11, 7, 3],
-        [5, 2, 8],
-        [10, 8, 2],
-        [10, 2, 7],
-        [6, 7, 11],
-        [6, 10, 7],
-        [5, 3, 2],
-        [2, 3, 7]
-    ]
-
-    let radius: FP = 10000
-
     override func viewDidLoad() {
         super.viewDidLoad()
         updateBounds()
+
+        radius = earthConfig.radius
+        lowPatchCalculator = PatchCalculator(config: earthConfig)
 
         scene.background.contents = NSImage(named: "tycho")!
 
@@ -200,8 +143,8 @@ class MarbleViewController: NSViewController {
         let distance = scnView.defaultCameraController.pointOfView!.position.length()
         let newVelocity = ((FP(distance) - radius) / radius) * flySpeed
         scnView.cameraControlConfiguration.flyModeVelocity = CGFloat(newVelocity)
-        let face = self.faces[faceIndex]
-        let vertices = [self.positions[Int(face[0])], self.positions[Int(face[1])], self.positions[Int(face[2])]]
+        let face = faces[faceIndex]
+        let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
         let geom = self.makeAdaptiveGeometry(faceIndex: faceIndex, corners: vertices, maxEdgeLength: maxEdgeLength)
         DispatchQueue.main.async {
             node.geometry = geom
@@ -236,7 +179,7 @@ class MarbleViewController: NSViewController {
         let bD = (SCNVector3(corners[1]) - cameraPosition).lengthSq() < distanceSq
         let cD = (SCNVector3(corners[2]) - cameraPosition).lengthSq() < distanceSq
         guard aD || bD || cD else { return nil }
-        // TODO doesn't work for low angle vistas
+        // TODO doesn't work great for low angle vistas
 
         let sphericalisedCorners = lowPatchCalculator.sphericalise(vertices: corners)
 

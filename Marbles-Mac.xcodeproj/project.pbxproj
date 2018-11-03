@@ -26,6 +26,7 @@
 		C8837A56218A16F100ABE455 /* Patch.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8837A55218A16F100ABE455 /* Patch.swift */; };
 		C8837A5B218A172700ABE455 /* PatchCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8837A5A218A172700ABE455 /* PatchCalculator.swift */; };
 		C8837A5D218A173F00ABE455 /* PatchCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8837A5C218A173F00ABE455 /* PatchCache.swift */; };
+		C8AF7C36218DB97E0027B7E8 /* Planet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8AF7C35218DB97E0027B7E8 /* Planet.swift */; };
 		C8DBE410218BD21900581CBE /* NSOperationStack.m in Sources */ = {isa = PBXBuildFile; fileRef = C8DBE40F218BD21900581CBE /* NSOperationStack.m */; };
 /* End PBXBuildFile section */
 
@@ -63,6 +64,7 @@
 		C8837A5A218A172700ABE455 /* PatchCalculator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PatchCalculator.swift; sourceTree = "<group>"; };
 		C8837A5C218A173F00ABE455 /* PatchCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchCache.swift; sourceTree = "<group>"; };
 		C88A461021774C8600E50318 /* geometry.shader.fragment */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = geometry.shader.fragment; sourceTree = "<group>"; };
+		C8AF7C35218DB97E0027B7E8 /* Planet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Planet.swift; sourceTree = "<group>"; };
 		C8C1B4C121779B9400CDDEDB /* geometry.shader.surface */ = {isa = PBXFileReference; lastKnownFileType = text; path = geometry.shader.surface; sourceTree = "<group>"; };
 		C8C1B4C32177E49600CDDEDB /* Shaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shaders.metal; sourceTree = "<group>"; };
 		C8DBE40D218BD21800581CBE /* Marbles-Mac-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Marbles-Mac-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -135,6 +137,7 @@
 			children = (
 				C80E460A216177440029A3A0 /* AppDelegate.swift */,
 				C80E460C216177440029A3A0 /* MarbleViewController.swift */,
+				C8AF7C35218DB97E0027B7E8 /* Planet.swift */,
 				C8837A55218A16F100ABE455 /* Patch.swift */,
 				C8837A5A218A172700ABE455 /* PatchCalculator.swift */,
 				C8837A5C218A173F00ABE455 /* PatchCache.swift */,
@@ -264,6 +267,7 @@
 				C85EB58E2168F62D00B670B2 /* compounds.swift in Sources */,
 				C8757C71216BB88C00CDEC74 /* Vector.swift in Sources */,
 				C816FAD9218CAA9400839795 /* RingBuffer.swift in Sources */,
+				C8AF7C36218DB97E0027B7E8 /* Planet.swift in Sources */,
 				C8837A56218A16F100ABE455 /* Patch.swift in Sources */,
 				C8837A5B218A172700ABE455 /* PatchCalculator.swift in Sources */,
 				C85EB58F2168F62D00B670B2 /* disk.swift in Sources */,

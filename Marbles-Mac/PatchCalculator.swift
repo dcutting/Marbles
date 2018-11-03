@@ -13,32 +13,7 @@ class PatchCalculator {
         case high
     }
 
-    struct Config {
-
-        let name: String
-
-        var radius: FP = 10000
-        var diameter: FP {
-            return radius * 2
-        }
-        var amplitude: FP = 0.0 // TODO: tie this to levels somehow
-        var mountainHeight: FP {
-            return amplitude / 2.0
-        }
-        var oceanDepth: FP {
-            return amplitude / 20.0
-        }
-        var levels: UInt32 = 0
-        var iciness: FP = 0.4
-        var noise: Noise
-
-        init(name: String, noise: Noise) {
-            self.name = name
-            self.noise = noise
-        }
-    }
-
-    private let config: Config
+    private var config: PlanetConfig
     private let lowRingBuffer: RingBuffer<PatchOp>
 //    private let highRingBuffer: RingBuffer<PatchOp>
     private let reader: DispatchQueue
@@ -47,7 +22,7 @@ class PatchCalculator {
     private let wip = PatchCache<Bool>()
     private let slowWip = PatchCache<Bool>()
 
-    init(config: Config) {
+    init(config: PlanetConfig) {
         self.config = config
         self.lowRingBuffer = RingBuffer(size: 20)
         self.reader = DispatchQueue(label: "reader", qos: .userInitiated, attributes: [])
