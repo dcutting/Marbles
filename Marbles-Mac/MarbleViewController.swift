@@ -11,7 +11,6 @@ let highSubdivisions: UInt32 = lowSubdivisions + 1
 let maxDepth = 50
 let updateInterval = 0.5
 let wireframe = false
-let flySpeed = 1000.0
 
 class MarbleViewController: NSViewController {
 
@@ -23,21 +22,14 @@ class MarbleViewController: NSViewController {
     var lowPatchCache = PatchCache<Patch>()
     var highPatchCache = PatchCache<Patch>()
     var lowPatchCalculator: PatchCalculator!
-    var radius: FP!
-//    lazy var highPatchCalculator: PatchCalculator = {
-//        let noise = makeFractalNoise(config: fractalNoiseConfig)
-//        var config = PatchCalculator.Config(name: "high", priority: .low, noise: noise)
-//        config.radius = radius
-//        config.amplitude = fractalNoiseConfig.amplitude
-//        return PatchCalculator(config: config)
-//    }()
+
+    var planet: PlanetConfig = vestaConfig
 
     override func viewDidLoad() {
         super.viewDidLoad()
         updateBounds()
 
-        radius = earthConfig.radius
-        lowPatchCalculator = PatchCalculator(config: earthConfig)
+        lowPatchCalculator = PatchCalculator(config: planet)
 
         scene.background.contents = NSImage(named: "tycho")!
 
@@ -59,7 +51,7 @@ class MarbleViewController: NSViewController {
         let camera = SCNCamera()
         camera.automaticallyAdjustsZRange = true
         let cameraNode = SCNNode()
-        cameraNode.position = SCNVector3(x: 0.0, y: 0.0, z: CGFloat(radius * 2.5))
+        cameraNode.position = SCNVector3(x: 0.0, y: 0.0, z: CGFloat(planet.radius * 2.5))
         cameraNode.camera = camera
         cameraNode.look(at: SCNVector3())
         scene.rootNode.addChildNode(cameraNode)
@@ -141,7 +133,7 @@ class MarbleViewController: NSViewController {
     private func refreshGeometry(faceIndex: Int, node: SCNNode) {
         let scnView = view as! SCNView
         let distance = scnView.defaultCameraController.pointOfView!.position.length()
-        let newVelocity = ((FP(distance) - radius) / radius) * flySpeed
+        let newVelocity = ((FP(distance) - planet.radius) / planet.radius) * planet.radius / 10.0
         scnView.cameraControlConfiguration.flyModeVelocity = CGFloat(newVelocity)
         let face = faces[faceIndex]
         let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
