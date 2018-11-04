@@ -5,7 +5,8 @@ let maxEdgeLength = 90.0
 let lowSubdivisions: UInt32 = 4
 let maxDepth = 50
 let updateInterval = 0.5
-let wireframe = false
+let wireframe = true
+let hasDays = false
 
 class MarbleViewController: NSViewController {
 
@@ -32,12 +33,14 @@ class MarbleViewController: NSViewController {
         let lightNode = SCNNode()
         lightNode.light = light
         lightNode.look(at: SCNVector3())
-        lightNode.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: 100)))
+        if hasDays {
+            lightNode.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: 100)))
+        }
         scene.rootNode.addChildNode(lightNode)
 
         let ambientLight = SCNLight()
         ambientLight.type = .ambient
-        ambientLight.color = NSColor(calibratedWhite: 0.3, alpha: 1.0)
+        ambientLight.color = NSColor(calibratedWhite: 0.1, alpha: 1.0)
         let ambientLightNode = SCNNode()
         ambientLightNode.light = ambientLight
         scene.rootNode.addChildNode(ambientLightNode)
