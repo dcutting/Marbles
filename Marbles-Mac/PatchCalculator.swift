@@ -42,7 +42,7 @@ class PatchCalculator {
                     self.slow.async(execute: op.op)
                 }
             }
-            print(self.slowWip.count())
+            print(self.wip.count(), self.slowWip.count())
             self.pollRingBuffer()
         }
     }
