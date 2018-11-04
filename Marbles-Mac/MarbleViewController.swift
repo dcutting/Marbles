@@ -1,30 +1,29 @@
 import AppKit
 import SceneKit
 
-let maxEdgeLength = 90.0
-let lowSubdivisions: UInt32 = 4
-let maxDepth = 50
-let updateInterval = 0.5
-let wireframe = true
-let hasDays = false
-
 class MarbleViewController: NSViewController {
 
-    var planet: PlanetConfig = earthConfig
+    let planet = earthConfig
+    let maxEdgeLength = 90.0
+    let detailSubdivisions: UInt32 = 4
+    let adaptivePatchMaxDepth = 50
+    let updateInterval = 0.5
+    let wireframe = false
+    let hasDays = false
 
     var screenWidth: CGFloat = 0.0
     var screenHeight: CGFloat = 0.0
     let scene = SCNScene()
     let terrainNode = SCNNode()
     let terrainQueues = [DispatchQueue](repeating: DispatchQueue(label: "terrain", qos: .userInteractive, attributes: .concurrent), count: faces.count)
-    var lowPatchCache = PatchCache<Patch>()
-    var lowPatchCalculator: PatchCalculator!
+    var patchCache = PatchCache<Patch>()
+    var patchCalculator: PatchCalculator!
 
     override func viewDidLoad() {
         super.viewDidLoad()
         updateBounds()
 
-        lowPatchCalculator = PatchCalculator(config: planet)
+        patchCalculator = PatchCalculator(config: planet)
 
         scene.background.contents = NSImage(named: "tycho")!
 
@@ -62,10 +61,8 @@ class MarbleViewController: NSViewController {
             scnView.debugOptions = SCNDebugOptions([.renderAsWireframe])
         }
 
-        // Marker
-        let box = SCNBox(width: 100.0, height: 100.0, length: 100.0, chamferRadius: 0.0)
-        let boxNode = SCNNode(geometry: box)
-        scene.rootNode.addChildNode(boxNode)
+        let originMarker = SCNBox(width: 100.0, height: 100.0, length: 100.0, chamferRadius: 0.0)
+        scene.rootNode.addChildNode(SCNNode(geometry: originMarker))
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             self.makeTerrain()
@@ -85,7 +82,6 @@ class MarbleViewController: NSViewController {
     private func updateBounds() {
         screenWidth = view.bounds.width
         screenHeight = view.bounds.height
-        print(screenWidth, screenHeight)
     }
 
     @objc func handleClick(_ gestureRecognizer: NSGestureRecognizer) {
@@ -98,8 +94,8 @@ class MarbleViewController: NSViewController {
         for faceIndex in 0..<faces.count {
             let face = faces[faceIndex]
             let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
-            lowPatchCalculator.calculate("\(faceIndex)-", vertices: vertices, subdivisions: 0, qos: .high) { patch in
-                let geometry = makeGeometry(patch: patch, asWireframe: wireframe)
+            patchCalculator.calculate("\(faceIndex)-", vertices: vertices, subdivisions: 0, qos: .high) { patch in
+                let geometry = makeGeometry(patch: patch, asWireframe: self.wireframe)
                 let node = SCNNode(geometry: geometry)
                 self.terrainNode.addChildNode(node)
                 self.terrainQueues[faceIndex].async {
@@ -120,7 +116,7 @@ class MarbleViewController: NSViewController {
         let geom = self.makeAdaptiveGeometry(faceIndex: faceIndex, corners: vertices, maxEdgeLength: maxEdgeLength)
         DispatchQueue.main.async {
             node.geometry = geom
-            self.terrainQueues[faceIndex].asyncAfter(deadline: .now() + updateInterval) {
+            self.terrainQueues[faceIndex].asyncAfter(deadline: .now() + self.updateInterval) {
                 self.refreshGeometry(faceIndex: faceIndex, node: node)
             }
         }
@@ -130,17 +126,17 @@ class MarbleViewController: NSViewController {
         let patch = makeAdaptivePatch(name: "\(faceIndex)-",
             corners: corners,
             maxEdgeLengthSq: maxEdgeLength * maxEdgeLength,
-            patchCache: lowPatchCache,
+            patchCache: patchCache,
             depth: 0)
-            ?? lowPatchCalculator.subdivideTriangle(vertices: corners,
-                                                    subdivisionLevels: lowSubdivisions)
+            ?? patchCalculator.subdivideTriangle(vertices: corners,
+                                                    subdivisionLevels: detailSubdivisions)
         return makeGeometry(patch: patch, asWireframe: wireframe)
     }
 
     private func makeAdaptivePatch(name: String, corners: [FP3], maxEdgeLengthSq: FP, patchCache: PatchCache<Patch>, depth: UInt32) -> Patch? {
 
-        if depth >= maxDepth {
-            print("hit max depth \(maxDepth)")
+        if depth >= adaptivePatchMaxDepth {
+            print("hit max depth \(adaptivePatchMaxDepth)")
             return nil
         }
 
@@ -153,7 +149,7 @@ class MarbleViewController: NSViewController {
         guard aD || bD || cD else { return nil }
         // TODO doesn't work great for low angle vistas
 
-        let sphericalisedCorners = lowPatchCalculator.sphericalise(vertices: corners)
+        let sphericalisedCorners = patchCalculator.sphericalise(vertices: corners)
 
         let v0 = sphericalisedCorners[0]
         let v1 = sphericalisedCorners[1]
@@ -179,7 +175,7 @@ class MarbleViewController: NSViewController {
         }
 
         if subdivide {
-            let (subv, sube) = lowPatchCalculator.sphericallySubdivide(vertices: corners)
+            let (subv, sube) = patchCalculator.sphericallySubdivide(vertices: corners)
             var subVertices = [[Patch.Vertex]](repeating: [], count: 4)
             var subColours = [[Patch.Colour]](repeating: [], count: 4)
             var subIndices = [[Patch.Index]](repeating: [], count: 4)
@@ -222,26 +218,22 @@ class MarbleViewController: NSViewController {
         if let stitchedPatch = stitchSubPatches(name: name) {
             return stitchedPatch
         } else {
-            let (subv, sube) = lowPatchCalculator.sphericallySubdivide(vertices: corners)
+            let (subv, sube) = patchCalculator.sphericallySubdivide(vertices: corners)
             for i in 0..<sube.count {
                 let index = sube[i]
                 let vx = subv[Int(index[0])]
                 let vy = subv[Int(index[1])]
                 let vz = subv[Int(index[2])]
                 let subName = name + "\(i)"
-                if !lowPatchCalculator.isCalculating(subName, subdivisions: lowSubdivisions) {
-                    lowPatchCalculator.calculate(subName, vertices: [vx, vy, vz], subdivisions: lowSubdivisions, qos: .low) { patch in
-                        self.lowPatchCache.write(subName, patch: patch)
-                    }
+                patchCalculator.calculate(subName, vertices: [vx, vy, vz], subdivisions: detailSubdivisions, qos: .low) { patch in
+                    self.patchCache.write(subName, patch: patch)
                 }
             }
-            if let cachedPatch = lowPatchCache.read(name) {
+            if let cachedPatch = patchCache.read(name) {
                 return cachedPatch
             } else {
-                if !lowPatchCalculator.isCalculating(name, subdivisions: lowSubdivisions) {
-                    lowPatchCalculator.calculate(name, vertices: corners, subdivisions: lowSubdivisions, qos: .high) { patch in
-                        self.lowPatchCache.write(name, patch: patch)
-                    }
+                patchCalculator.calculate(name, vertices: corners, subdivisions: detailSubdivisions, qos: .high) { patch in
+                    self.patchCache.write(name, patch: patch)
                 }
                 return nil
             }
@@ -271,7 +263,7 @@ class MarbleViewController: NSViewController {
 
     private func findSubPatches(name: String, depth: UInt32) -> [Patch] {
         if depth == 0 {
-            if let patch = lowPatchCache.read(name) {
+            if let patch = patchCache.read(name) {
                 return [patch]
             } else {
                 return []

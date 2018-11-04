@@ -48,6 +48,9 @@ class PatchCalculator {
     }
 
     func calculate(_ name: String, vertices: [Patch.Vertex], subdivisions: UInt32, qos: Priority, completion: @escaping (Patch) -> Void) {
+
+        guard !isCalculating(name, subdivisions: subdivisions) else { return }
+
         let opName = "\(name)-\(subdivisions)"
         wip.write(opName, patch: true)
         let op = PatchOp(op: {
