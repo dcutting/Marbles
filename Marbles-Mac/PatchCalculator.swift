@@ -6,82 +6,82 @@ struct PatchOp {
     let name: String
 }
 
+struct PrioritisedOp {
+    let priority: Double
+    let op: PatchOp
+}
+
 class PatchCalculator {
 
-    enum Priority {
-        case low
-        case high
-    }
-
     private var config: PlanetConfig
-    private let lowRingBuffer: RingBuffer<PatchOp>
+    private var priorityBuffer = [PrioritisedOp]()
     private let reader: DispatchQueue
-    private let slow: DispatchQueue
     private let fast: DispatchQueue
+    private let queued = PatchCache<Bool>()
     private let wip = PatchCache<Bool>()
-    private let slowWip = PatchCache<Bool>()
-
-    private let ringBufferSize = 10
+    private let concurrentPatches = 20
 
     init(config: PlanetConfig) {
         self.config = config
-        self.lowRingBuffer = RingBuffer(size: ringBufferSize)
-        self.reader = DispatchQueue(label: "reader", qos: .userInitiated, attributes: [])
-        self.slow = DispatchQueue(label: "slow", qos: .default, attributes: .concurrent)
-        self.fast = DispatchQueue(label: "fast", qos: .userInteractive, attributes: .concurrent)
+        self.reader = DispatchQueue(label: "reader", qos: .userInteractive, attributes: [])
+        self.fast = DispatchQueue(label: "fast", qos: .default, attributes: .concurrent)
         pollRingBuffer()
     }
 
     private func pollRingBuffer() {
         reader.asyncAfter(deadline: .now() + 0.1) {
-            let wipCount = self.slowWip.count()
-            let toDo = self.ringBufferSize - wipCount
-            if toDo > 0 {
-                for _ in 0..<toDo {
-                    guard let op = self.lowRingBuffer.read() else { break }
-                    self.slow.async(execute: op.op)
-                }
+            let queuedCount = self.queued.count()
+            let wipCount = self.wip.count()
+            let toDo = max(0, self.concurrentPatches - wipCount)
+            self.priorityBuffer.sort { a, b in
+                a.priority < b.priority
             }
-            print(self.wip.count(), self.slowWip.count())
+            let bufferCount = self.priorityBuffer.count
+            let willDo = min(toDo, bufferCount)
+            let ops = self.priorityBuffer.prefix(willDo)
+            self.priorityBuffer.removeFirst(willDo)
+            ops.forEach { op in
+                self.fast.async(execute: op.op.op)
+            }
+            print("\(queuedCount), \(wipCount): \(ops.map { op in op.op.name })")
             self.pollRingBuffer()
         }
     }
 
-    func calculate(_ name: String, vertices: [Patch.Vertex], subdivisions: UInt32, qos: Priority, completion: @escaping (Patch) -> Void) {
+    func calculate(_ name: String, vertices: [Patch.Vertex], subdivisions: UInt32, priority: Double, completion: @escaping (Patch) -> Void) {
 
         guard !isCalculating(name, subdivisions: subdivisions) else { return }
 
         let opName = "\(name)-\(subdivisions)"
-        wip.write(opName, patch: true)
+        queued.write(opName, patch: true)
+
         let op = PatchOp(op: {
-            self.slowWip.write(opName, patch: true)
+            self.wip.write(opName, patch: true)
             let patch = self.subdivideTriangle(vertices: vertices, subdivisionLevels: subdivisions)
             completion(patch)
             _ = self.wip.remove(opName)
-            _ = self.slowWip.remove(opName)
+            _ = self.queued.remove(opName)
         }, name: opName)
 
-        var lowBumped: PatchOp?
+        let prioritisedOp = PrioritisedOp(priority: priority, op: op)
 
-        switch qos {
-        case .low:
-            lowBumped = lowRingBuffer.append(op)
-        case .high:
-            fast.async {
-                let patch = self.subdivideTriangle(vertices: vertices, subdivisionLevels: subdivisions)
-                completion(patch)
-                _ = self.wip.remove(opName)
-            }
+        reader.async {
+            self.priorityBuffer.append(prioritisedOp)
         }
+    }
 
-        if let bumped = lowBumped {
-            _ = self.wip.remove(bumped.name)
-            _ = self.slowWip.remove(bumped.name)
+    func clearBuffer() {
+        reader.async {
+            self.priorityBuffer.forEach { op in
+                _ = self.queued.remove(op.op.name)
+            }
+            self.priorityBuffer.removeAll()
+            print("-----")
         }
     }
 
     func isCalculating(_ name: String, subdivisions: UInt32) -> Bool {
-        return wip.read("\(name)-\(subdivisions)") ?? false
+        return queued.read("\(name)-\(subdivisions)") ?? false
     }
 
     func subdivideTriangle(vertices: [Patch.Vertex], subdivisionLevels: UInt32) -> Patch {

@@ -94,19 +94,19 @@ class MarbleViewController: NSViewController {
         for faceIndex in 0..<faces.count {
             let face = faces[faceIndex]
             let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
-            patchCalculator.calculate("\(faceIndex)-", vertices: vertices, subdivisions: 0, qos: .high) { patch in
-                let geometry = makeGeometry(patch: patch, asWireframe: self.wireframe)
-                let node = SCNNode(geometry: geometry)
-                self.terrainNode.addChildNode(node)
-                self.terrainQueues[faceIndex].async {
-                    self.refreshGeometry(faceIndex: faceIndex, node: node)
-                }
+            let patch = patchCalculator.subdivideTriangle(vertices: vertices, subdivisionLevels: 0)
+            let geometry = makeGeometry(patch: patch, asWireframe: self.wireframe)
+            let node = SCNNode(geometry: geometry)
+            self.terrainNode.addChildNode(node)
+            self.terrainQueues[faceIndex].async {
+                self.refreshGeometry(faceIndex: faceIndex, node: node)
             }
         }
         self.scene.rootNode.addChildNode(terrainNode)
     }
 
     private func refreshGeometry(faceIndex: Int, node: SCNNode) {
+        patchCalculator.clearBuffer()
         let scnView = view as! SCNView
         let distance = scnView.defaultCameraController.pointOfView!.position.length()
         let newVelocity = ((FP(distance) - planet.radius) / planet.radius) * planet.radius / 10.0
@@ -143,10 +143,11 @@ class MarbleViewController: NSViewController {
         let scnView = view as! SCNView
         let cameraPosition = scnView.defaultCameraController.pointOfView!.position
         let distanceSq = cameraPosition.lengthSq()
-        let aD = (SCNVector3(corners[0]) - cameraPosition).lengthSq() < distanceSq
-        let bD = (SCNVector3(corners[1]) - cameraPosition).lengthSq() < distanceSq
-        let cD = (SCNVector3(corners[2]) - cameraPosition).lengthSq() < distanceSq
-        guard aD || bD || cD else { return nil }
+        let aD = (SCNVector3(corners[0]) - cameraPosition).lengthSq()
+        let bD = (SCNVector3(corners[1]) - cameraPosition).lengthSq()
+        let cD = (SCNVector3(corners[2]) - cameraPosition).lengthSq()
+        let minimumTriangleDistance = min(aD, bD, cD)
+        guard minimumTriangleDistance < distanceSq else { return nil }
         // TODO doesn't work great for low angle vistas
 
         let sphericalisedCorners = patchCalculator.sphericalise(vertices: corners)
@@ -225,14 +226,15 @@ class MarbleViewController: NSViewController {
                 let vy = subv[Int(index[1])]
                 let vz = subv[Int(index[2])]
                 let subName = name + "\(i)"
-                patchCalculator.calculate(subName, vertices: [vx, vy, vz], subdivisions: detailSubdivisions, qos: .low) { patch in
+                let priority = Double(pow(minimumTriangleDistance, 2))
+                patchCalculator.calculate(subName, vertices: [vx, vy, vz], subdivisions: detailSubdivisions, priority: priority) { patch in
                     self.patchCache.write(subName, patch: patch)
                 }
             }
             if let cachedPatch = patchCache.read(name) {
                 return cachedPatch
             } else {
-                patchCalculator.calculate(name, vertices: corners, subdivisions: detailSubdivisions, qos: .high) { patch in
+                patchCalculator.calculate(name, vertices: corners, subdivisions: detailSubdivisions, priority: Double(minimumTriangleDistance)) { patch in
                     self.patchCache.write(name, patch: patch)
                 }
                 return nil
