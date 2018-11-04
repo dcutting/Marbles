@@ -8,7 +8,16 @@ class MarbleViewController: NSViewController {
     let detailSubdivisions: UInt32 = 4
     let adaptivePatchMaxDepth = 50
     let updateInterval = 0.5
-    let wireframe = false
+    var wireframe: Bool = false {
+        didSet {
+            let scnView = view as? SCNView
+            if wireframe {
+                scnView?.debugOptions.insert(.renderAsWireframe)
+            } else {
+                scnView?.debugOptions.remove(.renderAsWireframe)
+            }
+        }
+    }
     let hasDays = false
 
     var screenWidth: CGFloat = 0.0
@@ -57,9 +66,6 @@ class MarbleViewController: NSViewController {
         scnView.allowsCameraControl = true
         scnView.backgroundColor = .black
         scnView.cameraControlConfiguration.flyModeVelocity = 50
-        if wireframe {
-            scnView.debugOptions = SCNDebugOptions([.renderAsWireframe])
-        }
 
         let originMarker = SCNBox(width: 100.0, height: 100.0, length: 100.0, chamferRadius: 0.0)
         scene.rootNode.addChildNode(SCNNode(geometry: originMarker))
@@ -85,9 +91,10 @@ class MarbleViewController: NSViewController {
     }
 
     @objc func handleClick(_ gestureRecognizer: NSGestureRecognizer) {
-        let scnView = view as! SCNView
-        let mode = scnView.defaultCameraController.interactionMode
-        scnView.defaultCameraController.interactionMode = mode == .fly ? .orbitCenteredArcball : .fly
+        wireframe.toggle()
+//        let scnView = view as! SCNView
+//        let mode = scnView.defaultCameraController.interactionMode
+//        scnView.defaultCameraController.interactionMode = mode == .fly ? .orbitCenteredArcball : .fly
     }
 
     private func makeTerrain() {
@@ -226,7 +233,7 @@ class MarbleViewController: NSViewController {
                 let vy = subv[Int(index[1])]
                 let vz = subv[Int(index[2])]
                 let subName = name + "\(i)"
-                let priority = Double(pow(minimumTriangleDistance, 2))
+                let priority = Double(pow(minimumTriangleDistance, 10))
                 patchCalculator.calculate(subName, vertices: [vx, vy, vz], subdivisions: detailSubdivisions, priority: priority) { patch in
                     self.patchCache.write(subName, patch: patch)
                 }
