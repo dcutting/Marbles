@@ -24,7 +24,7 @@ class PatchCalculator {
     init(config: PlanetConfig) {
         self.config = config
         self.reader = DispatchQueue(label: "reader", qos: .userInteractive, attributes: [])
-        self.fast = DispatchQueue(label: "fast", qos: .default, attributes: .concurrent)
+        self.fast = DispatchQueue(label: "fast", qos: .userInitiated, attributes: .concurrent)
         pollRingBuffer()
     }
 
