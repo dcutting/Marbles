@@ -22,9 +22,10 @@ class MarbleViewController: NSViewController {
 
     var screenWidth: CGFloat = 0.0
     var screenHeight: CGFloat = 0.0
+    var screenCenter = SCNVector3()
     let scene = SCNScene()
     let terrainNode = SCNNode()
-    let terrainQueues = [DispatchQueue](repeating: DispatchQueue(label: "terrain", qos: .userInteractive, attributes: .concurrent), count: faces.count)
+    let terrainQueues = [DispatchQueue](repeating: DispatchQueue(label: "terrain", qos: .userInitiated, attributes: .concurrent), count: faces.count)
     var patchCache = PatchCache<Patch>()
     var patchCalculator: PatchCalculator!
 
@@ -88,6 +89,8 @@ class MarbleViewController: NSViewController {
     private func updateBounds() {
         screenWidth = view.bounds.width
         screenHeight = view.bounds.height
+        screenCenter = SCNVector3(screenWidth/2.0, screenHeight/2.0, 0.0)
+        print(screenCenter)
     }
 
     @objc func handleClick(_ gestureRecognizer: NSGestureRecognizer) {
@@ -167,6 +170,14 @@ class MarbleViewController: NSViewController {
         let p1 = scnView.projectPoint(SCNVector3(v1))
         let p2 = scnView.projectPoint(SCNVector3(v2))
 
+        let p0d = (p0 - screenCenter).lengthSq()
+        let p1d = (p1 - screenCenter).lengthSq()
+        let p2d = (p2 - screenCenter).lengthSq()
+        let pm = min(p0d, p1d, p2d)
+        if pm < 100 {
+            print(pm)
+        }
+
         var subdivide = false
         if isIntersecting(p0, p1, p2, width: screenWidth, height: screenHeight) {
             let l0 = FP((p0 - p1).lengthSq())
@@ -233,6 +244,7 @@ class MarbleViewController: NSViewController {
                 let vy = subv[Int(index[1])]
                 let vz = subv[Int(index[2])]
                 let subName = name + "\(i)"
+                // TODO pm?
                 let priority = Double(pow(minimumTriangleDistance, 10))
                 patchCalculator.calculate(subName, vertices: [vx, vy, vz], subdivisions: detailSubdivisions, priority: priority) { patch in
                     self.patchCache.write(subName, patch: patch)
@@ -241,6 +253,7 @@ class MarbleViewController: NSViewController {
             if let cachedPatch = patchCache.read(name) {
                 return cachedPatch
             } else {
+                // TODO: pm?
                 patchCalculator.calculate(name, vertices: corners, subdivisions: detailSubdivisions, priority: Double(minimumTriangleDistance)) { patch in
                     self.patchCache.write(name, patch: patch)
                 }

@@ -19,12 +19,12 @@ class PatchCalculator {
     private let fast: DispatchQueue
     private let queued = PatchCache<Bool>()
     private let wip = PatchCache<Bool>()
-    private let concurrentPatches = 20
+    private let concurrentPatches = 10
 
     init(config: PlanetConfig) {
         self.config = config
         self.reader = DispatchQueue(label: "reader", qos: .userInteractive, attributes: [])
-        self.fast = DispatchQueue(label: "fast", qos: .userInitiated, attributes: .concurrent)
+        self.fast = DispatchQueue(label: "fast", qos: .default, attributes: .concurrent)
         pollRingBuffer()
     }
 
@@ -72,11 +72,8 @@ class PatchCalculator {
 
     func clearBuffer() {
         reader.async {
-            self.priorityBuffer.forEach { op in
-                _ = self.queued.remove(op.op.name)
-            }
+            self.queued.removeAll()
             self.priorityBuffer.removeAll()
-            print("-----")
         }
     }
 

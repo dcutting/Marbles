@@ -24,6 +24,12 @@ class PatchCache<T> {
         }
     }
 
+    func removeAll() {
+        lock.sync(flags: .barrier) {
+            cache.removeAll()
+        }
+    }
+
     func count() -> Int {
         return lock.sync {
             return cache.count
