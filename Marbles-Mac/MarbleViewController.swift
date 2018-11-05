@@ -25,7 +25,7 @@ class MarbleViewController: NSViewController {
     var screenCenter = SCNVector3()
     let scene = SCNScene()
     let terrainNode = SCNNode()
-    let terrainQueues = [DispatchQueue](repeating: DispatchQueue(label: "terrain", qos: .userInitiated, attributes: .concurrent), count: faces.count)
+    let terrainQueues = [DispatchQueue](repeating: DispatchQueue(label: "terrain", qos: .userInteractive, attributes: .concurrent), count: faces.count)
     var patchCache = PatchCache<Patch>()
     var patchCalculator: PatchCalculator!
 
@@ -90,7 +90,7 @@ class MarbleViewController: NSViewController {
         screenWidth = view.bounds.width
         screenHeight = view.bounds.height
         screenCenter = SCNVector3(screenWidth/2.0, screenHeight/2.0, 0.0)
-        print(screenCenter)
+//        print(screenCenter)
     }
 
     @objc func handleClick(_ gestureRecognizer: NSGestureRecognizer) {
@@ -175,7 +175,7 @@ class MarbleViewController: NSViewController {
         let p2d = (p2 - screenCenter).lengthSq()
         let pm = min(p0d, p1d, p2d)
         if pm < 100 {
-            print(pm)
+//            print(pm)
         }
 
         var subdivide = false

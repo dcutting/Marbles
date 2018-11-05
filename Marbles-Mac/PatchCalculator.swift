@@ -19,17 +19,17 @@ class PatchCalculator {
     private let fast: DispatchQueue
     private let queued = PatchCache<Bool>()
     private let wip = PatchCache<Bool>()
-    private let concurrentPatches = 10
+    private let concurrentPatches = 8
 
     init(config: PlanetConfig) {
         self.config = config
-        self.reader = DispatchQueue(label: "reader", qos: .userInteractive, attributes: [])
+        self.reader = DispatchQueue(label: "reader", qos: .userInitiated, attributes: [])
         self.fast = DispatchQueue(label: "fast", qos: .default, attributes: .concurrent)
         pollRingBuffer()
     }
 
     private func pollRingBuffer() {
-        reader.asyncAfter(deadline: .now() + 0.1) {
+        reader.asyncAfter(deadline: .now() + 0.08) {
             let queuedCount = self.queued.count()
             let wipCount = self.wip.count()
             let toDo = max(0, self.concurrentPatches - wipCount)
@@ -56,11 +56,15 @@ class PatchCalculator {
         queued.write(opName, patch: true)
 
         let op = PatchOp(op: {
-            self.wip.write(opName, patch: true)
+            self.reader.sync {
+                _ = self.queued.remove(opName)
+                self.wip.write(opName, patch: true)
+            }
             let patch = self.subdivideTriangle(vertices: vertices, subdivisionLevels: subdivisions)
             completion(patch)
-            _ = self.wip.remove(opName)
-            _ = self.queued.remove(opName)
+            self.reader.sync {
+                _ = self.wip.remove(opName)
+            }
         }, name: opName)
 
         let prioritisedOp = PrioritisedOp(priority: priority, op: op)
@@ -78,7 +82,12 @@ class PatchCalculator {
     }
 
     func isCalculating(_ name: String, subdivisions: UInt32) -> Bool {
-        return queued.read("\(name)-\(subdivisions)") ?? false
+        return reader.sync {
+            let opName = "\(name)-\(subdivisions)"
+            let isInProgress = wip.read(opName) ?? false
+            let isQueued = queued.read(opName) ?? false
+            return isInProgress || isQueued
+        }
     }
 
     func subdivideTriangle(vertices: [Patch.Vertex], subdivisionLevels: UInt32) -> Patch {
