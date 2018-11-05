@@ -43,7 +43,7 @@ class PatchCalculator {
             ops.forEach { op in
                 self.fast.async(execute: op.op.op)
             }
-            print("\(queuedCount), \(wipCount): \(ops.map { op in op.op.name })")
+//            print("\(queuedCount), \(wipCount): \(ops.map { op in op.op.name })")
             self.pollRingBuffer()
         }
     }

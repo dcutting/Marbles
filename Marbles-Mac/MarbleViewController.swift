@@ -236,19 +236,9 @@ class MarbleViewController: NSViewController {
                 subIndices[i] = subPatch.indices
             }
             if foundAllSubPatches {
-//                var vertices = [Patch.Vertex]()
-//                var colours = [Patch.Colour]()
-//                var indices = [Patch.Index]()
                 let vertices = subVertices[0] + subVertices[1] + subVertices[2] + subVertices[3]
                 let colours = subColours[0] + subColours[1] + subColours[2] + subColours[3]
                 var offset: UInt32 = 0
-//                for i in 0..<4 {
-//                    vertices.append(contentsOf: subVertices[i])
-//                    colours.append(contentsOf: subColours[i])
-//                    let offsetEdges = subIndices[i].map { index in index + offset }
-//                    offset += UInt32(subVertices[i].count)
-//                    indices.append(contentsOf: offsetEdges)
-//                }
                 let offsetIndices: [[Patch.Index]] = subIndices.enumerated().map { (i, s) in
                     defer { offset += UInt32(subVertices[i].count) }
                     return s.map { index in index + offset }
@@ -287,38 +277,31 @@ class MarbleViewController: NSViewController {
     }
 
     private func stitchSubPatches(name: String) -> Patch? {
-        for depth: UInt32 in (1..<2).reversed() {
-            let subPatches = findSubPatches(name: name, depth: depth)
-            if pow(4, depth) == subPatches.count {
-                var vertices = [Patch.Vertex]()
-                var colours = [Patch.Colour]()
-                var indices = [Patch.Index]()
-                var offset: UInt32 = 0
-                for subPatch in subPatches {
-                    vertices.append(contentsOf: subPatch.vertices)
-                    colours.append(contentsOf: subPatch.colours)
-                    let offsetEdges = subPatch.indices.map { index in index + offset }
-                    offset += UInt32(subPatch.vertices.count)
-                    indices.append(contentsOf: offsetEdges)
-                }
-                return Patch(vertices: vertices, colours: colours, indices: indices)
-            }
+
+        guard let subPatches = findSubPatches(name: name) else { return nil }
+
+        let vertices = subPatches[0].vertices + subPatches[1].vertices + subPatches[2].vertices + subPatches[3].vertices
+        let colours = subPatches[0].colours + subPatches[1].colours + subPatches[2].colours + subPatches[3].colours
+
+        var offset: UInt32 = 0
+        let offsetIndices: [[Patch.Index]] = subPatches.enumerated().map { (i, s) in
+            defer { offset += UInt32(subPatches[i].vertices.count) }
+            return s.indices.map { index in index + offset }
         }
-        return nil
+        let indices = offsetIndices[0] + offsetIndices[1] + offsetIndices[2] + offsetIndices[3]
+
+        return Patch(vertices: vertices, colours: colours, indices: indices)
     }
 
-    private func findSubPatches(name: String, depth: UInt32) -> [Patch] {
-        if depth == 0 {
-            if let patch = patchCache.read(name) {
-                return [patch]
-            } else {
-                return []
-            }
+    private func findSubPatches(name: String) -> [Patch]? {
+        guard
+            let a = patchCache.read(name+"0"),
+            let b = patchCache.read(name+"1"),
+            let c = patchCache.read(name+"2"),
+            let d = patchCache.read(name+"3")
+        else {
+            return nil
         }
-        var subPatches = [Patch]()
-        for subName in [name+"0", name+"1", name+"2", name+"3"] {
-            subPatches.append(contentsOf: findSubPatches(name: subName, depth: depth - 1))
-        }
-        return subPatches
+        return [a, b, c, d]
     }
 }

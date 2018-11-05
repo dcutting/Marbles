@@ -1,6 +1,7 @@
 import SceneKit
 
 func makeGeometry(patch: Patch, asWireframe: Bool) -> SCNGeometry {
+    let start = DispatchTime.now()
     let vertices = patch.vertices.map { SCNVector3($0[0], $0[1], $0[2]) }
     let verticesSource = SCNGeometrySource(vertices: vertices)
     var sources = [verticesSource]
@@ -19,5 +20,7 @@ func makeGeometry(patch: Patch, asWireframe: Bool) -> SCNGeometry {
     }
     let indicesElement = SCNGeometryElement(indices: patch.indices, primitiveType: .triangles)
     let geometry = SCNGeometry(sources: sources, elements: [indicesElement])
+    let stop = DispatchTime.now()
+    print("      Made geometry \(stop.uptimeNanoseconds - start.uptimeNanoseconds)")
     return geometry
 }
