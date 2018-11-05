@@ -25,7 +25,7 @@ class MarbleViewController: NSViewController {
     var screenCenter = SCNVector3()
     let scene = SCNScene()
     let terrainNode = SCNNode()
-    let terrainQueues = [DispatchQueue](repeating: DispatchQueue(label: "terrain", qos: .userInteractive, attributes: .concurrent), count: faces.count)
+    let terrainQueue = DispatchQueue(label: "terrain", qos: .userInteractive, attributes: .concurrent)
     var patchCache = PatchCache<Patch>()
     var patchCalculator: PatchCalculator!
 
@@ -66,6 +66,7 @@ class MarbleViewController: NSViewController {
         scnView.scene = scene
         scnView.allowsCameraControl = true
         scnView.backgroundColor = .black
+        scnView.showsStatistics = true
         scnView.cameraControlConfiguration.flyModeVelocity = 50
 
         let originMarker = SCNBox(width: 100.0, height: 100.0, length: 100.0, chamferRadius: 0.0)
@@ -100,6 +101,9 @@ class MarbleViewController: NSViewController {
 //        scnView.defaultCameraController.interactionMode = mode == .fly ? .orbitCenteredArcball : .fly
     }
 
+    var nodes = [SCNNode]()
+    var geometries = [SCNGeometry]()
+
     private func makeTerrain() {
         for faceIndex in 0..<faces.count {
             let face = faces[faceIndex]
@@ -107,32 +111,43 @@ class MarbleViewController: NSViewController {
             let patch = patchCalculator.subdivideTriangle(vertices: vertices, subdivisionLevels: 0)
             let geometry = makeGeometry(patch: patch, asWireframe: self.wireframe)
             let node = SCNNode(geometry: geometry)
+            geometries.append(geometry)
+            nodes.append(node)
             self.terrainNode.addChildNode(node)
-            self.terrainQueues[faceIndex].async {
-                self.refreshGeometry(faceIndex: faceIndex, node: node)
-            }
         }
         self.scene.rootNode.addChildNode(terrainNode)
+        self.refreshGeometry()
     }
 
-    private func refreshGeometry(faceIndex: Int, node: SCNNode) {
-        patchCalculator.clearBuffer()
+    private func refreshGeometry() {
+
+        print("* Refreshing geometry")
+        for faceIndex in 0..<nodes.count {
+            nodes[faceIndex].geometry = geometries[faceIndex]
+        }
         let scnView = view as! SCNView
         let distance = scnView.defaultCameraController.pointOfView!.position.length()
         let newVelocity = ((FP(distance) - planet.radius) / planet.radius) * planet.radius / 10.0
         scnView.cameraControlConfiguration.flyModeVelocity = CGFloat(newVelocity)
-        let face = faces[faceIndex]
-        let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
-        let geom = self.makeAdaptiveGeometry(faceIndex: faceIndex, corners: vertices, maxEdgeLength: maxEdgeLength)
-        DispatchQueue.main.async {
-            node.geometry = geom
-            self.terrainQueues[faceIndex].asyncAfter(deadline: .now() + self.updateInterval) {
-                self.refreshGeometry(faceIndex: faceIndex, node: node)
+
+        self.terrainQueue.asyncAfter(deadline: .now() + self.updateInterval) {
+            print("  Clearing priority buffer")
+            self.patchCalculator.clearBuffer()
+            for faceIndex in 0..<faces.count {
+                print("    Starting adaptive terrain generation for face \(faceIndex)")
+                let face = faces[faceIndex]
+                let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
+                let geom = self.makeAdaptiveGeometry(faceIndex: faceIndex, corners: vertices, maxEdgeLength: self.maxEdgeLength)
+                self.geometries[faceIndex] = geom
+            }
+            DispatchQueue.main.async {
+                self.refreshGeometry()
             }
         }
     }
 
     private func makeAdaptiveGeometry(faceIndex: Int, corners: [FP3], maxEdgeLength: FP) -> SCNGeometry {
+        let start = DispatchTime.now()
         let patch = makeAdaptivePatch(name: "\(faceIndex)-",
             corners: corners,
             maxEdgeLengthSq: maxEdgeLength * maxEdgeLength,
@@ -140,6 +155,8 @@ class MarbleViewController: NSViewController {
             depth: 0)
             ?? patchCalculator.subdivideTriangle(vertices: corners,
                                                     subdivisionLevels: detailSubdivisions)
+        let stop = DispatchTime.now()
+        print("      Made adaptive patch \(stop.uptimeNanoseconds - start.uptimeNanoseconds)")
         return makeGeometry(patch: patch, asWireframe: wireframe)
     }
 
@@ -219,17 +236,24 @@ class MarbleViewController: NSViewController {
                 subIndices[i] = subPatch.indices
             }
             if foundAllSubPatches {
-                var vertices = [Patch.Vertex]()
-                var colours = [Patch.Colour]()
-                var indices = [Patch.Index]()
+//                var vertices = [Patch.Vertex]()
+//                var colours = [Patch.Colour]()
+//                var indices = [Patch.Index]()
+                let vertices = subVertices[0] + subVertices[1] + subVertices[2] + subVertices[3]
+                let colours = subColours[0] + subColours[1] + subColours[2] + subColours[3]
                 var offset: UInt32 = 0
-                for i in 0..<4 {
-                    vertices.append(contentsOf: subVertices[i])
-                    colours.append(contentsOf: subColours[i])
-                    let offsetEdges = subIndices[i].map { index in index + offset }
-                    offset += UInt32(subVertices[i].count)
-                    indices.append(contentsOf: offsetEdges)
+//                for i in 0..<4 {
+//                    vertices.append(contentsOf: subVertices[i])
+//                    colours.append(contentsOf: subColours[i])
+//                    let offsetEdges = subIndices[i].map { index in index + offset }
+//                    offset += UInt32(subVertices[i].count)
+//                    indices.append(contentsOf: offsetEdges)
+//                }
+                let offsetIndices: [[Patch.Index]] = subIndices.enumerated().map { (i, s) in
+                    defer { offset += UInt32(subVertices[i].count) }
+                    return s.map { index in index + offset }
                 }
+                let indices = offsetIndices[0] + offsetIndices[1] + offsetIndices[2] + offsetIndices[3]
                 return Patch(vertices: vertices, colours: colours, indices: indices)
             }
         }
