@@ -53,6 +53,11 @@ struct PlanetConfig {
         self.amplitude = radius * mountainHeightFraction * 2.0
         self.oceanDepth = amplitude / 20.0
 
+        // TODO: can use cellular noise instead of gradient for different effects
+//        let sourceNoise = CellNoise3D(amplitude: amplitude,
+//                                      frequency: frequency,
+//                                      seed: seed)
+
         let sourceNoise = GradientNoise3D(amplitude: amplitude,
                                           frequency: frequency,
                                           seed: seed)
