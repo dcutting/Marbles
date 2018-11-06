@@ -43,7 +43,7 @@ class MarbleViewController: NSViewController {
         light.type = .directional
         let lightNode = SCNNode()
         lightNode.light = light
-        lightNode.rotation = SCNVector4(0, 20, 0, 3.14/2.0)
+        lightNode.rotation = SCNVector4(-1, 1, 0, 3.14/3.0)
         if hasDays {
             lightNode.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: 100)))
         }
