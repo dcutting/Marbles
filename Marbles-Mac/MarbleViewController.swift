@@ -77,8 +77,11 @@ class MarbleViewController: NSViewController {
         }
 
         let clickGesture = NSClickGestureRecognizer(target: self, action: #selector(handleClick(_:)))
+        let doubleClickGesture = NSClickGestureRecognizer(target: self, action: #selector(handleDoubleClick(_:)))
+        doubleClickGesture.numberOfClicksRequired = 2
         var gestureRecognizers = scnView.gestureRecognizers
         gestureRecognizers.insert(clickGesture, at: 0)
+        gestureRecognizers.insert(doubleClickGesture, at: 1)
         scnView.gestureRecognizers = gestureRecognizers
     }
 
@@ -96,9 +99,12 @@ class MarbleViewController: NSViewController {
 
     @objc func handleClick(_ gestureRecognizer: NSGestureRecognizer) {
         wireframe.toggle()
-//        let scnView = view as! SCNView
-//        let mode = scnView.defaultCameraController.interactionMode
-//        scnView.defaultCameraController.interactionMode = mode == .fly ? .orbitCenteredArcball : .fly
+    }
+
+    @objc func handleDoubleClick(_ gestureRecognizer: NSGestureRecognizer) {
+        let scnView = view as! SCNView
+        let mode = scnView.defaultCameraController.interactionMode
+        scnView.defaultCameraController.interactionMode = mode == .fly ? .orbitCenteredArcball : .fly
     }
 
     var nodes = [SCNNode]()
