@@ -3,7 +3,7 @@ import SceneKit
 
 class MarbleViewController: NSViewController {
 
-    let planet = earthConfig
+    let planet = vestaConfig
     let maxEdgeLength = 90.0
     let detailSubdivisions: UInt32 = 4
     let adaptivePatchMaxDepth = 50

@@ -187,23 +187,23 @@ let ridgeConfig = PlanetConfig(seed: 729123134,
                                 blue: ColourScale(min: 0.0, max: 0.0))
 )
 
-//let vestaConfig = PlanetConfig(seed: 719134,
-//                               radius: 1000.0,
-//                               frequencyFactor: 0.5,
-//                               mountainHeightFraction: 0.3,
-//                               hasWater: false,
-//                               levels: 0,
-//                               iciness: 0.0,
-//                               octaves: 12,
-//                               persistence: 0.3,
-//                               lacunarity: 3.0,
-//                               ridged: false,
-//                               groundColourScale: RGBColourScale(
-//                                red: ColourScale(0.2, 0.7),
-//                                green: ColourScale(0.2, 0.7),
-//                                blue: ColourScale(0.2, 0.7))
-//)
-//
+let vestaConfig = PlanetConfig(seed: 719134,
+                               radius: 1000.0,
+                               frequency: 0.5,
+                               amplitude: 0.6,
+                               octaves: 12,
+                               persistence: 0.3,
+                               lacunarity: 3.0,
+                               levels: 0,
+                               iciness: 0.0,
+                               hasWater: false,
+                               ridged: false,
+                               groundColourScale: RGBColourScale(
+                                red: ColourScale(min: 0.2, max: 0.7),
+                                green: ColourScale(min: 0.2, max: 0.7),
+                                blue: ColourScale(min: 0.2, max: 0.7))
+)
+
 //let marsConfig = PlanetConfig(seed: 729134,
 //                               radius: 1000.0,
 //                               frequencyFactor: 1.2,
