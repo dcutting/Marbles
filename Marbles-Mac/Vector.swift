@@ -63,7 +63,8 @@ func isIntersecting(_ a: SCNVector3, _ b: SCNVector3, _ c: SCNVector3, width: CG
     let maxX = max(a.x, b.x, c.x)
     let minY = min(a.y, b.y, c.y)
     let maxY = max(a.y, b.y, c.y)
-    let overlapsX = minX <= width && maxX >= 0
-    let overlapsY = minY <= height && maxY >= 0
+    let inset: CGFloat = debug ? 100.0 : 0.0
+    let overlapsX = minX <= width - inset && maxX >= inset
+    let overlapsY = minY <= height - inset && maxY >= inset
     return overlapsX && overlapsY
 }

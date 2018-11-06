@@ -6,8 +6,8 @@ let debug = false
 class MarbleViewController: NSViewController {
 
     let planet = earthConfig
-    let maxEdgeLength = 300.0
-    let detailSubdivisions: UInt32 = 4
+    let maxEdgeLength = 75.0
+    let detailSubdivisions: UInt32 = 5
     let adaptivePatchMaxDepth = 50
     let updateInterval = 0.2
     let hasDays = false
@@ -80,6 +80,7 @@ class MarbleViewController: NSViewController {
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             self.makeTerrain()
+            self.adaptFlyingSpeed()
         }
 
         let clickGesture = NSClickGestureRecognizer(target: self, action: #selector(handleClick(_:)))
@@ -130,6 +131,15 @@ class MarbleViewController: NSViewController {
         self.refreshGeometry()
     }
 
+    private func adaptFlyingSpeed() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            let distance = self.scnView.defaultCameraController.pointOfView!.position.length()
+            let newVelocity = ((FP(distance) - self.planet.radius) / self.planet.radius) * self.planet.radius / 10.0
+            self.scnView.cameraControlConfiguration.flyModeVelocity = CGFloat(newVelocity)
+            self.adaptFlyingSpeed()
+        }
+    }
+
     private func refreshGeometry() {
 
         if debug {
@@ -138,10 +148,6 @@ class MarbleViewController: NSViewController {
         for faceIndex in 0..<nodes.count {
             nodes[faceIndex].geometry = geometries[faceIndex]
         }
-        let scnView = view as! SCNView
-        let distance = scnView.defaultCameraController.pointOfView!.position.length()
-        let newVelocity = ((FP(distance) - planet.radius) / planet.radius) * planet.radius / 10.0
-        scnView.cameraControlConfiguration.flyModeVelocity = CGFloat(newVelocity)
 
         self.terrainQueue.asyncAfter(deadline: .now() + self.updateInterval) {
             if debug {
@@ -266,85 +272,12 @@ class MarbleViewController: NSViewController {
             return Patch(vertices: vertices, colours: colours, indices: indices)
         }
 
-        return stitchedSubPatch(name: name, corners: corners, depth: 0)
+        if let patch = patchCache.read(name) {
+            return patch
+        }
+        patchCalculator.calculate(name, vertices: corners, subdivisions: detailSubdivisions, priority: Double(depth)) { patch in
+            self.patchCache.write(name, patch: patch)
+        }
+        return makePatch(vertices: corners, colour: magenta)
     }
-
-//    let (subv, sube) = patchCalculator.sphericallySubdivide(vertices: corners)
-//    for i in 0..<sube.count {
-//    let index = sube[i]
-//    let vx = subv[Int(index[0])]
-//    let vy = subv[Int(index[1])]
-//    let vz = subv[Int(index[2])]
-//    let subName = name + "\(i)"
-//    // TODO pm?
-//    let priority = Double(pow(minimumTriangleDistance, 10))
-//    patchCalculator.calculate(subName, vertices: [vx, vy, vz], subdivisions: detailSubdivisions, priority: priority) { patch in
-//    self.patchCache.write(subName, patch: patch)
-//    }
-//    }
-//    if let cachedPatch = patchCache.read(name) {
-//        return cachedPatch
-//    } else {
-//    // TODO: pm?
-//    patchCalculator.calculate(name, vertices: corners, subdivisions: detailSubdivisions, priority: Double(minimumTriangleDistance)) { patch in
-//    self.patchCache.write(name, patch: patch)
-//    }
-//    return nil
-//    }
-
-
-    private func stitchedSubPatch(name: String, corners: [FP3], depth: Int) -> Patch {
-
-//        if depth == 0 {
-            if let patch = patchCache.read(name) {
-                return patch
-            }
-            patchCalculator.calculate(name, vertices: corners, subdivisions: detailSubdivisions, priority: 0.0) { patch in
-                self.patchCache.write(name, patch: patch)
-            }
-            return makePatch(vertices: corners, colour: magenta)
-//        }
-    }
-
-
-//        if depth == 0 {
-//            findSubPatches(name: name, depth: depth)
-//        }
-//
-//        guard let subPatches = findSubPatches(name: name, depth: 2) else { return nil }
-//
-//        var newPatch = Patch()
-//
-//        subPatches.forEach { patch in
-//            newPatch.vertices = newPatch.vertices + patch.vertices
-//            newPatch.colours = newPatch.colours + patch.colours
-//        }
-//
-//        var offset: UInt32 = 0
-//        let offsetIndices: [[Patch.Index]] = subPatches.enumerated().map { (i, s) in
-//            defer { offset += UInt32(subPatches[i].vertices.count) }
-//            return s.indices.map { index in index + offset }
-//        }
-//        offsetIndices.forEach { indices in
-//            newPatch.indices += indices
-//        }
-//
-//        return newPatch
-//    }
-//
-//    private func findSubPatches(name: String, depth: Int) -> [Patch]? {
-//        if depth == 0 {
-//            guard let patch = patchCache.read(name) else { return nil }
-//            return [patch]
-//        }
-//        guard
-//            let a = findSubPatches(name: name+"0", depth: depth-1),
-//            let b = findSubPatches(name: name+"1", depth: depth-1),
-//            let c = findSubPatches(name: name+"2", depth: depth-1),
-//            let d = findSubPatches(name: name+"3", depth: depth-1)
-//        else {
-//            return nil
-//        }
-//        return a + b + c + d
-//    }
 }
