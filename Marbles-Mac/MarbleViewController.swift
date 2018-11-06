@@ -6,10 +6,10 @@ let debug = false
 class MarbleViewController: NSViewController {
 
     let planet = earthConfig
-    let maxEdgeLength = 90.0
-    let detailSubdivisions: UInt32 = 3
+    let maxEdgeLength = 300.0
+    let detailSubdivisions: UInt32 = 4
     let adaptivePatchMaxDepth = 50
-    let updateInterval = 0.5
+    let updateInterval = 0.2
     let hasDays = false
     var wireframe: Bool = false {
         didSet {
@@ -30,6 +30,10 @@ class MarbleViewController: NSViewController {
     let terrainQueue = DispatchQueue(label: "terrain", qos: .userInteractive, attributes: .concurrent)
     var patchCache = PatchCache<Patch>()
     var patchCalculator: PatchCalculator!
+
+    var scnView: SCNView {
+        return view as! SCNView
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -160,166 +164,187 @@ class MarbleViewController: NSViewController {
     }
 
     private func makeAdaptiveGeometry(faceIndex: Int, corners: [FP3], maxEdgeLength: FP) -> SCNGeometry {
-        let start = DispatchTime.now()
-        let patch = makeAdaptivePatch(name: "\(faceIndex)-",
-            corners: corners,
-            maxEdgeLengthSq: maxEdgeLength * maxEdgeLength,
-            patchCache: patchCache,
-            depth: 0)
-            ?? patchCalculator.subdivideTriangle(vertices: corners,
-                                                    subdivisionLevels: detailSubdivisions)
-        if debug {
-            let stop = DispatchTime.now()
-            print("      Made adaptive patch \(stop.uptimeNanoseconds - start.uptimeNanoseconds)")
+        let cameraPosition = (view as! SCNView).defaultCameraController.pointOfView!.position
+        let distanceSq = cameraPosition.lengthSq()
+        let patch: Patch
+        if isVisible(vertices: corners, cameraPosition: cameraPosition, distanceSq: distanceSq) {
+            let start = DispatchTime.now()
+            patch = makeAdaptivePatch(name: "\(faceIndex)-",
+                corners: corners,
+                maxEdgeLengthSq: maxEdgeLength * maxEdgeLength,
+                patchCache: patchCache,
+                depth: 0)
+            if debug {
+                let stop = DispatchTime.now()
+                print("      Made adaptive patch \(stop.uptimeNanoseconds - start.uptimeNanoseconds)")
+            }
+        } else {
+            patch = makePatch(vertices: corners, colour: white)
         }
         return makeGeometry(patch: patch, asWireframe: wireframe)
     }
 
-    private func makeAdaptivePatch(name: String, corners: [FP3], maxEdgeLengthSq: FP, patchCache: PatchCache<Patch>, depth: UInt32) -> Patch? {
-
-        if depth >= adaptivePatchMaxDepth {
-            print("hit max depth \(adaptivePatchMaxDepth)")
-            return nil
-        }
-
-        let scnView = view as! SCNView
-        let cameraPosition = scnView.defaultCameraController.pointOfView!.position
-        let distanceSq = cameraPosition.lengthSq()
-        let aD = (SCNVector3(corners[0]) - cameraPosition).lengthSq()
-        let bD = (SCNVector3(corners[1]) - cameraPosition).lengthSq()
-        let cD = (SCNVector3(corners[2]) - cameraPosition).lengthSq()
+    private func isVisible(vertices: [FP3], cameraPosition: SCNVector3, distanceSq: CGFloat) -> Bool {
+        // Cull triangles on other side of planet
+        let aD = (SCNVector3(vertices[0]) - cameraPosition).lengthSq()
+        let bD = (SCNVector3(vertices[1]) - cameraPosition).lengthSq()
+        let cD = (SCNVector3(vertices[2]) - cameraPosition).lengthSq()
         let minimumTriangleDistance = min(aD, bD, cD)
-        guard minimumTriangleDistance < distanceSq else { return nil }
+        return minimumTriangleDistance < distanceSq
         // TODO doesn't work great for low angle vistas
+    }
 
-        let sphericalisedCorners = patchCalculator.sphericalise(vertices: corners)
+    let dumbLength: FP = 100000000000000
+    let white: Patch.Colour = [1.0, 1.0, 1.0]
+    let red: Patch.Colour = [1.0, 0.0, 0.0]
+    let yellow: Patch.Colour = [1.0, 1.0, 0.0]
+    let magenta: Patch.Colour = [1.0, 0.0, 1.0]
 
-        let v0 = sphericalisedCorners[0]
-        let v1 = sphericalisedCorners[1]
-        let v2 = sphericalisedCorners[2]
+    private func makePatch(vertices: [Patch.Vertex], colour: Patch.Colour) -> Patch {
+        return Patch(vertices: vertices,
+                     colours: [colour, colour, colour],
+                     indices: [0, 1, 2])
+    }
 
-        let p0 = scnView.projectPoint(SCNVector3(v0))
-        let p1 = scnView.projectPoint(SCNVector3(v1))
-        let p2 = scnView.projectPoint(SCNVector3(v2))
-
-        let p0d = (p0 - screenCenter).lengthSq()
-        let p1d = (p1 - screenCenter).lengthSq()
-        let p2d = (p2 - screenCenter).lengthSq()
-        let pm = min(p0d, p1d, p2d)
-
-        var subdivide = false
-        if isIntersecting(p0, p1, p2, width: screenWidth, height: screenHeight) {
-            let l0 = FP((p0 - p1).lengthSq())
-            let l1 = FP((p0 - p2).lengthSq())
-            let l2 = FP((p1 - p2).lengthSq())
-            let dumbLength: FP = 100000000000000
-            if l0 > maxEdgeLengthSq || l1 > maxEdgeLengthSq || l2 > maxEdgeLengthSq {
-                if l0 < dumbLength && l1 < dumbLength && l2 < dumbLength {
-                    subdivide = true
-                } else {
-//                    print("dumb:", name, l0, l1, l2)
-                }
+    private func shouldSubdivide(_ pA: SCNVector3, _ pB: SCNVector3, _ pC: SCNVector3, maxEdgeLengthSq: FP) -> Bool {
+        let lA = FP((pA - pB).lengthSq())
+        let lB = FP((pA - pC).lengthSq())
+        let lC = FP((pB - pC).lengthSq())
+        if lA > maxEdgeLengthSq || lB > maxEdgeLengthSq || lC > maxEdgeLengthSq {
+            if lA < dumbLength && lB < dumbLength && lC < dumbLength {
+                return true
+            } else {
+                //print("dumb:", name, l0, l1, l2)
             }
         }
+        return false
+    }
 
-        if subdivide {
-            let (subv, sube) = patchCalculator.sphericallySubdivide(vertices: corners)
+    private func makeAdaptivePatch(name: String, corners: [FP3], maxEdgeLengthSq: FP, patchCache: PatchCache<Patch>, depth: UInt32) -> Patch {
+
+        guard depth < adaptivePatchMaxDepth else {
+            return makePatch(vertices: corners, colour: red)
+        }
+
+        let (subv, sube) = patchCalculator.sphericallySubdivide(vertices: corners)
+
+        let pA = scnView.projectPoint(SCNVector3(subv[0]))
+        let pB = scnView.projectPoint(SCNVector3(subv[1]))
+        let pC = scnView.projectPoint(SCNVector3(subv[2]))
+
+        guard isIntersecting(pA, pB, pC, width: screenWidth, height: screenHeight) else {
+            return makePatch(vertices: corners, colour: yellow)
+        }
+
+        if shouldSubdivide(pA, pB, pC, maxEdgeLengthSq: maxEdgeLengthSq) {
             var subVertices = [[Patch.Vertex]](repeating: [], count: 4)
             var subColours = [[Patch.Colour]](repeating: [], count: 4)
             var subIndices = [[Patch.Index]](repeating: [], count: 4)
-            var foundAllSubPatches = true
             for i in 0..<sube.count {
                 let index = sube[i]
                 let vx = subv[Int(index[0])]
                 let vy = subv[Int(index[1])]
                 let vz = subv[Int(index[2])]
                 let subName = name + "\(i)"
-                guard let subPatch = makeAdaptivePatch(name: subName,
+                let subPatch = makeAdaptivePatch(name: subName,
                                                  corners: [vx, vy, vz],
                                                  maxEdgeLengthSq: maxEdgeLengthSq,
                                                  patchCache: patchCache,
                                                  depth: depth + 1)
-                    else {
-                        foundAllSubPatches = false
-                        break
-                }
                 subVertices[i] = subPatch.vertices
                 subColours[i] = subPatch.colours
                 subIndices[i] = subPatch.indices
             }
-            if foundAllSubPatches {
-                let vertices = subVertices[0] + subVertices[1] + subVertices[2] + subVertices[3]
-                let colours = subColours[0] + subColours[1] + subColours[2] + subColours[3]
-                var offset: UInt32 = 0
-                let offsetIndices: [[Patch.Index]] = subIndices.enumerated().map { (i, s) in
-                    defer { offset += UInt32(subVertices[i].count) }
-                    return s.map { index in index + offset }
-                }
-                let indices = offsetIndices[0] + offsetIndices[1] + offsetIndices[2] + offsetIndices[3]
-                return Patch(vertices: vertices, colours: colours, indices: indices)
+            let vertices = subVertices[0] + subVertices[1] + subVertices[2] + subVertices[3]
+            let colours = subColours[0] + subColours[1] + subColours[2] + subColours[3]
+            var offset: UInt32 = 0
+            let offsetIndices: [[Patch.Index]] = subIndices.enumerated().map { (i, s) in
+                defer { offset += UInt32(subVertices[i].count) }
+                return s.map { index in index + offset }
             }
+            let indices = offsetIndices[0] + offsetIndices[1] + offsetIndices[2] + offsetIndices[3]
+            return Patch(vertices: vertices, colours: colours, indices: indices)
         }
 
-        if let stitchedPatch = stitchSubPatches(name: name) {
-            return stitchedPatch
-        } else {
-            let (subv, sube) = patchCalculator.sphericallySubdivide(vertices: corners)
-            for i in 0..<sube.count {
-                let index = sube[i]
-                let vx = subv[Int(index[0])]
-                let vy = subv[Int(index[1])]
-                let vz = subv[Int(index[2])]
-                let subName = name + "\(i)"
-                // TODO pm?
-                let priority = Double(pow(minimumTriangleDistance, 10))
-                patchCalculator.calculate(subName, vertices: [vx, vy, vz], subdivisions: detailSubdivisions, priority: priority) { patch in
-                    self.patchCache.write(subName, patch: patch)
-                }
-            }
-            if let cachedPatch = patchCache.read(name) {
-                return cachedPatch
-            } else {
-                // TODO: pm?
-                patchCalculator.calculate(name, vertices: corners, subdivisions: detailSubdivisions, priority: Double(minimumTriangleDistance)) { patch in
-                    self.patchCache.write(name, patch: patch)
-                }
-                return nil
-            }
-        }
+        return stitchedSubPatch(name: name, corners: corners, depth: 0)
     }
 
-    private func stitchSubPatches(name: String) -> Patch? {
+//    let (subv, sube) = patchCalculator.sphericallySubdivide(vertices: corners)
+//    for i in 0..<sube.count {
+//    let index = sube[i]
+//    let vx = subv[Int(index[0])]
+//    let vy = subv[Int(index[1])]
+//    let vz = subv[Int(index[2])]
+//    let subName = name + "\(i)"
+//    // TODO pm?
+//    let priority = Double(pow(minimumTriangleDistance, 10))
+//    patchCalculator.calculate(subName, vertices: [vx, vy, vz], subdivisions: detailSubdivisions, priority: priority) { patch in
+//    self.patchCache.write(subName, patch: patch)
+//    }
+//    }
+//    if let cachedPatch = patchCache.read(name) {
+//        return cachedPatch
+//    } else {
+//    // TODO: pm?
+//    patchCalculator.calculate(name, vertices: corners, subdivisions: detailSubdivisions, priority: Double(minimumTriangleDistance)) { patch in
+//    self.patchCache.write(name, patch: patch)
+//    }
+//    return nil
+//    }
 
-        guard let subPatches = findSubPatches(name: name) else { return nil }
 
-        var newPatch = Patch()
+    private func stitchedSubPatch(name: String, corners: [FP3], depth: Int) -> Patch {
 
-        subPatches.forEach { patch in
-            newPatch.vertices = newPatch.vertices + patch.vertices
-            newPatch.colours = newPatch.colours + patch.colours
-        }
-
-        var offset: UInt32 = 0
-        let offsetIndices: [[Patch.Index]] = subPatches.enumerated().map { (i, s) in
-            defer { offset += UInt32(subPatches[i].vertices.count) }
-            return s.indices.map { index in index + offset }
-        }
-        offsetIndices.forEach { indices in
-            newPatch.indices += indices
-        }
-
-        return newPatch
+//        if depth == 0 {
+            if let patch = patchCache.read(name) {
+                return patch
+            }
+            patchCalculator.calculate(name, vertices: corners, subdivisions: detailSubdivisions, priority: 0.0) { patch in
+                self.patchCache.write(name, patch: patch)
+            }
+            return makePatch(vertices: corners, colour: magenta)
+//        }
     }
 
-    private func findSubPatches(name: String) -> [Patch]? {
-        guard
-            let a = patchCache.read(name+"0"),
-            let b = patchCache.read(name+"1"),
-            let c = patchCache.read(name+"2"),
-            let d = patchCache.read(name+"3")
-        else {
-            return nil
-        }
-        return [a, b, c, d]
-    }
+
+//        if depth == 0 {
+//            findSubPatches(name: name, depth: depth)
+//        }
+//
+//        guard let subPatches = findSubPatches(name: name, depth: 2) else { return nil }
+//
+//        var newPatch = Patch()
+//
+//        subPatches.forEach { patch in
+//            newPatch.vertices = newPatch.vertices + patch.vertices
+//            newPatch.colours = newPatch.colours + patch.colours
+//        }
+//
+//        var offset: UInt32 = 0
+//        let offsetIndices: [[Patch.Index]] = subPatches.enumerated().map { (i, s) in
+//            defer { offset += UInt32(subPatches[i].vertices.count) }
+//            return s.indices.map { index in index + offset }
+//        }
+//        offsetIndices.forEach { indices in
+//            newPatch.indices += indices
+//        }
+//
+//        return newPatch
+//    }
+//
+//    private func findSubPatches(name: String, depth: Int) -> [Patch]? {
+//        if depth == 0 {
+//            guard let patch = patchCache.read(name) else { return nil }
+//            return [patch]
+//        }
+//        guard
+//            let a = findSubPatches(name: name+"0", depth: depth-1),
+//            let b = findSubPatches(name: name+"1", depth: depth-1),
+//            let c = findSubPatches(name: name+"2", depth: depth-1),
+//            let d = findSubPatches(name: name+"3", depth: depth-1)
+//        else {
+//            return nil
+//        }
+//        return a + b + c + d
+//    }
 }
