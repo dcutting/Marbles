@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		C8027ECE218A1A3C00A99020 /* FractalNoise.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8027ECD218A1A3C00A99020 /* FractalNoise.swift */; };
 		C8027ED0218A581100A99020 /* AtomicInteger.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8027ECF218A581100A99020 /* AtomicInteger.swift */; };
 		C8027ED2218A631200A99020 /* Geometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8027ED1218A631200A99020 /* Geometry.swift */; };
 		C80E460B216177440029A3A0 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80E460A216177440029A3A0 /* AppDelegate.swift */; };
@@ -30,7 +29,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		C8027ECD218A1A3C00A99020 /* FractalNoise.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FractalNoise.swift; sourceTree = "<group>"; };
 		C8027ECF218A581100A99020 /* AtomicInteger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AtomicInteger.swift; sourceTree = "<group>"; };
 		C8027ED1218A631200A99020 /* Geometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Geometry.swift; sourceTree = "<group>"; };
 		C80E4607216177440029A3A0 /* Marbles-Mac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Marbles-Mac.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -134,7 +132,6 @@
 				C8837A5A218A172700ABE455 /* PatchCalculator.swift */,
 				C8837A5C218A173F00ABE455 /* PatchCache.swift */,
 				C816FAD8218CAA9400839795 /* RingBuffer.swift */,
-				C8027ECD218A1A3C00A99020 /* FractalNoise.swift */,
 				C8027ED1218A631200A99020 /* Geometry.swift */,
 				C85EB59A216AB39D00B670B2 /* Vector.swift */,
 				C85EB5832168F62D00B670B2 /* noise */,
@@ -267,7 +264,6 @@
 				C85EB5912168F62D00B670B2 /* cell.swift in Sources */,
 				C8027ED0218A581100A99020 /* AtomicInteger.swift in Sources */,
 				C80E460D216177440029A3A0 /* MarbleViewController.swift in Sources */,
-				C8027ECE218A1A3C00A99020 /* FractalNoise.swift in Sources */,
 				C80E460B216177440029A3A0 /* AppDelegate.swift in Sources */,
 				C8837A5D218A173F00ABE455 /* PatchCache.swift in Sources */,
 			);

@@ -139,6 +139,9 @@ class PatchCalculator {
         let an = normalize(a)
         let ans = an * config.radius
         var delta = config.noise.evaluate(Double(ans.x), Double(ans.y), Double(ans.z))
+//        if config.ridged {
+//            delta = abs(delta) * -1.0 + config.mountainHeight / 2.0
+//        }
         if config.levels > 0 {
             let ratio = Double(config.amplitude) / Double(config.levels)
             delta = ratio * round(delta / ratio)

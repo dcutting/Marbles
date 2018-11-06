@@ -8,6 +8,7 @@ class MarbleViewController: NSViewController {
     let detailSubdivisions: UInt32 = 4
     let adaptivePatchMaxDepth = 50
     let updateInterval = 0.5
+    let hasDays = false
     var wireframe: Bool = false {
         didSet {
             let scnView = view as? SCNView
@@ -18,7 +19,6 @@ class MarbleViewController: NSViewController {
             }
         }
     }
-    let hasDays = false
 
     var screenWidth: CGFloat = 0.0
     var screenHeight: CGFloat = 0.0
