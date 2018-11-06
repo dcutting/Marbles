@@ -20,7 +20,9 @@ func makeGeometry(patch: Patch, asWireframe: Bool) -> SCNGeometry {
     }
     let indicesElement = SCNGeometryElement(indices: patch.indices, primitiveType: .triangles)
     let geometry = SCNGeometry(sources: sources, elements: [indicesElement])
-    let stop = DispatchTime.now()
-    print("      Made geometry \(stop.uptimeNanoseconds - start.uptimeNanoseconds)")
+    if debug {
+        let stop = DispatchTime.now()
+        print("      Made geometry \(stop.uptimeNanoseconds - start.uptimeNanoseconds)")
+    }
     return geometry
 }

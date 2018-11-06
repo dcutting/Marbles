@@ -1,9 +1,11 @@
 import AppKit
 import SceneKit
 
+let debug = false
+
 class MarbleViewController: NSViewController {
 
-    let planet = vestaConfig
+    let planet = earthConfig
     let maxEdgeLength = 90.0
     let detailSubdivisions: UInt32 = 4
     let adaptivePatchMaxDepth = 50
@@ -41,7 +43,7 @@ class MarbleViewController: NSViewController {
         light.type = .directional
         let lightNode = SCNNode()
         lightNode.light = light
-        lightNode.look(at: SCNVector3())
+        lightNode.rotation = SCNVector4(0, 20, 0, 3.14/2.0)
         if hasDays {
             lightNode.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: 100)))
         }
@@ -94,7 +96,6 @@ class MarbleViewController: NSViewController {
         screenWidth = view.bounds.width
         screenHeight = view.bounds.height
         screenCenter = SCNVector3(screenWidth/2.0, screenHeight/2.0, 0.0)
-//        print(screenCenter)
     }
 
     @objc func handleClick(_ gestureRecognizer: NSGestureRecognizer) {
@@ -127,7 +128,9 @@ class MarbleViewController: NSViewController {
 
     private func refreshGeometry() {
 
-        print("* Refreshing geometry")
+        if debug {
+            print("* Refreshing geometry")
+        }
         for faceIndex in 0..<nodes.count {
             nodes[faceIndex].geometry = geometries[faceIndex]
         }
@@ -137,10 +140,14 @@ class MarbleViewController: NSViewController {
         scnView.cameraControlConfiguration.flyModeVelocity = CGFloat(newVelocity)
 
         self.terrainQueue.asyncAfter(deadline: .now() + self.updateInterval) {
-            print("  Clearing priority buffer")
+            if debug {
+                print("  Clearing priority buffer")
+            }
             self.patchCalculator.clearBuffer()
             for faceIndex in 0..<faces.count {
-                print("    Starting adaptive terrain generation for face \(faceIndex)")
+                if debug {
+                    print("    Starting adaptive terrain generation for face \(faceIndex)")
+                }
                 let face = faces[faceIndex]
                 let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
                 let geom = self.makeAdaptiveGeometry(faceIndex: faceIndex, corners: vertices, maxEdgeLength: self.maxEdgeLength)
@@ -161,8 +168,10 @@ class MarbleViewController: NSViewController {
             depth: 0)
             ?? patchCalculator.subdivideTriangle(vertices: corners,
                                                     subdivisionLevels: detailSubdivisions)
-        let stop = DispatchTime.now()
-        print("      Made adaptive patch \(stop.uptimeNanoseconds - start.uptimeNanoseconds)")
+        if debug {
+            let stop = DispatchTime.now()
+            print("      Made adaptive patch \(stop.uptimeNanoseconds - start.uptimeNanoseconds)")
+        }
         return makeGeometry(patch: patch, asWireframe: wireframe)
     }
 
@@ -197,9 +206,6 @@ class MarbleViewController: NSViewController {
         let p1d = (p1 - screenCenter).lengthSq()
         let p2d = (p2 - screenCenter).lengthSq()
         let pm = min(p0d, p1d, p2d)
-        if pm < 100 {
-//            print(pm)
-        }
 
         var subdivide = false
         if isIntersecting(p0, p1, p2, width: screenWidth, height: screenHeight) {
