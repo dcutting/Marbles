@@ -7,7 +7,7 @@ class MarbleViewController: NSViewController {
 
     let planet = earthConfig
     let maxEdgeLength = 90.0
-    let detailSubdivisions: UInt32 = 4
+    let detailSubdivisions: UInt32 = 3
     let adaptivePatchMaxDepth = 50
     let updateInterval = 0.5
     let hasDays = false
@@ -292,17 +292,23 @@ class MarbleViewController: NSViewController {
 
         guard let subPatches = findSubPatches(name: name) else { return nil }
 
-        let vertices = subPatches[0].vertices + subPatches[1].vertices + subPatches[2].vertices + subPatches[3].vertices
-        let colours = subPatches[0].colours + subPatches[1].colours + subPatches[2].colours + subPatches[3].colours
+        var newPatch = Patch()
+
+        subPatches.forEach { patch in
+            newPatch.vertices = newPatch.vertices + patch.vertices
+            newPatch.colours = newPatch.colours + patch.colours
+        }
 
         var offset: UInt32 = 0
         let offsetIndices: [[Patch.Index]] = subPatches.enumerated().map { (i, s) in
             defer { offset += UInt32(subPatches[i].vertices.count) }
             return s.indices.map { index in index + offset }
         }
-        let indices = offsetIndices[0] + offsetIndices[1] + offsetIndices[2] + offsetIndices[3]
+        offsetIndices.forEach { indices in
+            newPatch.indices += indices
+        }
 
-        return Patch(vertices: vertices, colours: colours, indices: indices)
+        return newPatch
     }
 
     private func findSubPatches(name: String) -> [Patch]? {

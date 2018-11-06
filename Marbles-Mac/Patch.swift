@@ -6,7 +6,7 @@ struct Patch {
     typealias Colour = float3
     typealias Index = UInt32
 
-    let vertices: [Vertex]
-    let colours: [Colour]
-    let indices: [Index]
+    var vertices = [Vertex]()
+    var colours = [Colour]()
+    var indices = [Index]()
 }
