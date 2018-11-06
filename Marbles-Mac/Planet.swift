@@ -9,12 +9,17 @@ struct RGBColourScale {
     let blue: ColourScale
 }
 
+enum NoiseType {
+    case gradient
+    case cellular
+}
+
 struct PlanetConfig {
 
     let radius: Double
-    let hasWater: Bool
     let levels: Int
     let iciness: Double
+    let hasWater: Bool
     let ridged: Bool
     let groundColourScale: RGBColourScale
 
@@ -26,11 +31,12 @@ struct PlanetConfig {
 
     init(seed: Int,
          radius: Double,
-         frequency: Double,
-         amplitude: Double,
+         frequency unscaledFrequency: Double,
+         amplitude unscaledAmplitude: Double,
          octaves: Int,
          persistence: Double,
          lacunarity: Double,
+         noiseType: NoiseType,
          levels: Int,
          iciness: Double,
          hasWater: Bool,
@@ -38,32 +44,39 @@ struct PlanetConfig {
          groundColourScale: RGBColourScale) {
 
         self.radius = radius
-        self.frequency = frequency / radius
-        self.amplitude = radius * amplitude
+        self.frequency = unscaledFrequency / radius
+        self.amplitude = radius * unscaledAmplitude
         self.levels = levels
         self.iciness = iciness
         self.hasWater = hasWater
         self.ridged = ridged
         self.groundColourScale = groundColourScale
 
-        self.mountainHeight = self.amplitude / 2.0
-        self.oceanDepth = self.amplitude / 20.0
+        self.mountainHeight = amplitude / 2.0
+        self.oceanDepth = amplitude / 20.0
 
-        // TODO: can use cellular noise instead of gradient for different effects
-        //        let sourceNoise = CellNoise3D(amplitude: amplitude,
-        //                                      frequency: frequency,
-        //                                      seed: seed)
-
-        let sourceNoise = GradientNoise3D(amplitude: self.amplitude,
-                                          frequency: self.frequency,
-                                          seed: seed)
-        let fractalNoise = FBM(sourceNoise,
+        let fractalNoise: Noise
+        switch noiseType {
+        case .gradient:
+            let sourceNoise = GradientNoise3D(amplitude: amplitude,
+                                              frequency: frequency,
+                                              seed: seed)
+            fractalNoise = FBM(sourceNoise,
                                octaves: octaves,
                                persistence: persistence,
                                lacunarity: lacunarity)
+        case .cellular:
+            let sourceNoise = CellNoise3D(amplitude: amplitude,
+                                          frequency: frequency,
+                                          seed: seed)
+            fractalNoise = FBM(sourceNoise,
+                               octaves: octaves,
+                               persistence: persistence,
+                               lacunarity: lacunarity)
+        }
 
         if ridged {
-            self.noise = RidgedNoise(noise: fractalNoise, amplitude: self.amplitude)
+            self.noise = RidgedNoise(noise: fractalNoise, amplitude: amplitude)
         } else {
             self.noise = fractalNoise
         }
@@ -160,6 +173,7 @@ let earthConfig = PlanetConfig(seed: 72934,
                                octaves: 12,
                                persistence: 0.5,
                                lacunarity: 2.0,
+                               noiseType: .gradient,
                                levels: 0,
                                iciness: 0.3,
                                hasWater: true,
@@ -177,6 +191,7 @@ let ridgeConfig = PlanetConfig(seed: 729123134,
                                octaves: 12,
                                persistence: 0.5,
                                lacunarity: 2.0,
+                               noiseType: .gradient,
                                levels: 0,
                                iciness: 0.3,
                                hasWater: true,
@@ -189,11 +204,12 @@ let ridgeConfig = PlanetConfig(seed: 729123134,
 
 let vestaConfig = PlanetConfig(seed: 719134,
                                radius: 1000.0,
-                               frequency: 0.5,
+                               frequency: 2.0,
                                amplitude: 0.6,
                                octaves: 12,
                                persistence: 0.3,
                                lacunarity: 3.0,
+                               noiseType: .cellular,
                                levels: 0,
                                iciness: 0.0,
                                hasWater: false,
