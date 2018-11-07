@@ -179,7 +179,7 @@ class MarbleViewController: NSViewController {
                 corners: corners,
                 maxEdgeLengthSq: maxEdgeLength * maxEdgeLength,
                 patchCache: patchCache,
-                depth: 0)
+                depth: 0) ?? makePatch(vertices: corners, colour: grey)
             if debug {
                 let stop = DispatchTime.now()
                 print("      Made adaptive patch with \(patch.vertices.count) vertices in \(stop.uptimeNanoseconds - start.uptimeNanoseconds)")
@@ -206,6 +206,7 @@ class MarbleViewController: NSViewController {
     let red: Patch.Colour = [1.0, 0.0, 0.0]
     let yellow: Patch.Colour = [1.0, 1.0, 0.0]
     let magenta: Patch.Colour = [1.0, 0.0, 1.0]
+    let grey: Patch.Colour = [0.01, 0.01, 0.01]
 
     private func makePatch(vertices: [Patch.Vertex], colour: Patch.Colour) -> Patch {
         return Patch(vertices: vertices,
@@ -231,7 +232,7 @@ class MarbleViewController: NSViewController {
         return false
     }
 
-    private func makeAdaptivePatch(name: String, corners: [FP3], maxEdgeLengthSq: FP, patchCache: PatchCache<Patch>, depth: UInt32) -> Patch {
+    private func makeAdaptivePatch(name: String, corners: [FP3], maxEdgeLengthSq: FP, patchCache: PatchCache<Patch>, depth: UInt32) -> Patch? {
 
         guard depth < adaptivePatchMaxDepth else {
             return makePatch(vertices: corners, colour: red)
@@ -244,45 +245,54 @@ class MarbleViewController: NSViewController {
         let pC = scnView.projectPoint(SCNVector3(subv[2]))
 
         guard isIntersecting(pA, pB, pC, width: screenWidth, height: screenHeight) else {
-            return makePatch(vertices: corners, colour: yellow)
+            return patchCache.read(name)
+                ?? patchCalculator.subdivideTriangle(vertices: corners, subdivisionLevels: 0)
         }
 
         if shouldSubdivide(pA, pB, pC, maxEdgeLengthSq: maxEdgeLengthSq) {
             var subVertices = [[Patch.Vertex]](repeating: [], count: 4)
             var subColours = [[Patch.Colour]](repeating: [], count: 4)
             var subIndices = [[Patch.Index]](repeating: [], count: 4)
+            var hasAllSubpatches = true
             for i in 0..<sube.count {
                 let index = sube[i]
                 let vx = subv[Int(index[0])]
                 let vy = subv[Int(index[1])]
                 let vz = subv[Int(index[2])]
                 let subName = name + "\(i)"
-                let subPatch = makeAdaptivePatch(name: subName,
+                guard let subPatch = makeAdaptivePatch(name: subName,
                                                  corners: [vx, vy, vz],
                                                  maxEdgeLengthSq: maxEdgeLengthSq,
                                                  patchCache: patchCache,
                                                  depth: depth + 1)
+                    else {
+                        hasAllSubpatches = false
+                        break
+                }
                 subVertices[i] = subPatch.vertices
                 subColours[i] = subPatch.colours
                 subIndices[i] = subPatch.indices
             }
-            let vertices = subVertices[0] + subVertices[1] + subVertices[2] + subVertices[3]
-            let colours = subColours[0] + subColours[1] + subColours[2] + subColours[3]
-            var offset: UInt32 = 0
-            let offsetIndices: [[Patch.Index]] = subIndices.enumerated().map { (i, s) in
-                defer { offset += UInt32(subVertices[i].count) }
-                return s.map { index in index + offset }
+            if hasAllSubpatches {
+                let vertices = subVertices[0] + subVertices[1] + subVertices[2] + subVertices[3]
+                let colours = subColours[0] + subColours[1] + subColours[2] + subColours[3]
+                var offset: UInt32 = 0
+                let offsetIndices: [[Patch.Index]] = subIndices.enumerated().map { (i, s) in
+                    defer { offset += UInt32(subVertices[i].count) }
+                    return s.map { index in index + offset }
+                }
+                let indices = offsetIndices[0] + offsetIndices[1] + offsetIndices[2] + offsetIndices[3]
+                return Patch(vertices: vertices, colours: colours, indices: indices)
             }
-            let indices = offsetIndices[0] + offsetIndices[1] + offsetIndices[2] + offsetIndices[3]
-            return Patch(vertices: vertices, colours: colours, indices: indices)
         }
 
         if let patch = patchCache.read(name) {
             return patch
         }
         patchCalculator.calculate(name, vertices: corners, subdivisions: detailSubdivisions, priority: Double(depth)) { patch in
+            // TODO: prioritise land near middle of screen (instead of water)
             self.patchCache.write(name, patch: patch)
         }
-        return makePatch(vertices: corners, colour: magenta)
+        return nil
     }
 }
