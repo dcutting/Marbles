@@ -1,6 +1,11 @@
 struct ColourScale {
-    let min: Double
-    let max: Double
+    let a: Double
+    let b: Double
+
+    init(_ a: Double, _ b: Double) {
+        self.a = a
+        self.b = b
+    }
 }
 
 struct RGBColourScale {
@@ -22,6 +27,7 @@ struct PlanetConfig {
     let hasWater: Bool
     let ridged: Bool
     let groundColourScale: RGBColourScale
+    let waterColourScale: RGBColourScale
 
     let mountainHeight: Double
     let frequency: Double
@@ -41,7 +47,8 @@ struct PlanetConfig {
          iciness: Double,
          hasWater: Bool,
          ridged: Bool,
-         groundColourScale: RGBColourScale) {
+         groundColourScale: RGBColourScale,
+         waterColourScale: RGBColourScale) {
 
         self.radius = radius
         self.frequency = unscaledFrequency / radius
@@ -51,6 +58,7 @@ struct PlanetConfig {
         self.hasWater = hasWater
         self.ridged = ridged
         self.groundColourScale = groundColourScale
+        self.waterColourScale = waterColourScale
 
         self.mountainHeight = amplitude / 2.0
         self.oceanDepth = amplitude / 20.0
@@ -166,7 +174,7 @@ let faces: [[UInt32]] = [
     [2, 3, 7]
 ]
 
-let earthConfig = PlanetConfig(seed: 72934,
+let earthConfig = PlanetConfig(seed: 72924,
                                radius: 10000.0,
                                frequency: 1.5,
                                amplitude: 0.1,
@@ -179,46 +187,50 @@ let earthConfig = PlanetConfig(seed: 72934,
                                hasWater: true,
                                ridged: false,
                                groundColourScale: RGBColourScale(
-                                red: ColourScale(min: 0.0, max: 0.0),
-                                green: ColourScale(min: 0.0, max: 1.0),
-                                blue: ColourScale(min: 0.0, max: 0.0))
+                                red: ColourScale(0x08/0xff, 0x02/0xff),
+                                green: ColourScale(0xad/0xff, 0x38/0xff),
+                                blue: ColourScale(0x08/0xff, 0x02/0xff)),
+                               waterColourScale: RGBColourScale(
+                                red: ColourScale(0x0/0xff, 0x0/0xff),
+                                green: ColourScale(0x0/0xff, 0x0/0xff),
+                                blue: ColourScale(0x26/0xff, 0x88/0xff))
 )
 
-let ridgeConfig = PlanetConfig(seed: 729123134,
-                               radius: 10000.0,
-                               frequency: 1.5,
-                               amplitude: 0.1,
-                               octaves: 12,
-                               persistence: 0.5,
-                               lacunarity: 2.0,
-                               noiseType: .gradient,
-                               levels: 0,
-                               iciness: 0.3,
-                               hasWater: true,
-                               ridged: true,
-                               groundColourScale: RGBColourScale(
-                                red: ColourScale(min: 0.0, max: 0.0),
-                                green: ColourScale(min: 0.0, max: 1.0),
-                                blue: ColourScale(min: 0.0, max: 0.0))
-)
-
-let vestaConfig = PlanetConfig(seed: 719134,
-                               radius: 1000.0,
-                               frequency: 2.0,
-                               amplitude: 0.6,
-                               octaves: 12,
-                               persistence: 0.3,
-                               lacunarity: 3.0,
-                               noiseType: .cellular,
-                               levels: 0,
-                               iciness: 0.0,
-                               hasWater: false,
-                               ridged: false,
-                               groundColourScale: RGBColourScale(
-                                red: ColourScale(min: 0.2, max: 0.7),
-                                green: ColourScale(min: 0.2, max: 0.7),
-                                blue: ColourScale(min: 0.2, max: 0.7))
-)
+//let ridgeConfig = PlanetConfig(seed: 729123134,
+//                               radius: 10000.0,
+//                               frequency: 1.5,
+//                               amplitude: 0.1,
+//                               octaves: 12,
+//                               persistence: 0.5,
+//                               lacunarity: 2.0,
+//                               noiseType: .gradient,
+//                               levels: 0,
+//                               iciness: 0.3,
+//                               hasWater: true,
+//                               ridged: true,
+//                               groundColourScale: RGBColourScale(
+//                                red: ColourScale(min: 0.0, max: 0.0),
+//                                green: ColourScale(min: 0.0, max: 1.0),
+//                                blue: ColourScale(min: 0.0, max: 0.0))
+//)
+//
+//let vestaConfig = PlanetConfig(seed: 719134,
+//                               radius: 1000.0,
+//                               frequency: 2.0,
+//                               amplitude: 0.6,
+//                               octaves: 12,
+//                               persistence: 0.3,
+//                               lacunarity: 3.0,
+//                               noiseType: .cellular,
+//                               levels: 0,
+//                               iciness: 0.0,
+//                               hasWater: false,
+//                               ridged: false,
+//                               groundColourScale: RGBColourScale(
+//                                red: ColourScale(min: 0.2, max: 0.7),
+//                                green: ColourScale(min: 0.2, max: 0.7),
+//                                blue: ColourScale(min: 0.2, max: 0.7))
+//)
 
 //let marsConfig = PlanetConfig(seed: 729134,
 //                               radius: 1000.0,

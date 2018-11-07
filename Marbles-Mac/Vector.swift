@@ -39,8 +39,8 @@ public func times (left:float3, scalar:Float) -> float3 {
     return [left[0] * scalar, left[1] * scalar, left[2] * scalar]
 }
 
-func scaledUnitClamp(_ v: FP, min: FP, max: FP = 1.0) -> FP {
-    return v * (max-min) + min
+func scaledUnitClamp(_ t: FP, v0: FP, v1: FP) -> FP {
+    return (1 - t) * v0 + t * v1
 }
 
 func pow(_ base: UInt32, _ power: UInt32) -> UInt32 {

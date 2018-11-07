@@ -6,8 +6,8 @@ let debug = false
 class MarbleViewController: NSViewController {
 
     let planet = earthConfig
-    let maxEdgeLength = 75.0
     let detailSubdivisions: UInt32 = 5
+    lazy var maxEdgeLength = FP(pow(2, detailSubdivisions + 1))
     let adaptivePatchMaxDepth = 12
     let updateInterval = 0.2
     let hasDays = false

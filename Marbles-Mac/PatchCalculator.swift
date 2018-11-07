@@ -43,7 +43,9 @@ class PatchCalculator {
             ops.forEach { op in
                 self.fast.async(execute: op.op.op)
             }
-//            print("\(queuedCount), \(wipCount): \(ops.map { op in op.op.name })")
+            if debug {
+                print("\(queuedCount), \(wipCount): \(ops.map { op in op.op.name })")
+            }
             self.pollRingBuffer()
         }
     }
@@ -139,9 +141,6 @@ class PatchCalculator {
         let an = normalize(a)
         let ans = an * config.radius
         var delta = config.noise.evaluate(Double(ans.x), Double(ans.y), Double(ans.z))
-//        if config.ridged {
-//            delta = abs(delta) * -1.0 + config.mountainHeight / 2.0
-//        }
         if config.levels > 0 {
             let ratio = Double(config.amplitude) / Double(config.levels)
             delta = ratio * round(delta / ratio)
@@ -202,18 +201,20 @@ class PatchCalculator {
                 rawHeightColour = FP(delta + config.mountainHeight) / (config.mountainHeight * 2.0)
             }
             let rawDepthColour = 1 + (FP(delta) / config.oceanDepth)
-            let depthColour = Float(scaledUnitClamp(rawDepthColour, min: 0.3, max: 0.7))
             if FP(delta) > snowLine {
                 // Ice
                 colours.append([1.0, 1.0, 1.0])
             } else if config.hasWater && FP(delta) <= 0.0 {
                 // Water
-                colours.append([0.0, 0.0, depthColour])
+                let r = scaledUnitClamp(rawDepthColour, v0: config.waterColourScale.red.a, v1: config.waterColourScale.red.b)
+                let g = scaledUnitClamp(rawDepthColour, v0: config.waterColourScale.green.a, v1: config.waterColourScale.green.b)
+                let b = scaledUnitClamp(rawDepthColour, v0: config.waterColourScale.blue.a, v1: config.waterColourScale.blue.b)
+                colours.append([Float(r), Float(g), Float(b)])
             } else {
                 // Ground
-                let r = scaledUnitClamp(rawHeightColour, min: config.groundColourScale.red.min, max: config.groundColourScale.red.max)
-                let g = scaledUnitClamp(rawHeightColour, min: config.groundColourScale.green.min, max: config.groundColourScale.green.max)
-                let b = scaledUnitClamp(rawHeightColour, min: config.groundColourScale.blue.min, max: config.groundColourScale.blue.max)
+                let r = scaledUnitClamp(rawHeightColour, v0: config.groundColourScale.red.a, v1: config.groundColourScale.red.b)
+                let g = scaledUnitClamp(rawHeightColour, v0: config.groundColourScale.green.a, v1: config.groundColourScale.green.b)
+                let b = scaledUnitClamp(rawHeightColour, v0: config.groundColourScale.blue.a, v1: config.groundColourScale.blue.b)
                 colours.append([Float(r), Float(g), Float(b)])
             }
         }
