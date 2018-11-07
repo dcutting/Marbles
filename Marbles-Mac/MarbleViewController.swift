@@ -23,6 +23,7 @@ class MarbleViewController: NSViewController {
     }
 
     var screenWidth: CGFloat = 0.0
+    var halfScreenWidthSq: CGFloat = 0.0
     var screenHeight: CGFloat = 0.0
     var screenCenter = SCNVector3()
     let scene = SCNScene()
@@ -100,7 +101,8 @@ class MarbleViewController: NSViewController {
     private func updateBounds() {
         screenWidth = view.bounds.width
         screenHeight = view.bounds.height
-        screenCenter = SCNVector3(screenWidth/2.0, screenHeight/2.0, 0.0)
+        halfScreenWidthSq = (screenWidth / 2.0) * (screenWidth / 2.0)
+        screenCenter = SCNVector3(screenWidth / 2.0, screenHeight / 2.0, 0.0)
     }
 
     @objc func handleClick(_ gestureRecognizer: NSGestureRecognizer) {
@@ -289,8 +291,15 @@ class MarbleViewController: NSViewController {
         if let patch = patchCache.read(name) {
             return patch
         }
-        patchCalculator.calculate(name, vertices: corners, subdivisions: detailSubdivisions, priority: Double(depth)) { patch in
-            // TODO: prioritise land near middle of screen (instead of water)
+
+        let pAd = (pA - screenCenter).lengthSq()
+        let pBd = (pB - screenCenter).lengthSq()
+        let pCd = (pC - screenCenter).lengthSq()
+        let pd = min(pAd, pBd, pCd) / halfScreenWidthSq
+        let priority = Double(depth) + Double(pd)
+        // TODO: prioritise coastlines, then land, then water?
+
+        patchCalculator.calculate(name, vertices: corners, subdivisions: detailSubdivisions, priority: priority) { patch in
             self.patchCache.write(name, patch: patch)
         }
         return nil
