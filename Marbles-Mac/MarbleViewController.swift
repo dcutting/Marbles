@@ -8,7 +8,7 @@ class MarbleViewController: NSViewController {
     let planet = earthConfig
     let maxEdgeLength = 75.0
     let detailSubdivisions: UInt32 = 5
-    let adaptivePatchMaxDepth = 50
+    let adaptivePatchMaxDepth = 12
     let updateInterval = 0.2
     let hasDays = false
     var wireframe: Bool = false {
@@ -182,7 +182,7 @@ class MarbleViewController: NSViewController {
                 depth: 0)
             if debug {
                 let stop = DispatchTime.now()
-                print("      Made adaptive patch \(stop.uptimeNanoseconds - start.uptimeNanoseconds)")
+                print("      Made adaptive patch with \(patch.vertices.count) vertices in \(stop.uptimeNanoseconds - start.uptimeNanoseconds)")
             }
         } else {
             patch = makePatch(vertices: corners, colour: white)
@@ -200,7 +200,8 @@ class MarbleViewController: NSViewController {
         // TODO doesn't work great for low angle vistas
     }
 
-    let dumbLength: FP = 100000000000000
+    let dumbLength: FP = 10000000000
+    let epsilon: FP = 0.0000001
     let white: Patch.Colour = [1.0, 1.0, 1.0]
     let red: Patch.Colour = [1.0, 0.0, 0.0]
     let yellow: Patch.Colour = [1.0, 1.0, 0.0]
@@ -216,12 +217,16 @@ class MarbleViewController: NSViewController {
         let lA = FP((pA - pB).lengthSq())
         let lB = FP((pA - pC).lengthSq())
         let lC = FP((pB - pC).lengthSq())
+        // TODO: somehow it keeps making thousands of tiny little triangles just behind the camera which basically hangs the loop
         if lA > maxEdgeLengthSq || lB > maxEdgeLengthSq || lC > maxEdgeLengthSq {
-            if lA < dumbLength && lB < dumbLength && lC < dumbLength {
+            if lA > 1000 && lB > 1000 && lC > 1000 {
                 return true
-            } else {
-                //print("dumb:", name, l0, l1, l2)
             }
+//            if lA < dumbLength && lB < dumbLength && lC < dumbLength {
+//                return true // TODO: dumbLength may need to be proportional to the depth? Or is there a better way to weed out massive subdivision?
+//            } else {
+//                //print("dumb:", name, l0, l1, l2)
+//            }
         }
         return false
     }
