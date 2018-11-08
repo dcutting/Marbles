@@ -43,6 +43,11 @@ extension SCNVector3 {
             return SCNVector3(0.0, 0.0, 0.0)
         }
     }
+
+}
+
+func centroid(of triangle: [SCNVector3]) -> SCNVector3 {
+    return (triangle[0] + triangle[1] + triangle[2]) / 3.0
 }
 
 public func times (left:float3, scalar:Float) -> float3 {

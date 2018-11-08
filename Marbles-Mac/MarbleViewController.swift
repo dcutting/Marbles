@@ -236,7 +236,7 @@ class MarbleViewController: NSViewController {
             return makePatch(vertices: corners, colour: red)
         }
 
-        let (subv, sube) = patchCalculator.sphericallySubdivide(vertices: corners)
+        let (subv, sube, deltas) = patchCalculator.sphericallySubdivide(vertices: corners)
 
         let worldA = SCNVector3(subv[0])
         let worldB = SCNVector3(subv[1])
@@ -292,7 +292,7 @@ class MarbleViewController: NSViewController {
             return patch
         }
 
-        let priority = prioritise(world: [worldA, worldB, worldC], screen: [screenA, screenB, screenC], depth: depth)
+        let priority = prioritise(world: [worldA, worldB, worldC], screen: [screenA, screenB, screenC], delta: [deltas[0], deltas[1], deltas[2]], depth: depth)
 
         patchCalculator.calculate(name, vertices: corners, subdivisions: detailSubdivisions, priority: priority) { patch in
             self.patchCache.write(name, patch: patch)
@@ -300,13 +300,17 @@ class MarbleViewController: NSViewController {
         return nil
     }
 
-    private func prioritise(world: [SCNVector3], screen: [SCNVector3], depth: UInt32) -> Double {
+    private func prioritise(world: [SCNVector3], screen: [SCNVector3], delta: [FP], depth: UInt32) -> Double {
 
-        // TODO: prioritise coastlines, then land, then water?
+        let coastlineWeight = 0.2
+        let landWeight = 0.1
+        let depthWeight = 0.5
+        let worldDistanceWeight = 0.15
+        let screenDistanceWeight = 0.05
 
-        let depthWeight = 0.699
-        let worldDistanceWeight = 0.3
-        let screenDistanceWeight = 0.001
+        let coastlineFactor = delta[0] * delta[1] < 0.0 || delta[1] * delta[2] < 0.0 || delta[2] * delta[0] < 0.0 ? 1.0 : 0.0
+
+        let landFactor = delta[0] > 0.0 && delta[1] > 0.0 && delta[2] > 0.0 ? 1.0 : 0.0
 
         let depthFactor = Double(adaptivePatchMaxDepth - depth) / Double(adaptivePatchMaxDepth)
 
@@ -317,11 +321,13 @@ class MarbleViewController: NSViewController {
         let screenCentroid = centroid(of: screen)
         let screenDistanceFactor = 1 - unitClamp(Double((screenCentroid - screenCenter).lengthSq() / halfScreenWidthSq))
 
+        let coastlineComponent = coastlineFactor * coastlineWeight
+        let landComponent = landFactor * landWeight
         let depthComponent = depthFactor * depthWeight
         let worldComponent = Double(worldDistanceFactor) * worldDistanceWeight
         let screenComponent = Double(screenDistanceFactor) * screenDistanceWeight
 
-        let priorityFactor = depthComponent + worldComponent + screenComponent
+        let priorityFactor = coastlineComponent + landComponent + depthComponent + worldComponent + screenComponent
         let priority = 1 - priorityFactor
 
         if debug {
@@ -330,16 +336,12 @@ class MarbleViewController: NSViewController {
             print(depth, cameraPosition, screenCenter)
             print(worldCentroid, worldDistanceFactor)
             print(screenCentroid, screenDistanceFactor)
-            print(depthFactor, worldDistanceFactor, screenDistanceFactor)
-            print(depthComponent, worldComponent, screenComponent)
+            print(coastlineFactor, depthFactor, worldDistanceFactor, screenDistanceFactor)
+            print(coastlineComponent, depthComponent, worldComponent, screenComponent)
             print(priorityFactor, priority)
             print()
         }
 
         return priority
-    }
-
-    private func centroid(of triangle: [SCNVector3]) -> SCNVector3 {
-        return (triangle[0] + triangle[1] + triangle[2]) / 3.0
     }
 }

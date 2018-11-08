@@ -176,7 +176,7 @@ let faces: [[UInt32]] = [
     [2, 3, 7]
 ]
 
-let earthConfig = PlanetConfig(seed: 72924,
+let earthConfig = PlanetConfig(seed: 31224,
                                radius: 10000.0,
                                frequency: 1.5,
                                amplitude: 0.1,
@@ -195,7 +195,7 @@ let earthConfig = PlanetConfig(seed: 72924,
                                waterColourScale: RGBColourScale(
                                 red: ColourScale(0x0/0xff, 0x0/0xff),
                                 green: ColourScale(0x0/0xff, 0x0/0xff),
-                                blue: ColourScale(0x26/0xff, 0x88/0xff))
+                                blue: ColourScale(0x26/0xff, 0xc8/0xff))
 )
 
 //let ridgeConfig = PlanetConfig(seed: 729123134,

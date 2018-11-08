@@ -94,9 +94,9 @@ class PatchCalculator {
 
     func subdivideTriangle(vertices: [Patch.Vertex], subdivisionLevels: UInt32) -> Patch {
 
-        let a = spherical(vertices[0])
-        let b = spherical(vertices[1])
-        let c = spherical(vertices[2])
+        let (a, _) = spherical(vertices[0])
+        let (b, _) = spherical(vertices[1])
+        let (c, _) = spherical(vertices[2])
 
         let segments = pow(2, subdivisionLevels)
 
@@ -116,11 +116,11 @@ class PatchCalculator {
         points.append(a)
         for j in 1...segments {
             let p = a + (vab * FP(j))
-            let ps = spherical(p)
+            let (ps, _) = spherical(p)
             points.append(ps)
             for i in 1...j {
                 let q = p + (vbc * FP(i))
-                let qs = spherical(q)
+                let (qs, _) = spherical(q)
                 points.append(qs)
                 if i < j {
                     indices.append(contentsOf: [next, next+j, next+j+1])
@@ -137,7 +137,7 @@ class PatchCalculator {
         return Patch(vertices: points, colours: colours, indices: indices)
     }
 
-    private func spherical(_ a: Patch.Vertex) -> Patch.Vertex {
+    private func spherical(_ a: Patch.Vertex) -> (Patch.Vertex, FP) {
         let an = normalize(a)
         let ans = an * config.radius
         var delta = config.noise.evaluate(Double(ans.x), Double(ans.y), Double(ans.z))
@@ -148,20 +148,20 @@ class PatchCalculator {
         if config.hasWater && delta < 0.0 {
             delta = (delta / config.mountainHeight) * config.oceanDepth
         }
-        return an * (config.radius + delta)
+        return (an * (config.radius + delta), delta)
     }
 
     func sphericalise(vertices: [Patch.Vertex]) -> [Patch.Vertex] {
         let a = vertices[0]
         let b = vertices[1]
         let c = vertices[2]
-        let `as` = spherical(a)
-        let bs = spherical(b)
-        let cs = spherical(c)
+        let (`as`, _) = spherical(a)
+        let (bs, _) = spherical(b)
+        let (cs, _) = spherical(c)
         return [`as`, bs, cs]
     }
 
-    func sphericallySubdivide(vertices: [Patch.Vertex]) -> ([Patch.Vertex], [[Patch.Index]]) {
+    func sphericallySubdivide(vertices: [Patch.Vertex]) -> ([Patch.Vertex], [[Patch.Index]], [FP]) {
 
         let a = vertices[0]
         let b = vertices[1]
@@ -171,19 +171,19 @@ class PatchCalculator {
         let bc = midway(b, c)
         let ca = midway(c, a)
 
-        let `as` = spherical(a)
-        let bs = spherical(b)
-        let cs = spherical(c)
-        let abs = spherical(ab)
-        let bcs = spherical(bc)
-        let cas = spherical(ca)
+        let (`as`, asd) = spherical(a)
+        let (bs, bsd) = spherical(b)
+        let (cs, csd) = spherical(c)
+        let (abs, absd) = spherical(ab)
+        let (bcs, bcsd) = spherical(bc)
+        let (cas, casd) = spherical(ca)
 
         let subdividedTriangleEdges: [[Patch.Index]] = [[0, 3, 5],
                                                         [3, 1, 4],
                                                         [3, 4, 5],
                                                         [5, 4, 2]]
 
-        return ([`as`, bs, cs, abs, bcs, cas], subdividedTriangleEdges)
+        return ([`as`, bs, cs, abs, bcs, cas], subdividedTriangleEdges, [asd, bsd, csd, absd, bcsd, casd])
     }
 
     private func findColours(for positions: [Patch.Vertex]) -> [Patch.Colour] {
