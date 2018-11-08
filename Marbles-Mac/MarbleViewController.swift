@@ -217,6 +217,7 @@ class MarbleViewController: NSViewController {
     }
 
     private func shouldSubdivide(_ pA: SCNVector3, _ pB: SCNVector3, _ pC: SCNVector3, maxEdgeLengthSq: FP) -> Bool {
+        guard pA.z > 0.5 && pB.z > 0.5 && pC.z > 0.5 else { return false }
         let lA = FP((pA - pB).lengthSq())
         let lB = FP((pA - pC).lengthSq())
         let lC = FP((pB - pC).lengthSq())
