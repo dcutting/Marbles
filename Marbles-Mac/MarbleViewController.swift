@@ -117,7 +117,7 @@ class MarbleViewController: NSViewController {
     private func adaptFlyingSpeed() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             let distance = self.scnView.defaultCameraController.pointOfView!.position.length()
-            let zeroHeight = self.planet.radius * 0.95
+            let zeroHeight = self.planet.radius * 0.99
             let newVelocity = ((FP(distance) - zeroHeight) / zeroHeight) * zeroHeight / 10.0
             self.scnView.cameraControlConfiguration.flyModeVelocity = CGFloat(newVelocity)
             self.adaptFlyingSpeed()
@@ -219,7 +219,7 @@ class MarbleViewController: NSViewController {
 
     private func shouldSubdivide(_ pA: SCNVector3, _ pB: SCNVector3, _ pC: SCNVector3, maxEdgeLengthSq: FP) -> Bool {
         // TODO: still can't get close enough to the ground
-        guard pA.z > 0.01 && pB.z > 0.01 && pC.z > 0.01 else { return false }
+        guard pA.z > 0.1 && pB.z > 0.1 && pC.z > 0.1 else { return false }
         let lA = FP((pA - pB).lengthSq())
         let lB = FP((pA - pC).lengthSq())
         let lC = FP((pB - pC).lengthSq())
@@ -304,8 +304,8 @@ class MarbleViewController: NSViewController {
 
         // TODO: prioritise coastlines, then land, then water?
 
-        let depthWeight = 0.199
-        let worldDistanceWeight = 0.8
+        let depthWeight = 0.699
+        let worldDistanceWeight = 0.3
         let screenDistanceWeight = 0.001
 
         let depthFactor = Double(adaptivePatchMaxDepth - depth) / Double(adaptivePatchMaxDepth)
