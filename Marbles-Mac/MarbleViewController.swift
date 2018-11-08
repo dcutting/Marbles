@@ -105,31 +105,13 @@ class MarbleViewController: NSViewController {
     }
 
     @objc func handleClick(_ gestureRecognizer: NSGestureRecognizer) {
-        wireframe.toggle()
-    }
-
-    @objc func handleDoubleClick(_ gestureRecognizer: NSGestureRecognizer) {
         let scnView = view as! SCNView
         let mode = scnView.defaultCameraController.interactionMode
         scnView.defaultCameraController.interactionMode = mode == .fly ? .orbitCenteredArcball : .fly
     }
 
-    var nodes = [SCNNode]()
-    var geometries = [SCNGeometry]()
-
-    private func makeTerrain() {
-        for faceIndex in 0..<faces.count {
-            let face = faces[faceIndex]
-            let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
-            let patch = patchCalculator.subdivideTriangle(vertices: vertices, subdivisionLevels: 0)
-            let geometry = makeGeometry(patch: patch, asWireframe: self.wireframe)
-            let node = SCNNode(geometry: geometry)
-            geometries.append(geometry)
-            nodes.append(node)
-            self.terrainNode.addChildNode(node)
-        }
-        self.scene.rootNode.addChildNode(terrainNode)
-        self.refreshGeometry()
+    @objc func handleDoubleClick(_ gestureRecognizer: NSGestureRecognizer) {
+        wireframe.toggle()
     }
 
     private func adaptFlyingSpeed() {
@@ -140,6 +122,25 @@ class MarbleViewController: NSViewController {
             self.scnView.cameraControlConfiguration.flyModeVelocity = CGFloat(newVelocity)
             self.adaptFlyingSpeed()
         }
+    }
+
+    var nodes = [SCNNode]()
+    var geometries = [SCNGeometry]()
+
+    private func makeTerrain() {
+        for faceIndex in 0..<faces.count {
+            let face = faces[faceIndex]
+            let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
+            let patch = patchCalculator.subdivideTriangle(vertices: vertices, subdivisionLevels: detailSubdivisions)
+            patchCache.write("\(faceIndex)-", patch: patch)
+            let geometry = makeGeometry(patch: patch, asWireframe: self.wireframe)
+            let node = SCNNode(geometry: geometry)
+            geometries.append(geometry)
+            nodes.append(node)
+            self.terrainNode.addChildNode(node)
+        }
+        self.scene.rootNode.addChildNode(terrainNode)
+        self.refreshGeometry()
     }
 
     private func refreshGeometry() {
@@ -158,7 +159,7 @@ class MarbleViewController: NSViewController {
                 let geom = self.makeAdaptiveGeometry(faceIndex: faceIndex, corners: vertices, maxEdgeLength: self.maxEdgeLength)
                 self.geometries[faceIndex] = geom
             }
-            DispatchQueue.main.async {
+            DispatchQueue.main.sync {
                 if debug {
                     print("* Refreshing geometry")
                 }
