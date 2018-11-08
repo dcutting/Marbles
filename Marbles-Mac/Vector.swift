@@ -1,18 +1,28 @@
 import SceneKit
 
-typealias FP = Double
-typealias FP3 = double3
+public typealias FP = Double
+public typealias FP3 = double3
 
-public func + (left:SCNVector3, right:SCNVector3) -> SCNVector3 {
+public func + (left: SCNVector3, right: SCNVector3) -> SCNVector3 {
     return SCNVector3(left.x + right.x, left.y + right.y, left.z + right.z)
 }
 
-public func - (left:SCNVector3, right:SCNVector3) -> SCNVector3 {
+public func - (left: SCNVector3, right: SCNVector3) -> SCNVector3 {
     return SCNVector3(left.x - right.x, left.y - right.y, left.z - right.z)
 }
 
-public func * (left:SCNVector3, scalar:CGFloat) -> SCNVector3 {
+public func * (left: SCNVector3, scalar: CGFloat) -> SCNVector3 {
     return SCNVector3(left.x * scalar, left.y * scalar, left.z * scalar)
+}
+
+public func / (left: SCNVector3, scalar: CGFloat) -> SCNVector3 {
+    return SCNVector3(left.x / scalar, left.y / scalar, left.z / scalar)
+}
+
+public func unitClamp(_ v: FP) -> FP {
+    guard v > 0.0 else { return 0.0 }
+    guard v < 1.0 else { return 1.0 }
+    return v
 }
 
 extension SCNVector3 {

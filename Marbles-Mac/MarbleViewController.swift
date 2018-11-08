@@ -8,7 +8,7 @@ class MarbleViewController: NSViewController {
     let planet = earthConfig
     let detailSubdivisions: UInt32 = 5
     lazy var maxEdgeLength = FP(pow(2, detailSubdivisions + 1))
-    let adaptivePatchMaxDepth = 15
+    let adaptivePatchMaxDepth: UInt32 = 15
     let updateInterval = 0.2
     let hasDays = false
     var wireframe: Bool = false {
@@ -135,7 +135,8 @@ class MarbleViewController: NSViewController {
     private func adaptFlyingSpeed() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             let distance = self.scnView.defaultCameraController.pointOfView!.position.length()
-            let newVelocity = ((FP(distance) - self.planet.radius) / self.planet.radius) * self.planet.radius / 10.0
+            let zeroHeight = self.planet.radius * 0.95
+            let newVelocity = ((FP(distance) - zeroHeight) / zeroHeight) * zeroHeight / 10.0
             self.scnView.cameraControlConfiguration.flyModeVelocity = CGFloat(newVelocity)
             self.adaptFlyingSpeed()
         }
@@ -222,14 +223,7 @@ class MarbleViewController: NSViewController {
         let lC = FP((pB - pC).lengthSq())
         // TODO: somehow it keeps making thousands of tiny little triangles just behind the camera which basically hangs the loop
         if lA > maxEdgeLengthSq || lB > maxEdgeLengthSq || lC > maxEdgeLengthSq {
-            if lA > 1000 && lB > 1000 && lC > 1000 {
                 return true
-            }
-//            if lA < dumbLength && lB < dumbLength && lC < dumbLength {
-//                return true // TODO: dumbLength may need to be proportional to the depth? Or is there a better way to weed out massive subdivision?
-//            } else {
-//                //print("dumb:", name, l0, l1, l2)
-//            }
         }
         return false
     }
@@ -242,16 +236,20 @@ class MarbleViewController: NSViewController {
 
         let (subv, sube) = patchCalculator.sphericallySubdivide(vertices: corners)
 
-        let pA = scnView.projectPoint(SCNVector3(subv[0]))
-        let pB = scnView.projectPoint(SCNVector3(subv[1]))
-        let pC = scnView.projectPoint(SCNVector3(subv[2]))
+        let worldA = SCNVector3(subv[0])
+        let worldB = SCNVector3(subv[1])
+        let worldC = SCNVector3(subv[2])
 
-        guard isIntersecting(pA, pB, pC, width: screenWidth, height: screenHeight) else {
+        let screenA = scnView.projectPoint(worldA)
+        let screenB = scnView.projectPoint(worldB)
+        let screenC = scnView.projectPoint(worldC)
+
+        guard isIntersecting(screenA, screenB, screenC, width: screenWidth, height: screenHeight) else {
             return patchCache.read(name)
                 ?? patchCalculator.subdivideTriangle(vertices: corners, subdivisionLevels: 0)
         }
 
-        if shouldSubdivide(pA, pB, pC, maxEdgeLengthSq: maxEdgeLengthSq) {
+        if shouldSubdivide(screenA, screenB, screenC, maxEdgeLengthSq: maxEdgeLengthSq) {
             var subVertices = [[Patch.Vertex]](repeating: [], count: 4)
             var subColours = [[Patch.Colour]](repeating: [], count: 4)
             var subIndices = [[Patch.Index]](repeating: [], count: 4)
@@ -292,25 +290,54 @@ class MarbleViewController: NSViewController {
             return patch
         }
 
-        let cameraPosition = (view as! SCNView).defaultCameraController.pointOfView!.position
-        let pAd = (pA - cameraPosition).lengthSq()
-        let pBd = (pB - cameraPosition).lengthSq()
-        let pCd = (pC - cameraPosition).lengthSq()
-        let pd = (Double(min(pAd, pBd, pCd)) / (planet.radius * planet.radius)) - 1
-
-//        let pAd = (pA - screenCenter).lengthSq()
-//        let pBd = (pB - screenCenter).lengthSq()
-//        let pCd = (pC - screenCenter).lengthSq()
-//        let pd = min(pAd, pBd, pCd) / halfScreenWidthSq
-
-        let priority = Double(depth) + Double(pd)
-        // TODO: prioritise coastlines, then land, then water?
-
-        print(depth, pd, priority)
+        let priority = prioritise(world: [worldA, worldB, worldC], screen: [screenA, screenB, screenC], depth: depth)
 
         patchCalculator.calculate(name, vertices: corners, subdivisions: detailSubdivisions, priority: priority) { patch in
             self.patchCache.write(name, patch: patch)
         }
         return nil
+    }
+
+    private func prioritise(world: [SCNVector3], screen: [SCNVector3], depth: UInt32) -> Double {
+
+        // TODO: prioritise coastlines, then land, then water?
+
+        let depthWeight = 0.199
+        let worldDistanceWeight = 0.8
+        let screenDistanceWeight = 0.001
+
+        let depthFactor = Double(adaptivePatchMaxDepth - depth) / Double(adaptivePatchMaxDepth)
+
+        let cameraPosition = (view as! SCNView).defaultCameraController.pointOfView!.position
+        let worldCentroid = centroid(of: world)
+        let worldDistanceFactor = 1 - unitClamp(Double((worldCentroid - cameraPosition).lengthSq()) / planet.diameterSq)
+
+        let screenCentroid = centroid(of: screen)
+        let screenDistanceFactor = 1 - unitClamp(Double((screenCentroid - screenCenter).lengthSq() / halfScreenWidthSq))
+
+        let depthComponent = depthFactor * depthWeight
+        let worldComponent = Double(worldDistanceFactor) * worldDistanceWeight
+        let screenComponent = Double(screenDistanceFactor) * screenDistanceWeight
+
+        let priorityFactor = depthComponent + worldComponent + screenComponent
+        let priority = 1 - priorityFactor
+
+//        if debug {
+            print(world)
+            print(screen)
+            print(depth, cameraPosition, screenCenter)
+            print(worldCentroid, worldDistanceFactor)
+            print(screenCentroid, screenDistanceFactor)
+            print(depthFactor, worldDistanceFactor, screenDistanceFactor)
+            print(depthComponent, worldComponent, screenComponent)
+            print(priorityFactor, priority)
+            print()
+//        }
+
+        return priority
+    }
+
+    private func centroid(of triangle: [SCNVector3]) -> SCNVector3 {
+        return (triangle[0] + triangle[1] + triangle[2]) / 3.0
     }
 }

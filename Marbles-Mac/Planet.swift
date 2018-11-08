@@ -22,6 +22,7 @@ enum NoiseType {
 struct PlanetConfig {
 
     let radius: Double
+    let diameterSq: Double
     let levels: Int
     let iciness: Double
     let hasWater: Bool
@@ -51,6 +52,7 @@ struct PlanetConfig {
          waterColourScale: RGBColourScale) {
 
         self.radius = radius
+        self.diameterSq = (radius * 2) * (radius * 2)
         self.frequency = unscaledFrequency / radius
         self.amplitude = radius * unscaledAmplitude
         self.levels = levels
