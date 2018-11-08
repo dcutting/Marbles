@@ -8,7 +8,7 @@ class MarbleViewController: NSViewController {
     let planet = earthConfig
     let detailSubdivisions: UInt32 = 5
     lazy var maxEdgeLength = FP(pow(2, detailSubdivisions + 1))
-    let adaptivePatchMaxDepth = 12
+    let adaptivePatchMaxDepth = 15
     let updateInterval = 0.2
     let hasDays = false
     var wireframe: Bool = false {
@@ -73,8 +73,7 @@ class MarbleViewController: NSViewController {
         scnView.scene = scene
         scnView.allowsCameraControl = true
         scnView.backgroundColor = .black
-        scnView.showsStatistics = true
-        scnView.cameraControlConfiguration.flyModeVelocity = 50
+//        scnView.showsStatistics = true
 
         let originMarker = SCNBox(width: 100.0, height: 100.0, length: 100.0, chamferRadius: 0.0)
         scene.rootNode.addChildNode(SCNNode(geometry: originMarker))
@@ -156,7 +155,7 @@ class MarbleViewController: NSViewController {
                 print("  Clearing priority buffer")
             }
             self.patchCalculator.clearBuffer()
-            for faceIndex in 0..<faces.count {
+            for faceIndex in 0..<1{//faces.count {
                 if debug {
                     print("    Starting adaptive terrain generation for face \(faceIndex)")
                 }
@@ -184,7 +183,7 @@ class MarbleViewController: NSViewController {
                 depth: 0) ?? makePatch(vertices: corners, colour: grey)
             if debug {
                 let stop = DispatchTime.now()
-                print("      Made adaptive patch with \(patch.vertices.count) vertices in \(stop.uptimeNanoseconds - start.uptimeNanoseconds)")
+                print("      Adaptive patch (\(faceIndex)): \(patch.vertices.count) vertices in \(stop.uptimeNanoseconds - start.uptimeNanoseconds)")
             }
         } else {
             patch = makePatch(vertices: corners, colour: white)
@@ -293,12 +292,21 @@ class MarbleViewController: NSViewController {
             return patch
         }
 
-        let pAd = (pA - screenCenter).lengthSq()
-        let pBd = (pB - screenCenter).lengthSq()
-        let pCd = (pC - screenCenter).lengthSq()
-        let pd = min(pAd, pBd, pCd) / halfScreenWidthSq
+        let cameraPosition = (view as! SCNView).defaultCameraController.pointOfView!.position
+        let pAd = (pA - cameraPosition).lengthSq()
+        let pBd = (pB - cameraPosition).lengthSq()
+        let pCd = (pC - cameraPosition).lengthSq()
+        let pd = (Double(min(pAd, pBd, pCd)) / (planet.radius * planet.radius)) - 1
+
+//        let pAd = (pA - screenCenter).lengthSq()
+//        let pBd = (pB - screenCenter).lengthSq()
+//        let pCd = (pC - screenCenter).lengthSq()
+//        let pd = min(pAd, pBd, pCd) / halfScreenWidthSq
+
         let priority = Double(depth) + Double(pd)
         // TODO: prioritise coastlines, then land, then water?
+
+        print(depth, pd, priority)
 
         patchCalculator.calculate(name, vertices: corners, subdivisions: detailSubdivisions, priority: priority) { patch in
             self.patchCache.write(name, patch: patch)
