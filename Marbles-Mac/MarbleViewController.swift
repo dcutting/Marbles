@@ -157,7 +157,7 @@ class MarbleViewController: NSViewController {
             }
             self.patchCalculator.clearBuffer()
             // TODO: don't calculate invisible faces
-            for faceIndex in 0..<1//faces.count {
+            for faceIndex in 0..<1{//faces.count {
                 if debug {
                     print("    Starting adaptive terrain generation for face \(faceIndex)")
                 }
