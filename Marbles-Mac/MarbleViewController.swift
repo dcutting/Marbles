@@ -156,7 +156,8 @@ class MarbleViewController: NSViewController {
                 print("  Clearing priority buffer")
             }
             self.patchCalculator.clearBuffer()
-            for faceIndex in 0..<1{//faces.count {
+            // TODO: don't calculate invisible faces
+            for faceIndex in 0..<1//faces.count {
                 if debug {
                     print("    Starting adaptive terrain generation for face \(faceIndex)")
                 }
@@ -217,7 +218,8 @@ class MarbleViewController: NSViewController {
     }
 
     private func shouldSubdivide(_ pA: SCNVector3, _ pB: SCNVector3, _ pC: SCNVector3, maxEdgeLengthSq: FP) -> Bool {
-        guard pA.z > 0.5 && pB.z > 0.5 && pC.z > 0.5 else { return false }
+        // TODO: still can't get close enough to the ground
+        guard pA.z > 0.01 && pB.z > 0.01 && pC.z > 0.01 else { return false }
         let lA = FP((pA - pB).lengthSq())
         let lB = FP((pA - pC).lengthSq())
         let lC = FP((pB - pC).lengthSq())
