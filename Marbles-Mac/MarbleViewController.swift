@@ -143,21 +143,13 @@ class MarbleViewController: NSViewController {
     }
 
     private func refreshGeometry() {
-
-        if debug {
-            print("* Refreshing geometry")
-        }
-        for faceIndex in 0..<nodes.count {
-            nodes[faceIndex].geometry = geometries[faceIndex]
-        }
-
         self.terrainQueue.asyncAfter(deadline: .now() + self.updateInterval) {
             if debug {
                 print("  Clearing priority buffer")
             }
             self.patchCalculator.clearBuffer()
             // TODO: don't calculate invisible faces
-            for faceIndex in 0..<1{//faces.count {
+            for faceIndex in 0..<faces.count {
                 if debug {
                     print("    Starting adaptive terrain generation for face \(faceIndex)")
                 }
@@ -167,6 +159,13 @@ class MarbleViewController: NSViewController {
                 self.geometries[faceIndex] = geom
             }
             DispatchQueue.main.async {
+                if debug {
+                    print("* Refreshing geometry")
+                }
+                for faceIndex in 0..<self.nodes.count {
+                    self.nodes[faceIndex].geometry = self.geometries[faceIndex]
+                }
+
                 self.refreshGeometry()
             }
         }
@@ -324,7 +323,7 @@ class MarbleViewController: NSViewController {
         let priorityFactor = depthComponent + worldComponent + screenComponent
         let priority = 1 - priorityFactor
 
-//        if debug {
+        if debug {
             print(world)
             print(screen)
             print(depth, cameraPosition, screenCenter)
@@ -334,7 +333,7 @@ class MarbleViewController: NSViewController {
             print(depthComponent, worldComponent, screenComponent)
             print(priorityFactor, priority)
             print()
-//        }
+        }
 
         return priority
     }
