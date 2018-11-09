@@ -156,8 +156,9 @@ class MarbleViewController: NSViewController {
                 }
                 let face = faces[faceIndex]
                 let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
-                let geom = self.makeAdaptiveGeometry(faceIndex: faceIndex, corners: vertices, maxEdgeLength: self.maxEdgeLength)
-                self.geometries[faceIndex] = geom
+                if let geom = self.makeAdaptiveGeometry(faceIndex: faceIndex, corners: vertices, maxEdgeLength: self.maxEdgeLength) {
+                    self.geometries[faceIndex] = geom
+                }
             }
             DispatchQueue.main.sync {
                 if debug {
@@ -172,23 +173,20 @@ class MarbleViewController: NSViewController {
         }
     }
 
-    private func makeAdaptiveGeometry(faceIndex: Int, corners: [FP3], maxEdgeLength: FP) -> SCNGeometry {
+    private func makeAdaptiveGeometry(faceIndex: Int, corners: [FP3], maxEdgeLength: FP) -> SCNGeometry? {
         let cameraPosition = (view as! SCNView).defaultCameraController.pointOfView!.position
         let distanceSq = cameraPosition.lengthSq()
-        let patch: Patch
-        if isVisible(vertices: corners, cameraPosition: cameraPosition, distanceSq: distanceSq) {
-            let start = DispatchTime.now()
-            patch = makeAdaptivePatch(name: "\(faceIndex)-",
-                corners: corners,
-                maxEdgeLengthSq: maxEdgeLength * maxEdgeLength,
-                patchCache: patchCache,
-                depth: 0) ?? makePatch(vertices: corners, colour: grey)
-            if debug {
-                let stop = DispatchTime.now()
-                print("      Adaptive patch (\(faceIndex)): \(patch.vertices.count) vertices in \(stop.uptimeNanoseconds - start.uptimeNanoseconds)")
-            }
-        } else {
-            patch = makePatch(vertices: corners, colour: white)
+        guard isVisible(vertices: corners, cameraPosition: cameraPosition, distanceSq: distanceSq)
+            else { return nil }
+        let start = DispatchTime.now()
+        let patch = makeAdaptivePatch(name: "\(faceIndex)-",
+            corners: corners,
+            maxEdgeLengthSq: maxEdgeLength * maxEdgeLength,
+            patchCache: patchCache,
+            depth: 0) ?? makePatch(vertices: corners, colour: grey)
+        if debug {
+            let stop = DispatchTime.now()
+            print("      Adaptive patch (\(faceIndex)): \(patch.vertices.count) vertices in \(stop.uptimeNanoseconds - start.uptimeNanoseconds)")
         }
         return makeGeometry(patch: patch, asWireframe: wireframe)
     }
@@ -200,7 +198,6 @@ class MarbleViewController: NSViewController {
         let cD = (SCNVector3(vertices[2]) - cameraPosition).lengthSq()
         let minimumTriangleDistance = min(aD, bD, cD)
         return minimumTriangleDistance < distanceSq
-        // TODO doesn't work great for low angle vistas
     }
 
     let dumbLength: FP = 10000000000
