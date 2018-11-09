@@ -19,7 +19,7 @@ class PatchCalculator {
     private let fast: DispatchQueue
     private let queued = PatchCache<Bool>()
     private let wip = PatchCache<Bool>()
-    private let concurrentPatches = 8
+    private let concurrentPatches = 12
 
     init(config: PlanetConfig) {
         self.config = config

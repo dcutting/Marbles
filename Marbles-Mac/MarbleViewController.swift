@@ -1,7 +1,7 @@
 import AppKit
 import SceneKit
 
-let debug = true
+let debug = false
 
 class MarbleViewController: NSViewController {
 
@@ -150,7 +150,7 @@ class MarbleViewController: NSViewController {
             }
             self.patchCalculator.clearBuffer()
             // TODO: don't calculate invisible faces
-            for faceIndex in 0..<1{//faces.count {
+            for faceIndex in 0..<faces.count {
                 if debug {
                     print("    Starting adaptive terrain generation for face \(faceIndex)")
                 }
@@ -217,16 +217,7 @@ class MarbleViewController: NSViewController {
                      indices: [0, 1, 2])
     }
 
-    let zNearSubdivisionThreshold: CGFloat = 0.5
-
     private func shouldSubdivide(_ pA: SCNVector3, _ pB: SCNVector3, _ pC: SCNVector3, maxEdgeLengthSq: FP) -> Bool {
-        guard pA.z >= zNearSubdivisionThreshold
-            && pB.z >= zNearSubdivisionThreshold
-            && pC.z >= zNearSubdivisionThreshold
-//            && pA.z <= 1.0
-//            && pB.z <= 1.0
-//            && pC.z <= 1.0
-            else { return false }
         let lA = FP((pA - pB).lengthSq())
         let lB = FP((pA - pC).lengthSq())
         let lC = FP((pB - pC).lengthSq())
@@ -257,6 +248,16 @@ class MarbleViewController: NSViewController {
                     ?? patchCalculator.subdivideTriangle(vertices: corners, subdivisionLevels: 0)
             }
         }
+
+//        if depth > 10 {
+//        var str = ""
+//        for _ in 0..<depth {
+//            str += " "
+//        }
+//        str += "> \(name)"
+//        print(str)
+//            print("deep")
+//        }
 
         if shouldSubdivide(screenA, screenB, screenC, maxEdgeLengthSq: maxEdgeLengthSq) {
             var subVertices = [[Patch.Vertex]](repeating: [], count: 4)
@@ -314,10 +315,10 @@ class MarbleViewController: NSViewController {
 
     private func prioritise(world: [SCNVector3], screen: [SCNVector3], delta: [FP], depth: UInt32) -> Double {
 
-        let coastlineWeight = 0.2
-        let landWeight = 0.1
-        let depthWeight = 0.5
-        let worldDistanceWeight = 0.15
+        let coastlineWeight = 0.35
+        let landWeight = 0.3
+        let depthWeight = 0.2
+        let worldDistanceWeight = 0.1
         let screenDistanceWeight = 0.05
 
         let isAllLand = delta[0] > 0.0 && delta[1] > 0.0 && delta[2] > 0.0

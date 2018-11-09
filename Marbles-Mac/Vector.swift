@@ -74,6 +74,9 @@ func midway(_ a: FP3, _ b: FP3) -> FP3 {
 }
 
 func isIntersecting(_ a: SCNVector3, _ b: SCNVector3, _ c: SCNVector3, width: CGFloat, height: CGFloat) -> Bool {
+    guard a.z >= 0.0 && b.z >= 0.0 && c.z >= 0.0
+        && a.z <= 1.1 && b.z <= 1.1 && c.z <= 1.1
+        else { return false }
     let minX = min(a.x, b.x, c.x)
     let maxX = max(a.x, b.x, c.x)
     let minY = min(a.y, b.y, c.y)
