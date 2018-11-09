@@ -1,7 +1,7 @@
 import AppKit
 import SceneKit
 
-let debug = false
+let debug = true
 
 class MarbleViewController: NSViewController {
 
@@ -73,7 +73,7 @@ class MarbleViewController: NSViewController {
         scnView.scene = scene
         scnView.allowsCameraControl = true
         scnView.backgroundColor = .black
-//        scnView.showsStatistics = true
+        scnView.showsStatistics = true
 
         let originMarker = SCNBox(width: 100.0, height: 100.0, length: 100.0, chamferRadius: 0.0)
         scene.rootNode.addChildNode(SCNNode(geometry: originMarker))
@@ -150,7 +150,7 @@ class MarbleViewController: NSViewController {
             }
             self.patchCalculator.clearBuffer()
             // TODO: don't calculate invisible faces
-            for faceIndex in 0..<faces.count {
+            for faceIndex in 0..<1{//faces.count {
                 if debug {
                     print("    Starting adaptive terrain generation for face \(faceIndex)")
                 }
@@ -217,17 +217,20 @@ class MarbleViewController: NSViewController {
                      indices: [0, 1, 2])
     }
 
+    let zNearSubdivisionThreshold: CGFloat = 0.5
+
     private func shouldSubdivide(_ pA: SCNVector3, _ pB: SCNVector3, _ pC: SCNVector3, maxEdgeLengthSq: FP) -> Bool {
-        // TODO: still can't get close enough to the ground
-        guard pA.z > 0.1 && pB.z > 0.1 && pC.z > 0.1 else { return false }
+        guard pA.z >= zNearSubdivisionThreshold
+            && pB.z >= zNearSubdivisionThreshold
+            && pC.z >= zNearSubdivisionThreshold
+//            && pA.z <= 1.0
+//            && pB.z <= 1.0
+//            && pC.z <= 1.0
+            else { return false }
         let lA = FP((pA - pB).lengthSq())
         let lB = FP((pA - pC).lengthSq())
         let lC = FP((pB - pC).lengthSq())
-        // TODO: somehow it keeps making thousands of tiny little triangles just behind the camera which basically hangs the loop
-        if lA > maxEdgeLengthSq || lB > maxEdgeLengthSq || lC > maxEdgeLengthSq {
-                return true
-        }
-        return false
+        return lA > maxEdgeLengthSq && lB > maxEdgeLengthSq && lC > maxEdgeLengthSq
     }
 
     private func makeAdaptivePatch(name: String, corners: [FP3], maxEdgeLengthSq: FP, patchCache: PatchCache<Patch>, depth: UInt32) -> Patch? {
@@ -247,8 +250,12 @@ class MarbleViewController: NSViewController {
         let screenC = scnView.projectPoint(worldC)
 
         guard isIntersecting(screenA, screenB, screenC, width: screenWidth, height: screenHeight) else {
-            return patchCache.read(name)
-                ?? patchCalculator.subdivideTriangle(vertices: corners, subdivisionLevels: 0)
+            if debug {
+                return makePatch(vertices: corners, colour: yellow)
+            } else {
+                return patchCache.read(name)
+                    ?? patchCalculator.subdivideTriangle(vertices: corners, subdivisionLevels: 0)
+            }
         }
 
         if shouldSubdivide(screenA, screenB, screenC, maxEdgeLengthSq: maxEdgeLengthSq) {
@@ -297,6 +304,11 @@ class MarbleViewController: NSViewController {
         patchCalculator.calculate(name, vertices: corners, subdivisions: detailSubdivisions, priority: priority) { patch in
             self.patchCache.write(name, patch: patch)
         }
+
+        if debug {
+            return makePatch(vertices: corners, colour: magenta)
+        }
+        
         return nil
     }
 
@@ -308,9 +320,12 @@ class MarbleViewController: NSViewController {
         let worldDistanceWeight = 0.15
         let screenDistanceWeight = 0.05
 
-        let coastlineFactor = delta[0] * delta[1] < 0.0 || delta[1] * delta[2] < 0.0 || delta[2] * delta[0] < 0.0 ? 1.0 : 0.0
+        let isAllLand = delta[0] > 0.0 && delta[1] > 0.0 && delta[2] > 0.0
+        let isAllWater = delta[0] < 0.0 && delta[1] < 0.0 && delta[2] < 0.0
 
-        let landFactor = delta[0] > 0.0 && delta[1] > 0.0 && delta[2] > 0.0 ? 1.0 : 0.0
+        let coastlineFactor = !(isAllLand || isAllWater) ? 1.0 : 0.0
+
+        let landFactor = isAllLand ? 1.0 : 0.0
 
         let depthFactor = Double(adaptivePatchMaxDepth - depth) / Double(adaptivePatchMaxDepth)
 
@@ -330,17 +345,17 @@ class MarbleViewController: NSViewController {
         let priorityFactor = coastlineComponent + landComponent + depthComponent + worldComponent + screenComponent
         let priority = 1 - priorityFactor
 
-        if debug {
-            print(world)
-            print(screen)
-            print(depth, cameraPosition, screenCenter)
-            print(worldCentroid, worldDistanceFactor)
-            print(screenCentroid, screenDistanceFactor)
-            print(coastlineFactor, depthFactor, worldDistanceFactor, screenDistanceFactor)
-            print(coastlineComponent, depthComponent, worldComponent, screenComponent)
-            print(priorityFactor, priority)
-            print()
-        }
+//        if debug {
+//            print(world)
+//            print(screen)
+//            print(depth, cameraPosition, screenCenter)
+//            print(worldCentroid, worldDistanceFactor)
+//            print(screenCentroid, screenDistanceFactor)
+//            print(coastlineFactor, depthFactor, worldDistanceFactor, screenDistanceFactor)
+//            print(coastlineComponent, depthComponent, worldComponent, screenComponent)
+//            print(priorityFactor, priority)
+//            print()
+//        }
 
         return priority
     }
