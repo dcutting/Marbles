@@ -201,7 +201,8 @@ class PatchCalculator {
                 rawHeightColour = FP(delta + config.mountainHeight) / (config.mountainHeight * 2.0)
             }
             let rawDepthColour = 1 + (FP(delta) / config.oceanDepth)
-            if FP(delta) > snowLine {
+            let snowNoiseValue = config.snowNoise.evaluate(p.x, p.y, p.z)
+            if FP(delta + snowNoiseValue) > snowLine {
                 // Ice
                 colours.append([1.0, 1.0, 1.0])
             } else if config.hasWater && FP(delta) <= 0.0 {

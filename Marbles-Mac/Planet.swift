@@ -35,6 +35,7 @@ struct PlanetConfig {
     let amplitude: Double
     let oceanDepth: Double
     let noise: Noise
+    let snowNoise: Noise
 
     init(seed: Int,
          radius: Double,
@@ -90,6 +91,10 @@ struct PlanetConfig {
         } else {
             self.noise = fractalNoise
         }
+
+        // TODO
+        let snowNoiseSource = GradientNoise3D(amplitude: 800, frequency: 0.001, seed: seed+1)
+        self.snowNoise = FBM(snowNoiseSource, octaves: 5, persistence: 0.4, lacunarity: 2.5)
     }
 }
 
@@ -176,7 +181,7 @@ let faces: [[UInt32]] = [
     [2, 3, 7]
 ]
 
-let earthConfig = PlanetConfig(seed: 31224,
+let earthConfig = PlanetConfig(seed: 224,
                                radius: 10000.0,
                                frequency: 1.1,
                                amplitude: 0.2,
@@ -185,7 +190,7 @@ let earthConfig = PlanetConfig(seed: 31224,
                                lacunarity: 2.4,
                                noiseType: .gradient,
                                levels: 0,
-                               iciness: 0.3,
+                               iciness: 0.4,
                                hasWater: true,
                                ridged: false,
                                groundColourScale: RGBColourScale(
