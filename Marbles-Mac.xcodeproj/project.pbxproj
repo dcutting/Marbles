@@ -21,6 +21,25 @@
 		C85EB5922168F62D00B670B2 /* noise.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB58B2168F62D00B670B2 /* noise.swift */; };
 		C85EB5932168F62D00B670B2 /* gradient.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB58C2168F62D00B670B2 /* gradient.swift */; };
 		C85EB59E216ABC7C00B670B2 /* ModelIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C85EB59D216ABC7C00B670B2 /* ModelIO.framework */; };
+		C8673C132196557900EC7CDD /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8673C122196557900EC7CDD /* AppDelegate.swift */; };
+		C8673C152196557900EC7CDD /* MarbleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8673C142196557900EC7CDD /* MarbleViewController.swift */; };
+		C8673C182196557900EC7CDD /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C8673C162196557900EC7CDD /* Main.storyboard */; };
+		C8673C1D2196557A00EC7CDD /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C8673C1B2196557A00EC7CDD /* LaunchScreen.storyboard */; };
+		C8673C222196560300EC7CDD /* Planet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8AF7C35218DB97E0027B7E8 /* Planet.swift */; };
+		C8673C232196560300EC7CDD /* Patch.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8837A55218A16F100ABE455 /* Patch.swift */; };
+		C8673C242196560300EC7CDD /* PatchCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8837A5A218A172700ABE455 /* PatchCalculator.swift */; };
+		C8673C252196560300EC7CDD /* PatchCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8837A5C218A173F00ABE455 /* PatchCache.swift */; };
+		C8673C262196560300EC7CDD /* RingBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C816FAD8218CAA9400839795 /* RingBuffer.swift */; };
+		C8673C272196560300EC7CDD /* Geometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8027ED1218A631200A99020 /* Geometry.swift */; };
+		C8673C282196560300EC7CDD /* Vector.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB59A216AB39D00B670B2 /* Vector.swift */; };
+		C8673C292196561100EC7CDD /* cell_meta.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB5852168F62D00B670B2 /* cell_meta.swift */; };
+		C8673C2A2196561100EC7CDD /* compounds.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB5872168F62D00B670B2 /* compounds.swift */; };
+		C8673C2B2196561100EC7CDD /* disk.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB5882168F62D00B670B2 /* disk.swift */; };
+		C8673C2C2196561100EC7CDD /* hash.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB5892168F62D00B670B2 /* hash.swift */; };
+		C8673C2D2196561100EC7CDD /* cell.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB58A2168F62D00B670B2 /* cell.swift */; };
+		C8673C2E2196561100EC7CDD /* noise.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB58B2168F62D00B670B2 /* noise.swift */; };
+		C8673C2F2196561100EC7CDD /* gradient.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB58C2168F62D00B670B2 /* gradient.swift */; };
+		C8673C30219656E700EC7CDD /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C80E4610216177440029A3A0 /* Assets.xcassets */; };
 		C8757C71216BB88C00CDEC74 /* Vector.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB59A216AB39D00B670B2 /* Vector.swift */; };
 		C8837A56218A16F100ABE455 /* Patch.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8837A55218A16F100ABE455 /* Patch.swift */; };
 		C8837A5B218A172700ABE455 /* PatchCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8837A5A218A172700ABE455 /* PatchCalculator.swift */; };
@@ -49,6 +68,12 @@
 		C85EB58C2168F62D00B670B2 /* gradient.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = gradient.swift; sourceTree = "<group>"; };
 		C85EB59A216AB39D00B670B2 /* Vector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vector.swift; sourceTree = "<group>"; };
 		C85EB59D216ABC7C00B670B2 /* ModelIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ModelIO.framework; path = System/Library/Frameworks/ModelIO.framework; sourceTree = SDKROOT; };
+		C8673C102196557900EC7CDD /* Marbles-iOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Marbles-iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C8673C122196557900EC7CDD /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		C8673C142196557900EC7CDD /* MarbleViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarbleViewController.swift; sourceTree = "<group>"; };
+		C8673C172196557900EC7CDD /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		C8673C1C2196557A00EC7CDD /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		C8673C1E2196557A00EC7CDD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C868AB4221775D38005429D1 /* geometry.shader.geometry */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = geometry.shader.geometry; sourceTree = "<group>"; };
 		C868AB4421776440005429D1 /* terrain.geometry */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = terrain.geometry; sourceTree = "<group>"; };
 		C868AB46217766BF005429D1 /* noise.geometry */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = noise.geometry; sourceTree = "<group>"; };
@@ -70,6 +95,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				C85EB59E216ABC7C00B670B2 /* ModelIO.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C8673C0D2196557900EC7CDD /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -109,6 +141,7 @@
 			isa = PBXGroup;
 			children = (
 				C80E4609216177440029A3A0 /* Marbles-Mac */,
+				C8673C112196557900EC7CDD /* Marbles-iOS */,
 				C80E4608216177440029A3A0 /* Products */,
 				C85EB59C216ABC7B00B670B2 /* Frameworks */,
 			);
@@ -118,6 +151,7 @@
 			isa = PBXGroup;
 			children = (
 				C80E4607216177440029A3A0 /* Marbles-Mac.app */,
+				C8673C102196557900EC7CDD /* Marbles-iOS.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -179,6 +213,18 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		C8673C112196557900EC7CDD /* Marbles-iOS */ = {
+			isa = PBXGroup;
+			children = (
+				C8673C122196557900EC7CDD /* AppDelegate.swift */,
+				C8673C142196557900EC7CDD /* MarbleViewController.swift */,
+				C8673C162196557900EC7CDD /* Main.storyboard */,
+				C8673C1B2196557A00EC7CDD /* LaunchScreen.storyboard */,
+				C8673C1E2196557A00EC7CDD /* Info.plist */,
+			);
+			path = "Marbles-iOS";
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -199,19 +245,39 @@
 			productReference = C80E4607216177440029A3A0 /* Marbles-Mac.app */;
 			productType = "com.apple.product-type.application";
 		};
+		C8673C0F2196557900EC7CDD /* Marbles-iOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C8673C212196557A00EC7CDD /* Build configuration list for PBXNativeTarget "Marbles-iOS" */;
+			buildPhases = (
+				C8673C0C2196557900EC7CDD /* Sources */,
+				C8673C0D2196557900EC7CDD /* Frameworks */,
+				C8673C0E2196557900EC7CDD /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "Marbles-iOS";
+			productName = "Marbles-iOS";
+			productReference = C8673C102196557900EC7CDD /* Marbles-iOS.app */;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
 		C80E45FF216177440029A3A0 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastSwiftUpdateCheck = 1000;
+				LastSwiftUpdateCheck = 1010;
 				LastUpgradeCheck = 1000;
 				ORGANIZATIONNAME = cutting.io;
 				TargetAttributes = {
 					C80E4606216177440029A3A0 = {
 						CreatedOnToolsVersion = 10.0;
 						LastSwiftMigration = 1010;
+					};
+					C8673C0F2196557900EC7CDD = {
+						CreatedOnToolsVersion = 10.1;
 					};
 				};
 			};
@@ -229,6 +295,7 @@
 			projectRoot = "";
 			targets = (
 				C80E4606216177440029A3A0 /* Marbles-Mac */,
+				C8673C0F2196557900EC7CDD /* Marbles-iOS */,
 			);
 		};
 /* End PBXProject section */
@@ -240,6 +307,16 @@
 			files = (
 				C80E4614216177440029A3A0 /* Main.storyboard in Resources */,
 				C80E4611216177440029A3A0 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C8673C0E2196557900EC7CDD /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C8673C1D2196557A00EC7CDD /* LaunchScreen.storyboard in Resources */,
+				C8673C30219656E700EC7CDD /* Assets.xcassets in Resources */,
+				C8673C182196557900EC7CDD /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -269,6 +346,29 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C8673C0C2196557900EC7CDD /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C8673C242196560300EC7CDD /* PatchCalculator.swift in Sources */,
+				C8673C252196560300EC7CDD /* PatchCache.swift in Sources */,
+				C8673C292196561100EC7CDD /* cell_meta.swift in Sources */,
+				C8673C222196560300EC7CDD /* Planet.swift in Sources */,
+				C8673C152196557900EC7CDD /* MarbleViewController.swift in Sources */,
+				C8673C2D2196561100EC7CDD /* cell.swift in Sources */,
+				C8673C2A2196561100EC7CDD /* compounds.swift in Sources */,
+				C8673C2F2196561100EC7CDD /* gradient.swift in Sources */,
+				C8673C232196560300EC7CDD /* Patch.swift in Sources */,
+				C8673C272196560300EC7CDD /* Geometry.swift in Sources */,
+				C8673C2B2196561100EC7CDD /* disk.swift in Sources */,
+				C8673C2E2196561100EC7CDD /* noise.swift in Sources */,
+				C8673C2C2196561100EC7CDD /* hash.swift in Sources */,
+				C8673C262196560300EC7CDD /* RingBuffer.swift in Sources */,
+				C8673C282196560300EC7CDD /* Vector.swift in Sources */,
+				C8673C132196557900EC7CDD /* AppDelegate.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
@@ -278,6 +378,22 @@
 				C80E4613216177440029A3A0 /* Base */,
 			);
 			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		C8673C162196557900EC7CDD /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				C8673C172196557900EC7CDD /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		C8673C1B2196557A00EC7CDD /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				C8673C1C2196557A00EC7CDD /* Base */,
+			);
+			name = LaunchScreen.storyboard;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
@@ -439,6 +555,49 @@
 			};
 			name = Release;
 		};
+		C8673C1F2196557A00EC7CDD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 3H86HRS574;
+				INFOPLIST_FILE = "Marbles-iOS/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 12.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "io.cutting.Marbles-iOS";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 4.2;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C8673C202196557A00EC7CDD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 3H86HRS574;
+				INFOPLIST_FILE = "Marbles-iOS/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 12.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "io.cutting.Marbles-iOS";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 4.2;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -456,6 +615,15 @@
 			buildConfigurations = (
 				C80E461A216177440029A3A0 /* Debug */,
 				C80E461B216177440029A3A0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C8673C212196557A00EC7CDD /* Build configuration list for PBXNativeTarget "Marbles-iOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C8673C1F2196557A00EC7CDD /* Debug */,
+				C8673C202196557A00EC7CDD /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

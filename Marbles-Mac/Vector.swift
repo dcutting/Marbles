@@ -12,11 +12,11 @@ public func - (left: SCNVector3, right: SCNVector3) -> SCNVector3 {
 }
 
 public func * (left: SCNVector3, scalar: CGFloat) -> SCNVector3 {
-    return SCNVector3(left.x * scalar, left.y * scalar, left.z * scalar)
+    return SCNVector3(CGFloat(left.x) * scalar, CGFloat(left.y) * scalar, CGFloat(left.z) * scalar)
 }
 
 public func / (left: SCNVector3, scalar: CGFloat) -> SCNVector3 {
-    return SCNVector3(left.x / scalar, left.y / scalar, left.z / scalar)
+    return SCNVector3(CGFloat(left.x) / scalar, CGFloat(left.y) / scalar, CGFloat(left.z) / scalar)
 }
 
 public func unitClamp(_ v: FP) -> FP {
@@ -32,13 +32,13 @@ extension SCNVector3 {
     }
 
     func lengthSq() -> CGFloat {
-        return x * x + y * y + z * z
+        return CGFloat(x * x + y * y + z * z)
     }
 
     func normalized() -> SCNVector3 {
         let l = length()
         if l > 0 {
-            return SCNVector3(x / l, y / l, z / l)
+            return SCNVector3(CGFloat(x) / l, CGFloat(y) / l, CGFloat(z) / l)
         } else {
             return SCNVector3(0.0, 0.0, 0.0)
         }
@@ -77,10 +77,10 @@ func isIntersecting(_ a: SCNVector3, _ b: SCNVector3, _ c: SCNVector3, width: CG
     guard a.z >= 0.0 && b.z >= 0.0 && c.z >= 0.0
         && a.z <= 1.1 && b.z <= 1.1 && c.z <= 1.1
         else { return false }
-    let minX = min(a.x, b.x, c.x)
-    let maxX = max(a.x, b.x, c.x)
-    let minY = min(a.y, b.y, c.y)
-    let maxY = max(a.y, b.y, c.y)
+    let minX = CGFloat(min(a.x, b.x, c.x))
+    let maxX = CGFloat(max(a.x, b.x, c.x))
+    let minY = CGFloat(min(a.y, b.y, c.y))
+    let maxY = CGFloat(max(a.y, b.y, c.y))
     let inset: CGFloat = debug ? 100.0 : 0.0
     let overlapsX = minX <= width - inset && maxX >= inset
     let overlapsY = minY <= height - inset && maxY >= inset

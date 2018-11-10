@@ -9,10 +9,20 @@
 			<key>orderHint</key>
 			<integer>0</integer>
 		</dict>
+		<key>Marbles-iOS.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>1</integer>
+		</dict>
 	</dict>
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
 		<key>C80E4606216177440029A3A0</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>C8673C0F2196557900EC7CDD</key>
 		<dict>
 			<key>primary</key>
 			<true/>
