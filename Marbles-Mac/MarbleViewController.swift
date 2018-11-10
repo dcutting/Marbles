@@ -9,7 +9,7 @@ class MarbleViewController: NSViewController {
     let detailSubdivisions: UInt32 = 5
     lazy var maxEdgeLength = FP(pow(2, detailSubdivisions + 1))
     let adaptivePatchMaxDepth: UInt32 = 15
-    let updateInterval = 0.2
+    let updateInterval = 0.1
     let hasDays = false
     var wireframe: Bool = false {
         didSet {
@@ -118,7 +118,7 @@ class MarbleViewController: NSViewController {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             let distance = self.scnView.defaultCameraController.pointOfView!.position.length()
             let zeroHeight = self.planet.radius * 0.99
-            let newVelocity = ((FP(distance) - zeroHeight) / zeroHeight) * zeroHeight / 10.0
+            let newVelocity = ((FP(distance) - zeroHeight) / zeroHeight) * zeroHeight / 2.0
             self.scnView.cameraControlConfiguration.flyModeVelocity = CGFloat(newVelocity)
             self.adaptFlyingSpeed()
         }
@@ -218,7 +218,7 @@ class MarbleViewController: NSViewController {
         let lA = FP((pA - pB).lengthSq())
         let lB = FP((pA - pC).lengthSq())
         let lC = FP((pB - pC).lengthSq())
-        return lA > maxEdgeLengthSq && lB > maxEdgeLengthSq && lC > maxEdgeLengthSq
+        return lA > maxEdgeLengthSq || lB > maxEdgeLengthSq || lC > maxEdgeLengthSq
     }
 
     private func makeAdaptivePatch(name: String, corners: [FP3], maxEdgeLengthSq: FP, patchCache: PatchCache<Patch>, depth: UInt32) -> Patch? {
@@ -312,9 +312,9 @@ class MarbleViewController: NSViewController {
 
     private func prioritise(world: [SCNVector3], screen: [SCNVector3], delta: [FP], depth: UInt32) -> Double {
 
-        let coastlineWeight = 0.35
-        let landWeight = 0.3
-        let depthWeight = 0.2
+        let coastlineWeight = 0.3
+        let landWeight = 0.2
+        let depthWeight = 0.35
         let worldDistanceWeight = 0.1
         let screenDistanceWeight = 0.05
 
