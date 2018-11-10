@@ -1,6 +1,8 @@
 import UIKit
 import SceneKit
 
+// TODO: extract most of this from the Mac version so it's not duplicated code.
+
 let debug = false
 
 class MarbleViewController: UIViewController {
