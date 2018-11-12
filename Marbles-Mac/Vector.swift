@@ -96,9 +96,6 @@ func midway(_ a: FP3, _ b: FP3) -> FP3 {
 }
 
 func isIntersecting(_ a: SCNVector3, _ b: SCNVector3, _ c: SCNVector3, width: CGFloat, height: CGFloat) -> Bool {
-    guard a.z >= 0.0 && b.z >= 0.0 && c.z >= 0.0
-        && a.z <= 1.1 && b.z <= 1.1 && c.z <= 1.1
-        else { return false }
     let minX = CGFloat(min(a.x, b.x, c.x))
     let maxX = CGFloat(max(a.x, b.x, c.x))
     let minY = CGFloat(min(a.y, b.y, c.y))
@@ -107,4 +104,10 @@ func isIntersecting(_ a: SCNVector3, _ b: SCNVector3, _ c: SCNVector3, width: CG
     let overlapsX = minX <= width - inset && maxX >= inset
     let overlapsY = minY <= height - inset && maxY >= inset
     return overlapsX && overlapsY
+}
+
+func isNotZClipped(_ a: SCNVector3, _ b: SCNVector3, _ c: SCNVector3) -> Bool {
+    return a.z >= 0.0 && a.z <= 1.0 ||
+        b.z >= 0.0 && b.z <= 1.0 ||
+        c.z >= 0.0 && c.z <= 1.0
 }

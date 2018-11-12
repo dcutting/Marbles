@@ -218,14 +218,18 @@ class MarbleViewController: NSViewController {
         let dot = e.dot(of: n)
 
         if dot < 0.0 { return false }
-        if dot > 0.5 { return true }
+        if dot >= 0.9 { return true }
 
         let heightSq = camera.lengthSq()
-        let radiusSq = planet.radius * planet.radius
+        let r = planet.radius - planet.mountainHeight
+        let radiusSq = r * r
         let dSq = heightSq - CGFloat(radiusSq)
         let d = sqrt(dSq)
         for corner in corners {
-            let cd = corner.distance(to: camera)
+            let c: Patch.Vertex = [FP(corner.x), FP(corner.y), FP(corner.z)]
+            let sb = patchCalculator.sphericalBase(c, plus: planet.mountainHeight)
+            let ssb = SCNVector3(sb)
+            let cd = ssb.distance(to: camera)
             if cd < d {
                 return true
             }
@@ -248,27 +252,47 @@ class MarbleViewController: NSViewController {
 
     private func makeAdaptivePatch(name: String, corners: [FP3], maxEdgeLengthSq: FP, patchCache: PatchCache<Patch>, depth: UInt32) -> Patch? {
 
-        guard depth < adaptivePatchMaxDepth else {
-            return makePatch(vertices: corners, colour: red)
-        }
+        let baseA = patchCalculator.sphericalBase(corners[0])
+        let baseB = patchCalculator.sphericalBase(corners[1])
+        let baseC = patchCalculator.sphericalBase(corners[2])
+
+        let sBaseA = SCNVector3(baseA)
+        let sBaseB = SCNVector3(baseB)
+        let sBaseC = SCNVector3(baseC)
 
         let (subv, sube, deltas) = patchCalculator.sphericallySubdivide(vertices: corners)
 
-        let worldA = SCNVector3(subv[0])
-        let worldB = SCNVector3(subv[1])
-        let worldC = SCNVector3(subv[2])
+        let worldA = subv[0]
+        let worldB = subv[1]
+        let worldC = subv[2]
 
-        guard isUnderHorizon(corners: [worldA, worldB, worldC]) else {
-            return makePatch(vertices: [subv[0], subv[1], subv[2]], colour: cyan)
+        let sWorldA = SCNVector3(worldA)
+        let sWorldB = SCNVector3(worldB)
+        let sWorldC = SCNVector3(worldC)
+
+        guard depth < adaptivePatchMaxDepth else {
+            return makePatch(vertices: [worldA, worldB, worldC], colour: red)
         }
 
-        let screenA = scnView.projectPoint(worldA)
-        let screenB = scnView.projectPoint(worldB)
-        let screenC = scnView.projectPoint(worldC)
+        guard isUnderHorizon(corners: [sBaseA, sBaseB, sBaseC]) else {
+            return makePatch(vertices: [worldA, worldB, worldC], colour: cyan)
+        }
+
+        let baseScreenA = scnView.projectPoint(sBaseA)
+        let baseScreenB = scnView.projectPoint(sBaseB)
+        let baseScreenC = scnView.projectPoint(sBaseC)
+
+        guard isNotZClipped(baseScreenA, baseScreenB, baseScreenC) else {
+            return makePatch(vertices: [worldA, worldB, worldC], colour: grey)
+        }
+
+        let screenA = scnView.projectPoint(sWorldA)
+        let screenB = scnView.projectPoint(sWorldB)
+        let screenC = scnView.projectPoint(sWorldC)
 
         guard isIntersecting(screenA, screenB, screenC, width: screenWidth, height: screenHeight) else {
             if debug {
-                return makePatch(vertices: corners, colour: yellow)
+                return makePatch(vertices: [worldA, worldB, worldC], colour: yellow)
             } else {
                 return patchCache.read(name)
                     ?? patchCalculator.subdivideTriangle(vertices: corners, subdivisionLevels: 0)
@@ -326,14 +350,14 @@ class MarbleViewController: NSViewController {
             return patch
         }
 
-        let priority = prioritise(world: [worldA, worldB, worldC], screen: [screenA, screenB, screenC], delta: [deltas[0], deltas[1], deltas[2]], depth: depth)
+        let priority = prioritise(world: [sWorldA, sWorldB, sWorldC], screen: [screenA, screenB, screenC], delta: [deltas[0], deltas[1], deltas[2]], depth: depth)
 
         patchCalculator.calculate(name, vertices: corners, subdivisions: detailSubdivisions, priority: priority) { patch in
             self.patchCache.write(name, patch: patch)
         }
 
         if debug {
-            return makePatch(vertices: corners, colour: magenta)
+            return makePatch(vertices: [worldA, worldB, worldC], colour: magenta)
         }
 
         return nil// patchCalculator.subdivideTriangle(vertices: corners, subdivisionLevels: 0)

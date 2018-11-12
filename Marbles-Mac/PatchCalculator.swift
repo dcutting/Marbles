@@ -137,6 +137,10 @@ class PatchCalculator {
         return Patch(vertices: points, colours: colours, indices: indices)
     }
 
+    public func sphericalBase(_ a: Patch.Vertex, plus: FP = 0.0) -> Patch.Vertex {
+        return normalize(a) * (config.radius + plus)
+    }
+
     private func spherical(_ a: Patch.Vertex) -> (Patch.Vertex, FP) {
         let an = normalize(a)
         let ans = an * config.radius
