@@ -44,13 +44,35 @@ extension SCNVector3 {
         }
     }
 
+    func dot(of vector: SCNVector3) -> CGFloat {
+        return x * vector.x + y * vector.y + z * vector.z
+    }
+
+    func cross(with vector: SCNVector3) -> SCNVector3 {
+        return SCNVector3(y * vector.z - z * vector.y,
+                          z * vector.x - x * vector.z,
+                          x * vector.y - y * vector.x)
+    }
+
+    func distance(to vector: SCNVector3) -> CGFloat {
+        return (self - vector).length()
+    }
+
+    func distance(to line: (SCNVector3, SCNVector3)) -> CGFloat {
+        let (b, c) = line
+        let d = (c - b) / c.distance(to: b)
+        let v = self - b
+        let t = v.dot(of: d)
+        let p = b + d * t
+        return p.distance(to: self)
+    }
 }
 
 func centroid(of triangle: [SCNVector3]) -> SCNVector3 {
     return (triangle[0] + triangle[1] + triangle[2]) / 3.0
 }
 
-public func times (left:float3, scalar:Float) -> float3 {
+public func times(left: float3, scalar: Float) -> float3 {
     return [left[0] * scalar, left[1] * scalar, left[2] * scalar]
 }
 

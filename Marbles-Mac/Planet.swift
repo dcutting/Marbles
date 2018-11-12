@@ -30,6 +30,7 @@ struct PlanetConfig {
     let groundColourScale: RGBColourScale
     let waterColourScale: RGBColourScale
 
+    let minimumRadius: Double
     let mountainHeight: Double
     let frequency: Double
     let amplitude: Double
@@ -65,6 +66,8 @@ struct PlanetConfig {
 
         self.mountainHeight = amplitude / 2.0
         self.oceanDepth = amplitude / 20.0
+
+        self.minimumRadius = radius - mountainHeight
 
         let fractalNoise: Noise
         switch noiseType {

@@ -156,9 +156,8 @@ class MarbleViewController: NSViewController {
                 }
                 let face = faces[faceIndex]
                 let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
-                if let geom = self.makeAdaptiveGeometry(faceIndex: faceIndex, corners: vertices, maxEdgeLength: self.maxEdgeLength) {
-                    self.geometries[faceIndex] = geom
-                }
+                let geom = self.makeAdaptiveGeometry(faceIndex: faceIndex, corners: vertices, maxEdgeLength: self.maxEdgeLength)
+                self.geometries[faceIndex] = geom
             }
             DispatchQueue.main.sync {
                 if debug {
@@ -173,11 +172,7 @@ class MarbleViewController: NSViewController {
         }
     }
 
-    private func makeAdaptiveGeometry(faceIndex: Int, corners: [FP3], maxEdgeLength: FP) -> SCNGeometry? {
-        let cameraPosition = (view as! SCNView).defaultCameraController.pointOfView!.position
-        let distanceSq = cameraPosition.lengthSq()
-        guard isVisible(vertices: corners, cameraPosition: cameraPosition, distanceSq: distanceSq)
-            else { return nil }
+    private func makeAdaptiveGeometry(faceIndex: Int, corners: [FP3], maxEdgeLength: FP) -> SCNGeometry {
         let start = DispatchTime.now()
         let patch = makeAdaptivePatch(name: "\(faceIndex)-",
             corners: corners,
@@ -191,22 +186,12 @@ class MarbleViewController: NSViewController {
         return makeGeometry(patch: patch, asWireframe: wireframe)
     }
 
-    private func isVisible(vertices: [FP3], cameraPosition: SCNVector3, distanceSq: CGFloat) -> Bool {
-        // Cull triangles on other side of planet
-        let aD = (SCNVector3(vertices[0]) - cameraPosition).lengthSq()
-        let bD = (SCNVector3(vertices[1]) - cameraPosition).lengthSq()
-        let cD = (SCNVector3(vertices[2]) - cameraPosition).lengthSq()
-        let minimumTriangleDistance = min(aD, bD, cD)
-        return minimumTriangleDistance < distanceSq
-    }
-
-    let dumbLength: FP = 10000000000
-    let epsilon: FP = 0.0000001
     let white: Patch.Colour = [1.0, 1.0, 1.0]
     let red: Patch.Colour = [1.0, 0.0, 0.0]
     let yellow: Patch.Colour = [1.0, 1.0, 0.0]
+    let cyan: Patch.Colour = [0.0, 1.0, 1.0]
     let magenta: Patch.Colour = [1.0, 0.0, 1.0]
-    let grey: Patch.Colour = [0.01, 0.01, 0.01]
+    let grey: Patch.Colour = [0.4, 0.4, 0.4]
 
     private func makePatch(vertices: [Patch.Vertex], colour: Patch.Colour) -> Patch {
         return Patch(vertices: vertices,
@@ -221,6 +206,46 @@ class MarbleViewController: NSViewController {
         return lA > maxEdgeLengthSq || lB > maxEdgeLengthSq || lC > maxEdgeLengthSq
     }
 
+    private func isUnderHorizon(corners: [SCNVector3]) -> Bool {
+
+        // TODO: still not right.
+
+        let camera = scnView.defaultCameraController.pointOfView!.position
+
+        let center = centroid(of: corners)
+        let n = center.normalized()
+        let e = camera.normalized()
+        let dot = e.dot(of: n)
+
+        if dot < 0.0 { return false }
+        if dot > 0.5 { return true }
+
+        let heightSq = camera.lengthSq()
+        let radiusSq = planet.radius * planet.radius
+        let dSq = heightSq - CGFloat(radiusSq)
+        let d = sqrt(dSq)
+        for corner in corners {
+            let cd = corner.distance(to: camera)
+            if cd < d {
+                return true
+            }
+//            let highest = patchCalculator.extendSpherically(corner, by: planet.mountainHeight)
+//            if isUnderHorizon(vertex: SCNVector3(highest), camera: camera) {
+//                return true
+//            }
+        }
+        return false
+    }
+
+//    private func isUnderHorizon(vertex: SCNVector3, camera: SCNVector3) -> Bool {
+//        let v = SCNVector3()
+////        if camera.distance(to: vertex) < camera.distance(to: v) {
+////            return true
+////        }
+//        let d = v.distance(to: (vertex, camera))
+//        return d >= CGFloat(planet.minimumRadius)
+//    }
+
     private func makeAdaptivePatch(name: String, corners: [FP3], maxEdgeLengthSq: FP, patchCache: PatchCache<Patch>, depth: UInt32) -> Patch? {
 
         guard depth < adaptivePatchMaxDepth else {
@@ -232,6 +257,10 @@ class MarbleViewController: NSViewController {
         let worldA = SCNVector3(subv[0])
         let worldB = SCNVector3(subv[1])
         let worldC = SCNVector3(subv[2])
+
+        guard isUnderHorizon(corners: [worldA, worldB, worldC]) else {
+            return makePatch(vertices: [subv[0], subv[1], subv[2]], colour: cyan)
+        }
 
         let screenA = scnView.projectPoint(worldA)
         let screenB = scnView.projectPoint(worldB)
@@ -306,8 +335,8 @@ class MarbleViewController: NSViewController {
         if debug {
             return makePatch(vertices: corners, colour: magenta)
         }
-        
-        return nil
+
+        return nil// patchCalculator.subdivideTriangle(vertices: corners, subdivisionLevels: 0)
     }
 
     private func prioritise(world: [SCNVector3], screen: [SCNVector3], delta: [FP], depth: UInt32) -> Double {
