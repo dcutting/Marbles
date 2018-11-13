@@ -206,49 +206,50 @@ class MarbleViewController: NSViewController {
         return lA > maxEdgeLengthSq || lB > maxEdgeLengthSq || lC > maxEdgeLengthSq
     }
 
-    private func isUnderHorizon(corners: [SCNVector3]) -> Bool {
+    private func findFacingFactor(triangle: Triangle, normalisedPosition: Patch.Vertex) -> FP {
+        let center = centroid(of: triangle)
+        let normal = center.normalised()
+        return normalisedPosition.dot(of: normal)
+    }
 
-        // TODO: still not right.
-
-        let camera = scnView.defaultCameraController.pointOfView!.position
-
-        let center = centroid(of: corners)
-        let n = center.normalized()
-        let e = camera.normalized()
-        let dot = e.dot(of: n)
-
-        if dot < 0.0 { return false }
-        if dot >= 0.5 { return true }
-
-//        let heightSq = camera.lengthSq()
-//        let r = planet.radius + planet.mountainHeight
-//        let radiusSq = r * r
-//        let dSq = heightSq - CGFloat(radiusSq)
-//        let d = sqrt(dSq)
-        for corner in corners {
-            let c: Patch.Vertex = [FP(corner.x), FP(corner.y), FP(corner.z)]
-//            let sb = patchCalculator.sphericalBase(c, plus: planet.mountainHeight)
-//            let ssb = SCNVector3(sb)
-//            let cd = ssb.distance(to: camera)
-//            if cd < d {
+//    private func isUnderHorizon(corners: [SCNVector3]) -> Bool {
+//
+//        let camera = scnView.defaultCameraController.pointOfView!.position
+//        let triangle = Triangle(a: corners[0], b: corners[1], c: corners[2])
+//        let facingFactor = findFacingFactor(triangle: triangle, position: camera)
+//
+//        if facingFactor < 0.0 { return false }
+//        if facingFactor >= 0.5 { return true }
+//
+////        let heightSq = camera.lengthSq()
+////        let r = planet.radius + planet.mountainHeight
+////        let radiusSq = r * r
+////        let dSq = heightSq - CGFloat(radiusSq)
+////        let d = sqrt(dSq)
+//        for corner in corners {
+//            let c: Patch.Vertex = [FP(corner.x), FP(corner.y), FP(corner.z)]
+////            let sb = patchCalculator.sphericalBase(c, plus: planet.mountainHeight)
+////            let ssb = SCNVector3(sb)
+////            let cd = ssb.distance(to: camera)
+////            if cd < d {
+////                return true
+////            }
+//            let highest = patchCalculator.sphericalBase(c, plus: planet.mountainHeight)
+//            if isUnderHorizon(vertex: SCNVector3(highest), camera: camera) {
 //                return true
 //            }
-            let highest = patchCalculator.sphericalBase(c, plus: planet.mountainHeight)
-            if isUnderHorizon(vertex: SCNVector3(highest), camera: camera) {
-                return true
-            }
-        }
-        return false
-    }
-
-    private func isUnderHorizon(vertex: SCNVector3, camera: SCNVector3) -> Bool {
-        let v = SCNVector3()
-//        if camera.distance(to: vertex) < camera.distance(to: v) {
-//            return true
 //        }
-        let d = v.distance(to: (vertex, camera))
-        return d >= CGFloat(planet.minimumRadius)
-    }
+//        return false
+//    }
+//
+//    private func isUnderHorizon(vertex: SCNVector3, camera: SCNVector3) -> Bool {
+//        let v = SCNVector3()
+////        if camera.distance(to: vertex) < camera.distance(to: v) {
+////            return true
+////        }
+//        let d = v.distance(to: (vertex, camera))
+//        return d >= CGFloat(planet.minimumRadius)
+//    }
 
     private func makeAdaptivePatch(name: String, corners: [FP3], maxEdgeLengthSq: FP, patchCache: PatchCache<Patch>, depth: UInt32) -> Patch? {
 
@@ -274,9 +275,9 @@ class MarbleViewController: NSViewController {
             return makePatch(vertices: [worldA, worldB, worldC], colour: red)
         }
 
-        guard isUnderHorizon(corners: [sBaseA, sBaseB, sBaseC]) else {
-            return makePatch(vertices: [worldA, worldB, worldC], colour: cyan)
-        }
+//        guard isUnderHorizon(corners: [sBaseA, sBaseB, sBaseC]) else {
+//            return makePatch(vertices: [worldA, worldB, worldC], colour: cyan)
+//        }
 
         let baseScreenA = scnView.projectPoint(sBaseA)
         let baseScreenB = scnView.projectPoint(sBaseB)
@@ -298,16 +299,6 @@ class MarbleViewController: NSViewController {
                     ?? patchCalculator.subdivideTriangle(vertices: corners, subdivisionLevels: 0)
             }
         }
-
-//        if depth > 10 {
-//        var str = ""
-//        for _ in 0..<depth {
-//            str += " "
-//        }
-//        str += "> \(name)"
-//        print(str)
-//            print("deep")
-//        }
 
         if shouldSubdivide(screenA, screenB, screenC, maxEdgeLengthSq: maxEdgeLengthSq) {
             var subVertices = [[Patch.Vertex]](repeating: [], count: 4)
@@ -360,7 +351,7 @@ class MarbleViewController: NSViewController {
             return makePatch(vertices: [worldA, worldB, worldC], colour: magenta)
         }
 
-        return nil// patchCalculator.subdivideTriangle(vertices: corners, subdivisionLevels: 0)
+        return nil
     }
 
     private func prioritise(world: [SCNVector3], screen: [SCNVector3], delta: [FP], depth: UInt32) -> Double {

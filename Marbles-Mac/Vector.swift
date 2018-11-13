@@ -25,6 +25,25 @@ public func unitClamp(_ v: FP) -> FP {
     return v
 }
 
+extension FP3 {
+
+    func length() -> FP {
+        return simd.length(self)
+    }
+
+    func lengthSq() -> FP {
+        return simd.length_squared(self)
+    }
+
+    func normalised() -> FP3 {
+        return simd.normalize(self)
+    }
+
+    func dot(of vector: FP3) -> FP {
+        return simd.dot(self, vector)
+    }
+}
+
 extension SCNVector3 {
 
     func length() -> CGFloat {
@@ -70,6 +89,10 @@ extension SCNVector3 {
 
 func centroid(of triangle: [SCNVector3]) -> SCNVector3 {
     return (triangle[0] + triangle[1] + triangle[2]) / 3.0
+}
+
+func centroid(of triangle: Triangle) -> Patch.Vertex {
+    return (triangle.a + triangle.b + triangle.c) / 3.0
 }
 
 public func times(left: float3, scalar: Float) -> float3 {

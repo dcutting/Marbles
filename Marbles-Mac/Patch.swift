@@ -1,5 +1,11 @@
 import SceneKit
 
+struct Triangle {
+    let a: Patch.Vertex
+    let b: Patch.Vertex
+    let c: Patch.Vertex
+}
+
 struct Patch {
 
     typealias Vertex = FP3
