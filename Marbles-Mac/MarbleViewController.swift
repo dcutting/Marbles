@@ -1,7 +1,7 @@
 import AppKit
 import SceneKit
 
-let debug = false
+let debug = true
 
 class MarbleViewController: NSViewController {
 
@@ -210,12 +210,6 @@ class MarbleViewController: NSViewController {
         return lA > maxEdgeLengthSq || lB > maxEdgeLengthSq || lC > maxEdgeLengthSq
     }
 
-    private func findFacingFactor(triangle: Triangle, normalisedPosition: Patch.Vertex) -> FP {
-        let center = centroid(of: triangle)
-        let normal = center.normalised()
-        return normalisedPosition.dot(of: normal)
-    }
-
 //    private func isUnderHorizon(corners: [SCNVector3]) -> Bool {
 //
 //        let camera = scnView.defaultCameraController.pointOfView!.position
@@ -364,35 +358,36 @@ class MarbleViewController: NSViewController {
 
     private func prioritise(world: Triangle, screen: Triangle, delta: [FP], depth: UInt32) -> Double {
 
-        let coastlineWeight = 0.3
-        let landWeight = 0.2
-        let depthWeight = 0.35
-        let worldDistanceWeight = 0.1
-        let screenDistanceWeight = 0.05
+//        let coastlineWeight = 0.3
+//        let landWeight = 0.2
+//        let depthWeight = 0.35
+//        let worldDistanceWeight = 0.1
+//        let screenDistanceWeight = 0.05
+//
+//        let isAllLand = delta[0] > 0.0 && delta[1] > 0.0 && delta[2] > 0.0
+//        let isAllWater = delta[0] < 0.0 && delta[1] < 0.0 && delta[2] < 0.0
+//
+//        let coastlineFactor = !(isAllLand || isAllWater) ? 1.0 : 0.0
+//
+//        let landFactor = isAllLand ? 1.0 : 0.0
+//
+//        let depthFactor = Double(adaptivePatchMaxDepth - depth) / Double(adaptivePatchMaxDepth)
+//
+//        let worldDistanceFactor = 1 - unitClamp(Double((world.centroid - cameraPosition).lengthSq()) / planet.diameterSq)
+//
+//        let screenDistanceFactor = 1 - unitClamp(Double((screen.centroid - screenCenter).lengthSq() / halfScreenWidthSq))
 
-        let isAllLand = delta[0] > 0.0 && delta[1] > 0.0 && delta[2] > 0.0
-        let isAllWater = delta[0] < 0.0 && delta[1] < 0.0 && delta[2] < 0.0
+        let facingFactor = (world.facingFactor(to: cameraPosition) - 1.0) / -2.0
+        return facingFactor
 
-        let coastlineFactor = !(isAllLand || isAllWater) ? 1.0 : 0.0
-
-        let landFactor = isAllLand ? 1.0 : 0.0
-
-        let depthFactor = Double(adaptivePatchMaxDepth - depth) / Double(adaptivePatchMaxDepth)
-
-        let worldCentroid = centroid(of: world)
-        let worldDistanceFactor = 1 - unitClamp(Double((worldCentroid - cameraPosition).lengthSq()) / planet.diameterSq)
-
-        let screenCentroid = centroid(of: screen)
-        let screenDistanceFactor = 1 - unitClamp(Double((screenCentroid - screenCenter).lengthSq() / halfScreenWidthSq))
-
-        let coastlineComponent = coastlineFactor * coastlineWeight
-        let landComponent = landFactor * landWeight
-        let depthComponent = depthFactor * depthWeight
-        let worldComponent = Double(worldDistanceFactor) * worldDistanceWeight
-        let screenComponent = Double(screenDistanceFactor) * screenDistanceWeight
-
-        let priorityFactor = coastlineComponent + landComponent + depthComponent + worldComponent + screenComponent
-        let priority = 1 - priorityFactor
+//        let coastlineComponent = coastlineFactor * coastlineWeight
+//        let landComponent = landFactor * landWeight
+//        let depthComponent = depthFactor * depthWeight
+//        let worldComponent = Double(worldDistanceFactor) * worldDistanceWeight
+//        let screenComponent = Double(screenDistanceFactor) * screenDistanceWeight
+//
+//        let priorityFactor = coastlineComponent + landComponent + depthComponent + worldComponent + screenComponent
+//        let priority = 1 - priorityFactor
 
 //        if debug {
 //            print(world)
@@ -406,6 +401,6 @@ class MarbleViewController: NSViewController {
 //            print()
 //        }
 
-        return priority
+//        return priority
     }
 }
