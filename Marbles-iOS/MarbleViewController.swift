@@ -312,7 +312,7 @@ class MarbleViewController: UIViewController {
         return nil
     }
 
-    private func prioritise(world: [SCNVector3], screen: [SCNVector3], delta: [FP], depth: UInt32) -> Double {
+    private func prioritise(world: Triangle, screen: Triangle, delta: [FP], depth: UInt32) -> Double {
 
         let coastlineWeight = 0.35
         let landWeight = 0.3

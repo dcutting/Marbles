@@ -22,10 +22,10 @@ class MarbleViewController: NSViewController {
         }
     }
 
-    var screenWidth: CGFloat = 0.0
-    var halfScreenWidthSq: CGFloat = 0.0
-    var screenHeight: CGFloat = 0.0
-    var screenCenter = SCNVector3()
+    var screenWidth: FP = 0.0
+    var halfScreenWidthSq: FP = 0.0
+    var screenHeight: FP = 0.0
+    var screenCenter = Patch.Vertex()
     let scene = SCNScene()
     let terrainNode = SCNNode()
     let terrainQueue = DispatchQueue(label: "terrain", qos: .userInteractive, attributes: .concurrent)
@@ -98,10 +98,10 @@ class MarbleViewController: NSViewController {
     }
 
     private func updateBounds() {
-        screenWidth = view.bounds.width
-        screenHeight = view.bounds.height
+        screenWidth = FP(view.bounds.width)
+        screenHeight = FP(view.bounds.height)
         halfScreenWidthSq = (screenWidth / 2.0) * (screenWidth / 2.0)
-        screenCenter = SCNVector3(screenWidth / 2.0, screenHeight / 2.0, 0.0)
+        screenCenter = Patch.Vertex(screenWidth / 2.0, screenHeight / 2.0, 0.0)
     }
 
     @objc func handleClick(_ gestureRecognizer: NSGestureRecognizer) {
@@ -114,9 +114,13 @@ class MarbleViewController: NSViewController {
         wireframe.toggle()
     }
 
+    var cameraPosition: Patch.Vertex {
+        return Patch.Vertex(self.scnView.defaultCameraController.pointOfView!.position)
+    }
+
     private func adaptFlyingSpeed() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            let distance = self.scnView.defaultCameraController.pointOfView!.position.length()
+            let distance = self.cameraPosition.length()
             let zeroHeight = self.planet.radius * 0.99
             let newVelocity = ((FP(distance) - zeroHeight) / zeroHeight) * zeroHeight / 2.0
             self.scnView.cameraControlConfiguration.flyModeVelocity = CGFloat(newVelocity)
@@ -199,7 +203,7 @@ class MarbleViewController: NSViewController {
                      indices: [0, 1, 2])
     }
 
-    private func shouldSubdivide(_ pA: SCNVector3, _ pB: SCNVector3, _ pC: SCNVector3, maxEdgeLengthSq: FP) -> Bool {
+    private func shouldSubdivide(_ pA: Patch.Vertex, _ pB: Patch.Vertex, _ pC: Patch.Vertex, maxEdgeLengthSq: FP) -> Bool {
         let lA = FP((pA - pB).lengthSq())
         let lB = FP((pA - pC).lengthSq())
         let lC = FP((pB - pC).lengthSq())
@@ -267,6 +271,8 @@ class MarbleViewController: NSViewController {
         let worldB = subv[1]
         let worldC = subv[2]
 
+        let worldTriangle = Triangle(a: worldA, b: worldB, c: worldC)
+
         let sWorldA = SCNVector3(worldA)
         let sWorldB = SCNVector3(worldB)
         let sWorldC = SCNVector3(worldC)
@@ -287,9 +293,11 @@ class MarbleViewController: NSViewController {
             return makePatch(vertices: [worldA, worldB, worldC], colour: grey)
         }
 
-        let screenA = scnView.projectPoint(sWorldA)
-        let screenB = scnView.projectPoint(sWorldB)
-        let screenC = scnView.projectPoint(sWorldC)
+        let screenA = Patch.Vertex(scnView.projectPoint(sWorldA))
+        let screenB = Patch.Vertex(scnView.projectPoint(sWorldB))
+        let screenC = Patch.Vertex(scnView.projectPoint(sWorldC))
+
+        let screenTriangle = Triangle(a: screenA, b: screenB, c: screenC)
 
         guard isIntersecting(screenA, screenB, screenC, width: screenWidth, height: screenHeight) else {
             if debug {
@@ -341,7 +349,7 @@ class MarbleViewController: NSViewController {
             return patch
         }
 
-        let priority = prioritise(world: [sWorldA, sWorldB, sWorldC], screen: [screenA, screenB, screenC], delta: [deltas[0], deltas[1], deltas[2]], depth: depth)
+        let priority = prioritise(world: worldTriangle, screen: screenTriangle, delta: [deltas[0], deltas[1], deltas[2]], depth: depth)
 
         patchCalculator.calculate(name, vertices: corners, subdivisions: detailSubdivisions, priority: priority) { patch in
             self.patchCache.write(name, patch: patch)
@@ -354,7 +362,7 @@ class MarbleViewController: NSViewController {
         return nil
     }
 
-    private func prioritise(world: [SCNVector3], screen: [SCNVector3], delta: [FP], depth: UInt32) -> Double {
+    private func prioritise(world: Triangle, screen: Triangle, delta: [FP], depth: UInt32) -> Double {
 
         let coastlineWeight = 0.3
         let landWeight = 0.2
@@ -371,7 +379,6 @@ class MarbleViewController: NSViewController {
 
         let depthFactor = Double(adaptivePatchMaxDepth - depth) / Double(adaptivePatchMaxDepth)
 
-        let cameraPosition = (view as! SCNView).defaultCameraController.pointOfView!.position
         let worldCentroid = centroid(of: world)
         let worldDistanceFactor = 1 - unitClamp(Double((worldCentroid - cameraPosition).lengthSq()) / planet.diameterSq)
 
