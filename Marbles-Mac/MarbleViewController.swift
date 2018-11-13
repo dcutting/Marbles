@@ -218,37 +218,37 @@ class MarbleViewController: NSViewController {
         let dot = e.dot(of: n)
 
         if dot < 0.0 { return false }
-        if dot >= 0.9 { return true }
+        if dot >= 0.5 { return true }
 
-        let heightSq = camera.lengthSq()
-        let r = planet.radius - planet.mountainHeight
-        let radiusSq = r * r
-        let dSq = heightSq - CGFloat(radiusSq)
-        let d = sqrt(dSq)
+//        let heightSq = camera.lengthSq()
+//        let r = planet.radius + planet.mountainHeight
+//        let radiusSq = r * r
+//        let dSq = heightSq - CGFloat(radiusSq)
+//        let d = sqrt(dSq)
         for corner in corners {
             let c: Patch.Vertex = [FP(corner.x), FP(corner.y), FP(corner.z)]
-            let sb = patchCalculator.sphericalBase(c, plus: planet.mountainHeight)
-            let ssb = SCNVector3(sb)
-            let cd = ssb.distance(to: camera)
-            if cd < d {
-                return true
-            }
-//            let highest = patchCalculator.extendSpherically(corner, by: planet.mountainHeight)
-//            if isUnderHorizon(vertex: SCNVector3(highest), camera: camera) {
+//            let sb = patchCalculator.sphericalBase(c, plus: planet.mountainHeight)
+//            let ssb = SCNVector3(sb)
+//            let cd = ssb.distance(to: camera)
+//            if cd < d {
 //                return true
 //            }
+            let highest = patchCalculator.sphericalBase(c, plus: planet.mountainHeight)
+            if isUnderHorizon(vertex: SCNVector3(highest), camera: camera) {
+                return true
+            }
         }
         return false
     }
 
-//    private func isUnderHorizon(vertex: SCNVector3, camera: SCNVector3) -> Bool {
-//        let v = SCNVector3()
-////        if camera.distance(to: vertex) < camera.distance(to: v) {
-////            return true
-////        }
-//        let d = v.distance(to: (vertex, camera))
-//        return d >= CGFloat(planet.minimumRadius)
-//    }
+    private func isUnderHorizon(vertex: SCNVector3, camera: SCNVector3) -> Bool {
+        let v = SCNVector3()
+//        if camera.distance(to: vertex) < camera.distance(to: v) {
+//            return true
+//        }
+        let d = v.distance(to: (vertex, camera))
+        return d >= CGFloat(planet.minimumRadius)
+    }
 
     private func makeAdaptivePatch(name: String, corners: [FP3], maxEdgeLengthSq: FP, patchCache: PatchCache<Patch>, depth: UInt32) -> Patch? {
 
