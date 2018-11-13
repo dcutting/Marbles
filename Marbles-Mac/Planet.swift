@@ -67,7 +67,7 @@ struct PlanetConfig {
         self.mountainHeight = amplitude / 2.0
         self.oceanDepth = amplitude / 20.0
 
-        self.minimumRadius = radius - mountainHeight
+        self.minimumRadius = hasWater ? (radius - oceanDepth) : (radius - mountainHeight)
 
         let fractalNoise: Noise
         switch noiseType {
