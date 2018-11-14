@@ -22,7 +22,6 @@
 		C85EB5932168F62D00B670B2 /* gradient.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB58C2168F62D00B670B2 /* gradient.swift */; };
 		C85EB59E216ABC7C00B670B2 /* ModelIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C85EB59D216ABC7C00B670B2 /* ModelIO.framework */; };
 		C8673C132196557900EC7CDD /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8673C122196557900EC7CDD /* AppDelegate.swift */; };
-		C8673C152196557900EC7CDD /* MarbleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8673C142196557900EC7CDD /* MarbleViewController.swift */; };
 		C8673C182196557900EC7CDD /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C8673C162196557900EC7CDD /* Main.storyboard */; };
 		C8673C1D2196557A00EC7CDD /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C8673C1B2196557A00EC7CDD /* LaunchScreen.storyboard */; };
 		C8673C222196560300EC7CDD /* Planet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8AF7C35218DB97E0027B7E8 /* Planet.swift */; };
@@ -70,7 +69,6 @@
 		C85EB59D216ABC7C00B670B2 /* ModelIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ModelIO.framework; path = System/Library/Frameworks/ModelIO.framework; sourceTree = SDKROOT; };
 		C8673C102196557900EC7CDD /* Marbles-iOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Marbles-iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C8673C122196557900EC7CDD /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		C8673C142196557900EC7CDD /* MarbleViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarbleViewController.swift; sourceTree = "<group>"; };
 		C8673C172196557900EC7CDD /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		C8673C1C2196557A00EC7CDD /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		C8673C1E2196557A00EC7CDD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -217,7 +215,6 @@
 			isa = PBXGroup;
 			children = (
 				C8673C122196557900EC7CDD /* AppDelegate.swift */,
-				C8673C142196557900EC7CDD /* MarbleViewController.swift */,
 				C8673C162196557900EC7CDD /* Main.storyboard */,
 				C8673C1B2196557A00EC7CDD /* LaunchScreen.storyboard */,
 				C8673C1E2196557A00EC7CDD /* Info.plist */,
@@ -354,7 +351,6 @@
 				C8673C252196560300EC7CDD /* PatchCache.swift in Sources */,
 				C8673C292196561100EC7CDD /* cell_meta.swift in Sources */,
 				C8673C222196560300EC7CDD /* Planet.swift in Sources */,
-				C8673C152196557900EC7CDD /* MarbleViewController.swift in Sources */,
 				C8673C2D2196561100EC7CDD /* cell.swift in Sources */,
 				C8673C2A2196561100EC7CDD /* compounds.swift in Sources */,
 				C8673C2F2196561100EC7CDD /* gradient.swift in Sources */,
