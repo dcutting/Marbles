@@ -4,6 +4,10 @@ struct Triangle {
     let a: Patch.Vertex
     let b: Patch.Vertex
     let c: Patch.Vertex
+
+    var vertices: [Patch.Vertex] {
+        return [a, b, c]
+    }
 }
 
 struct Patch {

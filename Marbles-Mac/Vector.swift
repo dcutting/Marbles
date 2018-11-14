@@ -83,8 +83,21 @@ func isIntersecting(_ a: Patch.Vertex, _ b: Patch.Vertex, _ c: Patch.Vertex, wid
     return overlapsX && overlapsY
 }
 
-func isNotZClipped(_ a: SCNVector3, _ b: SCNVector3, _ c: SCNVector3) -> Bool {
-    return a.z >= 0.0 && a.z <= 1.0 &&
-        b.z >= 0.0 && b.z <= 1.0 &&
-        c.z >= 0.0 && c.z <= 1.0
+func isNotZClipped(_ a: Patch.Vertex, _ b: Patch.Vertex, _ c: Patch.Vertex) -> Bool {
+    if a.z > 1.0 && b.z > 1.0 && c.z > 1.0 {
+        return false
+    }
+    if a.z < 0.0 && b.z < 0.0 && c.z < 0.0 {
+        return false
+    }
+    let r = a.z >= 0.0 && a.z <= 1.0 ||  // TODO: || or &&?
+            b.z >= 0.0 && b.z <= 1.0 ||
+            c.z >= 0.0 && c.z <= 1.0
+    if !r {
+        print(a)
+        print(b)
+        print(c)
+        print()
+    }
+    return r
 }

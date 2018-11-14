@@ -50,7 +50,7 @@ class PatchCalculator {
         }
     }
 
-    func calculate(_ name: String, vertices: [Patch.Vertex], subdivisions: UInt32, priority: Double, completion: @escaping (Patch) -> Void) {
+    func calculate(_ name: String, triangle: Triangle, subdivisions: UInt32, priority: Double, completion: @escaping (Patch) -> Void) {
 
         guard !isCalculating(name, subdivisions: subdivisions) else { return }
 
@@ -62,7 +62,7 @@ class PatchCalculator {
                 _ = self.queued.remove(opName)
                 self.wip.write(opName, patch: true)
             }
-            let patch = self.subdivideTriangle(vertices: vertices, subdivisionLevels: subdivisions)
+            let patch = self.subdivide(triangle: triangle, subdivisionLevels: subdivisions)
             completion(patch)
             self.reader.sync {
                 _ = self.wip.remove(opName)
@@ -92,11 +92,11 @@ class PatchCalculator {
         }
     }
 
-    func subdivideTriangle(vertices: [Patch.Vertex], subdivisionLevels: UInt32) -> Patch {
+    func subdivide(triangle: Triangle, subdivisionLevels: UInt32) -> Patch {
 
-        let (a, _) = spherical(vertices[0])
-        let (b, _) = spherical(vertices[1])
-        let (c, _) = spherical(vertices[2])
+        let (a, _) = spherical(triangle.a)
+        let (b, _) = spherical(triangle.b)
+        let (c, _) = spherical(triangle.c)
 
         let segments = pow(2, subdivisionLevels)
 
@@ -165,11 +165,11 @@ class PatchCalculator {
         return [`as`, bs, cs]
     }
 
-    func sphericallySubdivide(vertices: [Patch.Vertex]) -> ([Patch.Vertex], [[Patch.Index]], [FP]) {
+    func sphericallySubdivide(triangle: Triangle) -> ([Patch.Vertex], [[Patch.Index]], [FP]) {
 
-        let a = vertices[0]
-        let b = vertices[1]
-        let c = vertices[2]
+        let a = triangle.a
+        let b = triangle.b
+        let c = triangle.c
 
         let ab = midway(a, b)
         let bc = midway(b, c)

@@ -118,6 +118,10 @@ class MarbleViewController: NSViewController {
         return Patch.Vertex(self.scnView.defaultCameraController.pointOfView!.position)
     }
 
+    var altitude: FP {
+        return cameraPosition.length()
+    }
+
     private func adaptFlyingSpeed() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             let distance = self.cameraPosition.length()
@@ -134,8 +138,8 @@ class MarbleViewController: NSViewController {
     private func makeTerrain() {
         for faceIndex in 0..<faces.count {
             let face = faces[faceIndex]
-            let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
-            let patch = patchCalculator.subdivideTriangle(vertices: vertices, subdivisionLevels: detailSubdivisions)
+            let triangle = Triangle(a: positions[Int(face[0])], b: positions[Int(face[1])], c: positions[Int(face[2])])
+            let patch = patchCalculator.subdivide(triangle: triangle, subdivisionLevels: detailSubdivisions)
             patchCache.write("\(faceIndex)-", patch: patch)
             let geometry = makeGeometry(patch: patch, asWireframe: self.wireframe)
             let node = SCNNode(geometry: geometry)
@@ -159,8 +163,8 @@ class MarbleViewController: NSViewController {
                     print("    Starting adaptive terrain generation for face \(faceIndex)")
                 }
                 let face = faces[faceIndex]
-                let vertices = [positions[Int(face[0])], positions[Int(face[1])], positions[Int(face[2])]]
-                let geom = self.makeAdaptiveGeometry(faceIndex: faceIndex, corners: vertices, maxEdgeLength: self.maxEdgeLength)
+                let triangle = Triangle(a: positions[Int(face[0])], b: positions[Int(face[1])], c: positions[Int(face[2])])
+                let geom = self.makeAdaptiveGeometry(faceIndex: faceIndex, corners: triangle, maxEdgeLength: self.maxEdgeLength)
                 self.geometries[faceIndex] = geom
             }
             DispatchQueue.main.sync {
@@ -176,16 +180,17 @@ class MarbleViewController: NSViewController {
         }
     }
 
-    private func makeAdaptiveGeometry(faceIndex: Int, corners: [FP3], maxEdgeLength: FP) -> SCNGeometry {
+    private func makeAdaptiveGeometry(faceIndex: Int, corners: Triangle, maxEdgeLength: FP) -> SCNGeometry {
         let start = DispatchTime.now()
         let patch = makeAdaptivePatch(name: "\(faceIndex)-",
-            corners: corners,
+            crinklyCorners: corners,
             maxEdgeLengthSq: maxEdgeLength * maxEdgeLength,
             patchCache: patchCache,
-            depth: 0) ?? makePatch(vertices: corners, colour: grey)
+            depth: 0) ?? makePatch(triangle: corners, colour: grey)
         if debug {
             let stop = DispatchTime.now()
-            print("      Adaptive patch (\(faceIndex)): \(patch.vertices.count) vertices in \(stop.uptimeNanoseconds - start.uptimeNanoseconds)")
+            let time = Double(stop.uptimeNanoseconds - start.uptimeNanoseconds) / 1000000000.0
+            print("      Adaptive patch (\(faceIndex)): \(patch.vertices.count) vertices in \(time) s")
         }
         return makeGeometry(patch: patch, asWireframe: wireframe)
     }
@@ -197,8 +202,8 @@ class MarbleViewController: NSViewController {
     let magenta: Patch.Colour = [1.0, 0.0, 1.0]
     let grey: Patch.Colour = [0.4, 0.4, 0.4]
 
-    private func makePatch(vertices: [Patch.Vertex], colour: Patch.Colour) -> Patch {
-        return Patch(vertices: vertices,
+    private func makePatch(triangle: Triangle, colour: Patch.Colour) -> Patch {
+        return Patch(vertices: triangle.vertices,
                      colours: [colour, colour, colour],
                      indices: [0, 1, 2])
     }
@@ -249,56 +254,56 @@ class MarbleViewController: NSViewController {
 //        return d >= CGFloat(planet.minimumRadius)
 //    }
 
-    private func makeAdaptivePatch(name: String, corners: [FP3], maxEdgeLengthSq: FP, patchCache: PatchCache<Patch>, depth: UInt32) -> Patch? {
+    private func makeAdaptivePatch(name: String, crinklyCorners: Triangle, maxEdgeLengthSq: FP, patchCache: PatchCache<Patch>, depth: UInt32) -> Patch? {
 
-        let baseA = patchCalculator.sphericalBase(corners[0])
-        let baseB = patchCalculator.sphericalBase(corners[1])
-        let baseC = patchCalculator.sphericalBase(corners[2])
+//        let flatWorldA = patchCalculator.sphericalBase(corners[0])
+//        let flatWorldB = patchCalculator.sphericalBase(corners[1])
+//        let flatWorldC = patchCalculator.sphericalBase(corners[2])
 
-        let sBaseA = SCNVector3(baseA)
-        let sBaseB = SCNVector3(baseB)
-        let sBaseC = SCNVector3(baseC)
+//        let sBaseA = SCNVector3(flatWorldA)
+//        let sBaseB = SCNVector3(flatWorldB)
+//        let sBaseC = SCNVector3(flatWorldC)
 
-        let (subv, sube, deltas) = patchCalculator.sphericallySubdivide(vertices: corners)
+        let (crinklyWorldVertices, crinklyWorldEdges, crinklyWorldDeltas) = patchCalculator.sphericallySubdivide(triangle: crinklyCorners)
 
-        let worldA = subv[0]
-        let worldB = subv[1]
-        let worldC = subv[2]
+        let crinklyWorldA = crinklyWorldVertices[0]
+        let crinklyWorldB = crinklyWorldVertices[1]
+        let crinklyWorldC = crinklyWorldVertices[2]
 
-        let worldTriangle = Triangle(a: worldA, b: worldB, c: worldC)
+        let crinklyWorldTriangle = Triangle(a: crinklyWorldA, b: crinklyWorldB, c: crinklyWorldC)
 
-        let sWorldA = SCNVector3(worldA)
-        let sWorldB = SCNVector3(worldB)
-        let sWorldC = SCNVector3(worldC)
+        let sWorldA = SCNVector3(crinklyWorldA)
+        let sWorldB = SCNVector3(crinklyWorldB)
+        let sWorldC = SCNVector3(crinklyWorldC)
 
         guard depth < adaptivePatchMaxDepth else {
-            return makePatch(vertices: [worldA, worldB, worldC], colour: red)
+            return makePatch(triangle: crinklyWorldTriangle, colour: red)
         }
 
 //        guard isUnderHorizon(corners: [sBaseA, sBaseB, sBaseC]) else {
 //            return makePatch(vertices: [worldA, worldB, worldC], colour: cyan)
 //        }
 
-        let baseScreenA = scnView.projectPoint(sBaseA)
-        let baseScreenB = scnView.projectPoint(sBaseB)
-        let baseScreenC = scnView.projectPoint(sBaseC)
-
-        guard isNotZClipped(baseScreenA, baseScreenB, baseScreenC) else {
-            return makePatch(vertices: [worldA, worldB, worldC], colour: grey)
-        }
+//        let baseScreenA = scnView.projectPoint(sBaseA)
+//        let baseScreenB = scnView.projectPoint(sBaseB)
+//        let baseScreenC = scnView.projectPoint(sBaseC)
 
         let screenA = Patch.Vertex(scnView.projectPoint(sWorldA))
         let screenB = Patch.Vertex(scnView.projectPoint(sWorldB))
         let screenC = Patch.Vertex(scnView.projectPoint(sWorldC))
 
+        guard isNotZClipped(screenA, screenB, screenC) else {
+            return makePatch(triangle: crinklyWorldTriangle, colour: grey)
+        }
+
         let screenTriangle = Triangle(a: screenA, b: screenB, c: screenC)
 
         guard isIntersecting(screenA, screenB, screenC, width: screenWidth, height: screenHeight) else {
             if debug {
-                return makePatch(vertices: [worldA, worldB, worldC], colour: yellow)
+                return makePatch(triangle: crinklyWorldTriangle, colour: yellow)
             } else {
                 return patchCache.read(name)
-                    ?? patchCalculator.subdivideTriangle(vertices: corners, subdivisionLevels: 0)
+                    ?? patchCalculator.subdivide(triangle: crinklyCorners, subdivisionLevels: 0)
             }
         }
 
@@ -307,17 +312,18 @@ class MarbleViewController: NSViewController {
             var subColours = [[Patch.Colour]](repeating: [], count: 4)
             var subIndices = [[Patch.Index]](repeating: [], count: 4)
             var hasAllSubpatches = true
-            for i in 0..<sube.count {
-                let index = sube[i]
-                let vx = subv[Int(index[0])]
-                let vy = subv[Int(index[1])]
-                let vz = subv[Int(index[2])]
+            for i in 0..<crinklyWorldEdges.count {
+                let index = crinklyWorldEdges[i]
+                let vx = crinklyWorldVertices[Int(index[0])]
+                let vy = crinklyWorldVertices[Int(index[1])]
+                let vz = crinklyWorldVertices[Int(index[2])]
+                let subTriangle = Triangle(a: vx, b: vy, c: vz)
                 let subName = name + "\(i)"
                 guard let subPatch = makeAdaptivePatch(name: subName,
-                                                 corners: [vx, vy, vz],
-                                                 maxEdgeLengthSq: maxEdgeLengthSq,
-                                                 patchCache: patchCache,
-                                                 depth: depth + 1)
+                                                       crinklyCorners: subTriangle,
+                                                       maxEdgeLengthSq: maxEdgeLengthSq,
+                                                       patchCache: patchCache,
+                                                       depth: depth + 1)
                     else {
                         hasAllSubpatches = false
                         break
@@ -343,14 +349,14 @@ class MarbleViewController: NSViewController {
             return patch
         }
 
-        let priority = prioritise(world: worldTriangle, screen: screenTriangle, delta: [deltas[0], deltas[1], deltas[2]], depth: depth)
+        let priority = prioritise(world: crinklyWorldTriangle, screen: screenTriangle, delta: [crinklyWorldDeltas[0], crinklyWorldDeltas[1], crinklyWorldDeltas[2]], depth: depth)
 
-        patchCalculator.calculate(name, vertices: corners, subdivisions: detailSubdivisions, priority: priority) { patch in
+        patchCalculator.calculate(name, triangle: crinklyCorners, subdivisions: detailSubdivisions, priority: priority) { patch in
             self.patchCache.write(name, patch: patch)
         }
 
         if debug {
-            return makePatch(vertices: [worldA, worldB, worldC], colour: magenta)
+            return makePatch(triangle: crinklyWorldTriangle, colour: magenta)
         }
 
         return nil
