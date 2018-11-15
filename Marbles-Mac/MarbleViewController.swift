@@ -1,13 +1,13 @@
 import AppKit
 import SceneKit
 
-let debug = true
+let debug = false
 
 class MarbleViewController: NSViewController {
 
     let planet = earthConfig
     let detailSubdivisions: UInt32 = 5
-    lazy var maxEdgeLength = FP(pow(2, detailSubdivisions + 1))
+    lazy var maxEdgeLength: FP = FP(pow(2, detailSubdivisions + 3))
     let adaptivePatchMaxDepth: UInt32 = 15
     let updateInterval = 0.1
     let hasDays = false
@@ -80,7 +80,6 @@ class MarbleViewController: NSViewController {
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             self.makeTerrain()
-            self.adaptFlyingSpeed()
         }
 
         let clickGesture = NSClickGestureRecognizer(target: self, action: #selector(handleClick(_:)))
@@ -123,13 +122,10 @@ class MarbleViewController: NSViewController {
     }
 
     private func adaptFlyingSpeed() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            let distance = self.cameraPosition.length()
-            let zeroHeight = self.planet.radius * 0.99
-            let newVelocity = ((FP(distance) - zeroHeight) / zeroHeight) * zeroHeight / 2.0
-            self.scnView.cameraControlConfiguration.flyModeVelocity = CGFloat(newVelocity)
-            self.adaptFlyingSpeed()
-        }
+        let distance = self.cameraPosition.length()
+        let zeroHeight = self.planet.radius * 0.99
+        let newVelocity = ((FP(distance) - zeroHeight) / zeroHeight) * zeroHeight / 2.0
+        self.scnView.cameraControlConfiguration.flyModeVelocity = CGFloat(newVelocity)
     }
 
     var nodes = [SCNNode]()
@@ -153,15 +149,9 @@ class MarbleViewController: NSViewController {
 
     private func refreshGeometry() {
         self.terrainQueue.asyncAfter(deadline: .now() + self.updateInterval) {
-            if debug {
-                print("  Clearing priority buffer")
-            }
             self.patchCalculator.clearBuffer()
             // TODO: don't calculate invisible faces
             for faceIndex in 0..<faces.count {
-                if debug {
-                    print("    Starting adaptive terrain generation for face \(faceIndex)")
-                }
                 let face = faces[faceIndex]
                 let triangle = Triangle(a: positions[Int(face[0])], b: positions[Int(face[1])], c: positions[Int(face[2])])
                 let geom = self.makeAdaptiveGeometry(faceIndex: faceIndex, corners: triangle, maxEdgeLength: self.maxEdgeLength)
@@ -169,12 +159,12 @@ class MarbleViewController: NSViewController {
             }
             DispatchQueue.main.sync {
                 if debug {
-                    print("* Refreshing geometry")
+                    print("* Refreshing geometry at altitude \(self.altitude)")
                 }
                 for faceIndex in 0..<self.nodes.count {
                     self.nodes[faceIndex].geometry = self.geometries[faceIndex]
                 }
-
+                self.adaptFlyingSpeed()
                 self.refreshGeometry()
             }
         }
@@ -186,7 +176,7 @@ class MarbleViewController: NSViewController {
             crinklyCorners: corners,
             maxEdgeLengthSq: maxEdgeLength * maxEdgeLength,
             patchCache: patchCache,
-            depth: 0) ?? makePatch(triangle: corners, colour: grey)
+            depth: 0) ?? makePatch(triangle: corners, colour: white)
         if debug {
             let stop = DispatchTime.now()
             let time = Double(stop.uptimeNanoseconds - start.uptimeNanoseconds) / 1000000000.0
@@ -292,20 +282,49 @@ class MarbleViewController: NSViewController {
         let screenB = Patch.Vertex(scnView.projectPoint(sWorldB))
         let screenC = Patch.Vertex(scnView.projectPoint(sWorldC))
 
-        guard isNotZClipped(screenA, screenB, screenC) else {
-            return makePatch(triangle: crinklyWorldTriangle, colour: grey)
-        }
-
         let screenTriangle = Triangle(a: screenA, b: screenB, c: screenC)
 
-        guard isIntersecting(screenA, screenB, screenC, width: screenWidth, height: screenHeight) else {
+        let normalisedScreenTriangle = screenTriangle.normalised()
+
+//        if isStraddlingZ(screenTriangle) {
+//            let longestEdge = screenTriangle.longestEdge
+////            print(longestEdge)
+//            if longestEdge > 200000 {
+//                return makePatch(triangle: crinklyWorldTriangle, colour: cyan)
+//            }
+//        }
+
+//        guard allZsUnclipped(screenTriangle) else {
+//            return makePatch(triangle: crinklyWorldTriangle, colour: grey)
+//        }
+
+        guard isIntersecting(normalisedScreenTriangle, width: screenWidth, height: screenHeight) else {
             if debug {
+//                if isStraddlingZ(screenTriangle) {
+//                    let longestEdge = screenTriangle.longestEdge
+//                    print(crinklyWorldTriangle)
+//                    print(screenTriangle)
+//                    print(longestEdge)
+//                }
                 return makePatch(triangle: crinklyWorldTriangle, colour: yellow)
             } else {
                 return patchCache.read(name)
                     ?? patchCalculator.subdivide(triangle: crinklyCorners, subdivisionLevels: 0)
             }
         }
+
+//        if screenA.z < 0.0 || screenA.z > 1.0 || screenB.z < 0.0 || screenB.z > 1.0 || screenC.z < 0.0 || screenC.z > 1.0 {
+//            print(screenA)
+//            print(screenB)
+//            print(screenC)
+//            print()
+//        }
+//        if screenB.z < 0.0 || screenB.z > 1.0 {
+//            print("screenB: \(screenB)")
+//        }
+//        if screenC.z < 0.0 || screenC.z > 1.0 {
+//            print("screenC: \(screenC)")
+//        }
 
         if shouldSubdivide(screenA, screenB, screenC, maxEdgeLengthSq: maxEdgeLengthSq) {
             var subVertices = [[Patch.Vertex]](repeating: [], count: 4)
@@ -349,7 +368,7 @@ class MarbleViewController: NSViewController {
             return patch
         }
 
-        let priority = prioritise(world: crinklyWorldTriangle, screen: screenTriangle, delta: [crinklyWorldDeltas[0], crinklyWorldDeltas[1], crinklyWorldDeltas[2]], depth: depth)
+        let priority = prioritise(world: crinklyWorldTriangle, screen: normalisedScreenTriangle, delta: [crinklyWorldDeltas[0], crinklyWorldDeltas[1], crinklyWorldDeltas[2]], depth: depth)
 
         patchCalculator.calculate(name, triangle: crinklyCorners, subdivisions: detailSubdivisions, priority: priority) { patch in
             self.patchCache.write(name, patch: patch)

@@ -72,32 +72,25 @@ func midway(_ a: FP3, _ b: FP3) -> FP3 {
     return [abx, aby, abz]
 }
 
-func isIntersecting(_ a: Patch.Vertex, _ b: Patch.Vertex, _ c: Patch.Vertex, width: FP, height: FP) -> Bool {
-    let minX = min(a.x, b.x, c.x)
-    let maxX = max(a.x, b.x, c.x)
-    let minY = min(a.y, b.y, c.y)
-    let maxY = max(a.y, b.y, c.y)
+func isIntersecting(_ triangle: Triangle, width: FP, height: FP) -> Bool {
+    let minX = min(triangle.a.x, triangle.b.x, triangle.c.x)
+    let maxX = max(triangle.a.x, triangle.b.x, triangle.c.x)
+    let minY = min(triangle.a.y, triangle.b.y, triangle.c.y)
+    let maxY = max(triangle.a.y, triangle.b.y, triangle.c.y)
     let inset: FP = debug ? 100.0 : 0.0
     let overlapsX = minX <= width - inset && maxX >= inset
     let overlapsY = minY <= height - inset && maxY >= inset
     return overlapsX && overlapsY
 }
 
-func isNotZClipped(_ a: Patch.Vertex, _ b: Patch.Vertex, _ c: Patch.Vertex) -> Bool {
-    if a.z > 1.0 && b.z > 1.0 && c.z > 1.0 {
-        return false
-    }
-    if a.z < 0.0 && b.z < 0.0 && c.z < 0.0 {
-        return false
-    }
-    let r = a.z >= 0.0 && a.z <= 1.0 ||  // TODO: || or &&?
-            b.z >= 0.0 && b.z <= 1.0 ||
-            c.z >= 0.0 && c.z <= 1.0
-    if !r {
-        print(a)
-        print(b)
-        print(c)
-        print()
-    }
-    return r
+func allZsUnclipped(_ triangle: Triangle) -> Bool {
+    return triangle.a.z >= 0.0 && triangle.a.z <= 1.0 &&
+        triangle.b.z >= 0.0 && triangle.b.z <= 1.0 &&
+        triangle.c.z >= 0.0 && triangle.c.z <= 1.0
+}
+
+func isStraddlingZ(_ triangle: Triangle) -> Bool {
+    let allBeforeNear = triangle.a.z < 0.0 && triangle.b.z < 0.0 && triangle.c.z < 0.0
+    let allAfterFar = triangle.a.z > 1.0 && triangle.b.z > 1.0 && triangle.c.z > 1.0
+    return !allBeforeNear && !allAfterFar && !allZsUnclipped(triangle)
 }
