@@ -1,6 +1,6 @@
 import SceneKit
 
-struct Triangle {
+struct Triangle: Equatable {
     let a: Patch.Vertex
     let b: Patch.Vertex
     let c: Patch.Vertex

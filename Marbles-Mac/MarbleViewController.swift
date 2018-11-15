@@ -150,7 +150,6 @@ class MarbleViewController: NSViewController {
     private func refreshGeometry() {
         self.terrainQueue.asyncAfter(deadline: .now() + self.updateInterval) {
             self.patchCalculator.clearBuffer()
-            // TODO: don't calculate invisible faces
             for faceIndex in 0..<faces.count {
                 let face = faces[faceIndex]
                 let triangle = Triangle(a: positions[Int(face[0])], b: positions[Int(face[1])], c: positions[Int(face[2])])
@@ -198,11 +197,8 @@ class MarbleViewController: NSViewController {
                      indices: [0, 1, 2])
     }
 
-    private func shouldSubdivide(_ pA: Patch.Vertex, _ pB: Patch.Vertex, _ pC: Patch.Vertex, maxEdgeLengthSq: FP) -> Bool {
-        let lA = FP((pA - pB).lengthSq())
-        let lB = FP((pA - pC).lengthSq())
-        let lC = FP((pB - pC).lengthSq())
-        return lA > maxEdgeLengthSq || lB > maxEdgeLengthSq || lC > maxEdgeLengthSq
+    private func shouldSubdivide(_ triangle: Triangle, maxEdgeLengthSq: FP) -> Bool {
+        return triangle.longestEdge > sqrt(maxEdgeLengthSq)
     }
 
 //    private func isUnderHorizon(corners: [SCNVector3]) -> Bool {
@@ -298,8 +294,16 @@ class MarbleViewController: NSViewController {
 //            return makePatch(triangle: crinklyWorldTriangle, colour: grey)
 //        }
 
-        guard isIntersecting(normalisedScreenTriangle, width: screenWidth, height: screenHeight) else {
+        let inset: FP = debug ? 100.0 : 0.0
+
+        if !isIntersecting(normalisedScreenTriangle, width: screenWidth, height: screenHeight, inset: inset) {
             if debug {
+                if normalisedScreenTriangle != screenTriangle {
+                    print(crinklyWorldTriangle)
+                    print(screenTriangle)
+                    print(normalisedScreenTriangle)
+                    print()
+                }
 //                if isStraddlingZ(screenTriangle) {
 //                    let longestEdge = screenTriangle.longestEdge
 //                    print(crinklyWorldTriangle)
@@ -326,7 +330,7 @@ class MarbleViewController: NSViewController {
 //            print("screenC: \(screenC)")
 //        }
 
-        if shouldSubdivide(screenA, screenB, screenC, maxEdgeLengthSq: maxEdgeLengthSq) {
+        if shouldSubdivide(normalisedScreenTriangle, maxEdgeLengthSq: maxEdgeLengthSq) {
             var subVertices = [[Patch.Vertex]](repeating: [], count: 4)
             var subColours = [[Patch.Colour]](repeating: [], count: 4)
             var subIndices = [[Patch.Index]](repeating: [], count: 4)
@@ -400,10 +404,14 @@ class MarbleViewController: NSViewController {
 //
 //        let worldDistanceFactor = 1 - unitClamp(Double((world.centroid - cameraPosition).lengthSq()) / planet.diameterSq)
 //
-//        let screenDistanceFactor = 1 - unitClamp(Double((screen.centroid - screenCenter).lengthSq() / halfScreenWidthSq))
+        let screenDistanceFactor = 1 - unitClamp(Double((screen.centroid - screenCenter).lengthSq() / halfScreenWidthSq))
+        return 1-screenDistanceFactor
 
-        let facingFactor = (world.facingFactor(to: cameraPosition) - 1.0) / -2.0
-        return facingFactor
+//        let forward = scnView.defaultCameraController.pointOfView!.worldFront
+//        let speed = 2000//scnView.cameraControlConfiguration.flyModeVelocity
+//        let projectedPosition = cameraPosition + Patch.Vertex(forward) * FP(speed)
+//        let facingFactor = (world.facingFactor(to: projectedPosition) - 1.0) / -2.0
+//        return facingFactor
 
 //        let coastlineComponent = coastlineFactor * coastlineWeight
 //        let landComponent = landFactor * landWeight

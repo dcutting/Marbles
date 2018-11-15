@@ -72,12 +72,11 @@ func midway(_ a: FP3, _ b: FP3) -> FP3 {
     return [abx, aby, abz]
 }
 
-func isIntersecting(_ triangle: Triangle, width: FP, height: FP) -> Bool {
+func isIntersecting(_ triangle: Triangle, width: FP, height: FP, inset: FP) -> Bool {
     let minX = min(triangle.a.x, triangle.b.x, triangle.c.x)
     let maxX = max(triangle.a.x, triangle.b.x, triangle.c.x)
     let minY = min(triangle.a.y, triangle.b.y, triangle.c.y)
     let maxY = max(triangle.a.y, triangle.b.y, triangle.c.y)
-    let inset: FP = debug ? 100.0 : 0.0
     let overlapsX = minX <= width - inset && maxX >= inset
     let overlapsY = minY <= height - inset && maxY >= inset
     return overlapsX && overlapsY
