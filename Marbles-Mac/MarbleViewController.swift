@@ -269,6 +269,7 @@ class MarbleViewController: NSViewController {
                 subIndices[i] = subPatch.indices
             }
             if hasAllSubpatches {
+                // TODO: pass pointers to recursive function so we don't have to copy arrays around later
                 let vertices = subVertices[0] + subVertices[1] + subVertices[2] + subVertices[3]
                 let colours = subColours[0] + subColours[1] + subColours[2] + subColours[3]
                 var offset: UInt32 = 0
