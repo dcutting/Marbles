@@ -10,7 +10,7 @@ class MarbleViewController: NSViewController {
     lazy var maxEdgeLength: FP = 160.0
     let adaptivePatchMaxDepth: UInt32 = 20
     let updateInterval = 0.1
-    let dayDuration: FP = 300
+    let dayDuration: FP = 1000
     var wireframe: Bool = false {
         didSet {
             let scnView = view as? SCNView
@@ -46,17 +46,20 @@ class MarbleViewController: NSViewController {
 
         let light = SCNLight()
         light.type = .omni
-        let sunGeometry = SCNSphere(radius: 100000)
+        let sunGeometry = SCNSphere(radius: 40000)
         sunGeometry.segmentCount = 64
         let sunMaterial = SCNMaterial()
         sunMaterial.emission.contents = NSImage(named: "2k_sun")!
         sunGeometry.materials = [sunMaterial]
         let sun = SCNNode(geometry: sunGeometry)
-        sun.position = SCNVector3(x: 1000000, y: 1000000, z: 1000000)
+        let bloom = CIFilter(name: "CIBloom")!
+        bloom.setValue(40.0, forKey: kCIInputRadiusKey)
+        bloom.setValue(1.0, forKey: kCIInputIntensityKey)
+        sun.filters = [bloom]
+        sun.position = SCNVector3(x: 1000000, y: 0, z: 0)
         sun.light = light
         let sunParent = SCNNode()
         sunParent.addChildNode(sun)
-        sun.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: dayDuration / 10.0)))
         sunParent.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: dayDuration)))
         scene.rootNode.addChildNode(sunParent)
 
