@@ -1,8 +1,0 @@
-#include <metal_stdlib>
-#include <metal_common>
-#include <simd/simd.h>
-
-uniform float colorModifier;
-
-float c = _surface.diffuse[0];
-_output.color.r = _output.color.r * (1.0 - c) + colorModifier * _output.color.g;

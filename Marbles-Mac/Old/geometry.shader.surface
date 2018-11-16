@@ -1,9 +1,0 @@
-#include <metal_stdlib>
-#include <metal_common>
-
-#pragma transparent
-#pragma body
-
-vec4 p = u_inverseModelTransform * u_inverseViewTransform * vec4(_surface.position, 1.0);
-float x = (length(p) - 5120.0) / 10000.0;// (length(p) - 5000.0) / 10000.0;
-_surface.diffuse = vec4(0.0, x, 0.0, 1.0);
