@@ -45,14 +45,20 @@ class MarbleViewController: NSViewController {
         scene.background.contents = NSImage(named: "tycho")!
 
         let light = SCNLight()
-        light.type = .directional
-        let lightNode = SCNNode()
-        lightNode.light = light
-        lightNode.rotation = SCNVector4(-1, 1, 0, 3.14/3.0)
-        if dayDuration > 0.0 {
-            lightNode.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: dayDuration)))
-        }
-        scene.rootNode.addChildNode(lightNode)
+        light.type = .omni
+        let sunGeometry = SCNSphere(radius: 100000)
+        sunGeometry.segmentCount = 64
+        let sunMaterial = SCNMaterial()
+        sunMaterial.emission.contents = NSImage(named: "2k_sun")!
+        sunGeometry.materials = [sunMaterial]
+        let sun = SCNNode(geometry: sunGeometry)
+        sun.position = SCNVector3(x: 1000000, y: 1000000, z: 1000000)
+        sun.light = light
+        let sunParent = SCNNode()
+        sunParent.addChildNode(sun)
+        sun.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: dayDuration / 10.0)))
+        sunParent.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: dayDuration)))
+        scene.rootNode.addChildNode(sunParent)
 
         let ambientLight = SCNLight()
         ambientLight.type = .ambient
