@@ -7,7 +7,7 @@ class MarbleViewController: NSViewController {
 
     let planet = earthConfig
     let detailSubdivisions: UInt32 = 5
-    lazy var maxEdgeLength: FP = 160.0//FP(pow(2, detailSubdivisions + 2))
+    lazy var maxEdgeLength: FP = 160.0
     let adaptivePatchMaxDepth: UInt32 = 20
     let updateInterval = 0.1
     let dayDuration: FP = 300
@@ -201,58 +201,7 @@ class MarbleViewController: NSViewController {
         return triangle.longestEdge > sqrt(maxEdgeLengthSq)
     }
 
-    private func extrude(triangle: Triangle, to: FP) -> Triangle {
-        let a = patchCalculator.sphericalBase(triangle.a, plus: to)
-        let b = patchCalculator.sphericalBase(triangle.b, plus: to)
-        let c = patchCalculator.sphericalBase(triangle.c, plus: to)
-        return Triangle(a: a, b: b, c: c)
-    }
-
-    private func isUnderHorizon(triangle: Triangle) -> Bool {
-
-//        let facingFactor = triangle.facingFactor(to: cameraPosition)
-//
-//        if facingFactor < 0.5 { return false }
-
-        let heightSq = cameraPosition.lengthSq()
-        let r = planet.radius + planet.mountainHeight
-        let radiusSq = r * r
-        let dSq = heightSq - radiusSq
-        let d = sqrt(dSq)
-
-        let extrudedTriangle = extrude(triangle: triangle, to: planet.mountainHeight)
-        return extrudedTriangle.distance(from: cameraPosition) < d
-
-//        for corner in corners {
-//            let c: Patch.Vertex = [FP(corner.x), FP(corner.y), FP(corner.z)]
-//            let sb = patchCalculator.sphericalBase(c, plus: planet.mountainHeight)
-//            let ssb = SCNVector3(sb)
-//            let cd = ssb.distance(to: camera)
-//            if cd < d {
-//                return true
-//            }
-//            let highest = patchCalculator.sphericalBase(c, plus: planet.mountainHeight)
-//            if isUnderHorizon(vertex: SCNVector3(highest), camera: camera) {
-//                return true
-//            }
-//        }
-//        return false
-    }
-
-//    private func isUnderHorizon(vertex: SCNVector3, camera: SCNVector3) -> Bool {
-//        let v = SCNVector3()
-////        if camera.distance(to: vertex) < camera.distance(to: v) {
-////            return true
-////        }
-//        let d = v.distance(to: (vertex, camera))
-//        return d >= CGFloat(planet.minimumRadius)
-//    }
-
     private func makeAdaptivePatch(name: String, crinklyCorners: Triangle, maxEdgeLengthSq: FP, patchCache: PatchCache<Patch>, depth: UInt32) -> Patch? {
-
-//        let sBaseA = SCNVector3(flatWorldA)
-//        let sBaseB = SCNVector3(flatWorldB)
-//        let sBaseC = SCNVector3(flatWorldC)
 
         let (crinklyWorldVertices, crinklyWorldEdges, crinklyWorldDeltas) = patchCalculator.sphericallySubdivide(triangle: crinklyCorners)
 
@@ -270,14 +219,6 @@ class MarbleViewController: NSViewController {
             return makePatch(triangle: crinklyWorldTriangle, colour: red)
         }
 
-//        guard isUnderHorizon(corners: [sBaseA, sBaseB, sBaseC]) else {
-//            return makePatch(vertices: [worldA, worldB, worldC], colour: cyan)
-//        }
-
-//        let baseScreenA = scnView.projectPoint(sBaseA)
-//        let baseScreenB = scnView.projectPoint(sBaseB)
-//        let baseScreenC = scnView.projectPoint(sBaseC)
-
         let screenA = Patch.Vertex(scnView.projectPoint(sWorldA))
         let screenB = Patch.Vertex(scnView.projectPoint(sWorldB))
         let screenC = Patch.Vertex(scnView.projectPoint(sWorldC))
@@ -286,58 +227,14 @@ class MarbleViewController: NSViewController {
 
         let normalisedScreenTriangle = screenTriangle.normalised()
 
-//        if isStraddlingZ(screenTriangle) {
-//            let longestEdge = screenTriangle.longestEdge
-////            print(longestEdge)
-//            if longestEdge > 200000 {
-//                return makePatch(triangle: crinklyWorldTriangle, colour: cyan)
-//            }
-//        }
-
-//        guard allZsUnclipped(screenTriangle) else {
-//            return makePatch(triangle: crinklyWorldTriangle, colour: grey)
-//        }
-
         let inset: FP = debug ? 100.0 : 0.0
 
         if !isIntersecting(normalisedScreenTriangle, width: screenWidth, height: screenHeight, inset: inset) {
 
-//            if !isUnderHorizon(triangle: crinklyWorldTriangle) {
-
             let camera = cameraPosition
-//            let facingFactor = crinklyWorldTriangle.facingFactor(to: camera)
-
-            if crinklyWorldTriangle.distance(from: camera) > crinklyWorldTriangle.longestEdge {//} && facingFactor < 0.9 {
-
-//            let maxWorldA = patchCalculator.sphericalBase(crinklyCorners.a, plus: planet.mountainHeight)
-//            let maxWorldB = patchCalculator.sphericalBase(crinklyCorners.b, plus: planet.mountainHeight)
-//            let maxWorldC = patchCalculator.sphericalBase(crinklyCorners.c, plus: planet.mountainHeight)
-//
-//            let maxScreenA = Patch.Vertex(scnView.projectPoint(SCNVector3(maxWorldA)))
-//            let maxScreenB = Patch.Vertex(scnView.projectPoint(SCNVector3(maxWorldB)))
-//            let maxScreenC = Patch.Vertex(scnView.projectPoint(SCNVector3(maxWorldC)))
-//
-//            let maxScreenTriangle = Triangle(a: maxScreenA, b: maxScreenB, c: maxScreenC)
-//
-//            let maxNormalisedScreenTriangle = maxScreenTriangle.normalised()
-//
-//            if !isIntersecting(maxScreenTriangle, width: screenWidth, height: screenHeight, inset: inset) {
-
-//            if normalisedScreenTriangle.longestEdge < screenWidth {
+            if crinklyWorldTriangle.distance(from: camera) > crinklyWorldTriangle.longestEdge {
 
                 if debug {
-                    if normalisedScreenTriangle != screenTriangle {
-                        print(crinklyWorldTriangle)
-                        print(screenTriangle)
-                        print(normalisedScreenTriangle)
-                        print()
-                    }
-    //                if isStraddlingZ(screenTriangle) {
-    //                    let longestEdge = screenTriangle.longestEdge
-    //                    print(crinklyWorldTriangle)
-    //                    print(screenTriangle)
-    //                    print(longestEdge)
-    //                }
                     return makePatch(triangle: crinklyWorldTriangle, colour: yellow)
                 } else {
                     return patchCache.read(name)
@@ -345,19 +242,6 @@ class MarbleViewController: NSViewController {
                 }
             }
         }
-
-//        if screenA.z < 0.0 || screenA.z > 1.0 || screenB.z < 0.0 || screenB.z > 1.0 || screenC.z < 0.0 || screenC.z > 1.0 {
-//            print(screenA)
-//            print(screenB)
-//            print(screenC)
-//            print()
-//        }
-//        if screenB.z < 0.0 || screenB.z > 1.0 {
-//            print("screenB: \(screenB)")
-//        }
-//        if screenC.z < 0.0 || screenC.z > 1.0 {
-//            print("screenC: \(screenC)")
-//        }
 
         if shouldSubdivide(normalisedScreenTriangle, maxEdgeLengthSq: maxEdgeLengthSq) {
             var subVertices = [[Patch.Vertex]](repeating: [], count: 4)
@@ -415,54 +299,6 @@ class MarbleViewController: NSViewController {
     }
 
     private func prioritise(world: Triangle, screen: Triangle, delta: [FP], depth: UInt32) -> Double {
-
-//        let coastlineWeight = 0.3
-//        let landWeight = 0.2
-//        let depthWeight = 0.35
-//        let worldDistanceWeight = 0.1
-//        let screenDistanceWeight = 0.05
-//
-//        let isAllLand = delta[0] > 0.0 && delta[1] > 0.0 && delta[2] > 0.0
-//        let isAllWater = delta[0] < 0.0 && delta[1] < 0.0 && delta[2] < 0.0
-//
-//        let coastlineFactor = !(isAllLand || isAllWater) ? 1.0 : 0.0
-//
-//        let landFactor = isAllLand ? 1.0 : 0.0
-//
-//        let depthFactor = Double(adaptivePatchMaxDepth - depth) / Double(adaptivePatchMaxDepth)
-//
-//        let worldDistanceFactor = 1 - unitClamp(Double((world.centroid - cameraPosition).lengthSq()) / planet.diameterSq)
-//
-        let screenDistanceFactor = 1 - unitClamp(Double((screen.centroid - screenCenter).lengthSq() / halfScreenWidthSq))
-        return 1-screenDistanceFactor
-
-//        let forward = scnView.defaultCameraController.pointOfView!.worldFront
-//        let speed = 2000//scnView.cameraControlConfiguration.flyModeVelocity
-//        let projectedPosition = cameraPosition + Patch.Vertex(forward) * FP(speed)
-//        let facingFactor = (world.facingFactor(to: projectedPosition) - 1.0) / -2.0
-//        return facingFactor
-
-//        let coastlineComponent = coastlineFactor * coastlineWeight
-//        let landComponent = landFactor * landWeight
-//        let depthComponent = depthFactor * depthWeight
-//        let worldComponent = Double(worldDistanceFactor) * worldDistanceWeight
-//        let screenComponent = Double(screenDistanceFactor) * screenDistanceWeight
-//
-//        let priorityFactor = coastlineComponent + landComponent + depthComponent + worldComponent + screenComponent
-//        let priority = 1 - priorityFactor
-
-//        if debug {
-//            print(world)
-//            print(screen)
-//            print(depth, cameraPosition, screenCenter)
-//            print(worldCentroid, worldDistanceFactor)
-//            print(screenCentroid, screenDistanceFactor)
-//            print(coastlineFactor, depthFactor, worldDistanceFactor, screenDistanceFactor)
-//            print(coastlineComponent, depthComponent, worldComponent, screenComponent)
-//            print(priorityFactor, priority)
-//            print()
-//        }
-
-//        return priority
+        return unitClamp(Double((screen.centroid - screenCenter).lengthSq() / halfScreenWidthSq))
     }
 }
