@@ -198,7 +198,7 @@ class MarbleViewController: NSViewController {
     }
 
     private func shouldSubdivide(_ triangle: Triangle, maxEdgeLengthSq: FP) -> Bool {
-        return triangle.longestEdge > sqrt(maxEdgeLengthSq)
+        return triangle.longestEdgeSq > maxEdgeLengthSq
     }
 
     private func makeAdaptivePatch(name: String, crinklyCorners: Triangle, maxEdgeLengthSq: FP, patchCache: PatchCache<Patch>, depth: UInt32) -> Patch? {
@@ -232,7 +232,7 @@ class MarbleViewController: NSViewController {
         if !isIntersecting(normalisedScreenTriangle, width: screenWidth, height: screenHeight, inset: inset) {
 
             let camera = cameraPosition
-            if crinklyWorldTriangle.distance(from: camera) > crinklyWorldTriangle.longestEdge {
+            if crinklyWorldTriangle.distanceSq(from: camera) > crinklyWorldTriangle.longestEdgeSq {
 
                 if debug {
                     return makePatch(triangle: crinklyWorldTriangle, colour: yellow)

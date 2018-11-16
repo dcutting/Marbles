@@ -9,10 +9,10 @@ struct Triangle: Equatable {
         return [a, b, c]
     }
 
-    var longestEdge: FP {
-        let ab = (a-b).length()
-        let bc = (b-c).length()
-        let ac = (a-c).length()
+    var longestEdgeSq: FP {
+        let ab = (a-b).lengthSq()
+        let bc = (b-c).lengthSq()
+        let ac = (a-c).lengthSq()
         return max(ab, bc, ac)
     }
 
@@ -27,10 +27,10 @@ struct Triangle: Equatable {
         return vertex
     }
 
-    func distance(from p: Patch.Vertex) -> FP {
-        let pa = (p-a).length()
-        let pb = (p-b).length()
-        let pc = (p-c).length()
+    func distanceSq(from p: Patch.Vertex) -> FP {
+        let pa = (p-a).lengthSq()
+        let pb = (p-b).lengthSq()
+        let pc = (p-c).lengthSq()
         return min(pa, pb, pc)
     }
 }
