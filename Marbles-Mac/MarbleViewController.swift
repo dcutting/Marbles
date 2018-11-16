@@ -7,8 +7,8 @@ class MarbleViewController: NSViewController {
 
     let planet = earthConfig
     let detailSubdivisions: UInt32 = 5
-    lazy var maxEdgeLength: FP = FP(pow(2, detailSubdivisions + 3))
-    let adaptivePatchMaxDepth: UInt32 = 15
+    lazy var maxEdgeLength: FP = FP(pow(2, detailSubdivisions + 2))
+    let adaptivePatchMaxDepth: UInt32 = 20
     let updateInterval = 0.1
     let hasDays = false
     var wireframe: Bool = false {
@@ -123,8 +123,8 @@ class MarbleViewController: NSViewController {
 
     private func adaptFlyingSpeed() {
         let distance = self.cameraPosition.length()
-        let zeroHeight = self.planet.radius * 0.99
-        let newVelocity = ((FP(distance) - zeroHeight) / zeroHeight) * zeroHeight / 2.0
+        let zeroHeight = self.planet.radius * 1.0
+        let newVelocity = ((FP(distance) - zeroHeight) / zeroHeight) * zeroHeight / 4.0
         self.scnView.cameraControlConfiguration.flyModeVelocity = CGFloat(newVelocity)
     }
 
@@ -242,10 +242,6 @@ class MarbleViewController: NSViewController {
 
     private func makeAdaptivePatch(name: String, crinklyCorners: Triangle, maxEdgeLengthSq: FP, patchCache: PatchCache<Patch>, depth: UInt32) -> Patch? {
 
-//        let flatWorldA = patchCalculator.sphericalBase(corners[0])
-//        let flatWorldB = patchCalculator.sphericalBase(corners[1])
-//        let flatWorldC = patchCalculator.sphericalBase(corners[2])
-
 //        let sBaseA = SCNVector3(flatWorldA)
 //        let sBaseB = SCNVector3(flatWorldB)
 //        let sBaseC = SCNVector3(flatWorldC)
@@ -297,24 +293,42 @@ class MarbleViewController: NSViewController {
         let inset: FP = debug ? 100.0 : 0.0
 
         if !isIntersecting(normalisedScreenTriangle, width: screenWidth, height: screenHeight, inset: inset) {
-            if debug {
-                if normalisedScreenTriangle != screenTriangle {
-                    print(crinklyWorldTriangle)
-                    print(screenTriangle)
-                    print(normalisedScreenTriangle)
-                    print()
+
+//            let maxWorldA = patchCalculator.sphericalBase(crinklyCorners.a, plus: planet.mountainHeight)
+//            let maxWorldB = patchCalculator.sphericalBase(crinklyCorners.b, plus: planet.mountainHeight)
+//            let maxWorldC = patchCalculator.sphericalBase(crinklyCorners.c, plus: planet.mountainHeight)
+//
+//            let maxScreenA = Patch.Vertex(scnView.projectPoint(SCNVector3(maxWorldA)))
+//            let maxScreenB = Patch.Vertex(scnView.projectPoint(SCNVector3(maxWorldB)))
+//            let maxScreenC = Patch.Vertex(scnView.projectPoint(SCNVector3(maxWorldC)))
+//
+//            let maxScreenTriangle = Triangle(a: maxScreenA, b: maxScreenB, c: maxScreenC)
+//
+//            let maxNormalisedScreenTriangle = maxScreenTriangle.normalised()
+//
+//            if !isIntersecting(maxScreenTriangle, width: screenWidth, height: screenHeight, inset: inset) {
+
+//            if normalisedScreenTriangle.longestEdge < screenWidth {
+
+                if debug {
+                    if normalisedScreenTriangle != screenTriangle {
+                        print(crinklyWorldTriangle)
+                        print(screenTriangle)
+                        print(normalisedScreenTriangle)
+                        print()
+                    }
+    //                if isStraddlingZ(screenTriangle) {
+    //                    let longestEdge = screenTriangle.longestEdge
+    //                    print(crinklyWorldTriangle)
+    //                    print(screenTriangle)
+    //                    print(longestEdge)
+    //                }
+                    return makePatch(triangle: crinklyWorldTriangle, colour: yellow)
+                } else {
+                    return patchCache.read(name)
+                        ?? patchCalculator.subdivide(triangle: crinklyCorners, subdivisionLevels: 0)
                 }
-//                if isStraddlingZ(screenTriangle) {
-//                    let longestEdge = screenTriangle.longestEdge
-//                    print(crinklyWorldTriangle)
-//                    print(screenTriangle)
-//                    print(longestEdge)
-//                }
-                return makePatch(triangle: crinklyWorldTriangle, colour: yellow)
-            } else {
-                return patchCache.read(name)
-                    ?? patchCalculator.subdivide(triangle: crinklyCorners, subdivisionLevels: 0)
-            }
+//            }
         }
 
 //        if screenA.z < 0.0 || screenA.z > 1.0 || screenB.z < 0.0 || screenB.z > 1.0 || screenC.z < 0.0 || screenC.z > 1.0 {
