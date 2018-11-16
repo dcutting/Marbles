@@ -26,6 +26,13 @@ struct Triangle: Equatable {
         }
         return vertex
     }
+
+    func distance(from p: Patch.Vertex) -> FP {
+        let pa = (p-a).length()
+        let pb = (p-b).length()
+        let pc = (p-c).length()
+        return min(pa, pb, pc)
+    }
 }
 
 struct Patch {

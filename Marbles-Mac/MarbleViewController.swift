@@ -201,36 +201,44 @@ class MarbleViewController: NSViewController {
         return triangle.longestEdge > sqrt(maxEdgeLengthSq)
     }
 
-//    private func isUnderHorizon(corners: [SCNVector3]) -> Bool {
+    private func extrude(triangle: Triangle, to: FP) -> Triangle {
+        let a = patchCalculator.sphericalBase(triangle.a, plus: to)
+        let b = patchCalculator.sphericalBase(triangle.b, plus: to)
+        let c = patchCalculator.sphericalBase(triangle.c, plus: to)
+        return Triangle(a: a, b: b, c: c)
+    }
+
+    private func isUnderHorizon(triangle: Triangle) -> Bool {
+
+//        let facingFactor = triangle.facingFactor(to: cameraPosition)
 //
-//        let camera = scnView.defaultCameraController.pointOfView!.position
-//        let triangle = Triangle(a: corners[0], b: corners[1], c: corners[2])
-//        let facingFactor = findFacingFactor(triangle: triangle, position: camera)
-//
-//        if facingFactor < 0.0 { return false }
-//        if facingFactor >= 0.5 { return true }
-//
-////        let heightSq = camera.lengthSq()
-////        let r = planet.radius + planet.mountainHeight
-////        let radiusSq = r * r
-////        let dSq = heightSq - CGFloat(radiusSq)
-////        let d = sqrt(dSq)
+//        if facingFactor < 0.5 { return false }
+
+        let heightSq = cameraPosition.lengthSq()
+        let r = planet.radius + planet.mountainHeight
+        let radiusSq = r * r
+        let dSq = heightSq - radiusSq
+        let d = sqrt(dSq)
+
+        let extrudedTriangle = extrude(triangle: triangle, to: planet.mountainHeight)
+        return extrudedTriangle.distance(from: cameraPosition) < d
+
 //        for corner in corners {
 //            let c: Patch.Vertex = [FP(corner.x), FP(corner.y), FP(corner.z)]
-////            let sb = patchCalculator.sphericalBase(c, plus: planet.mountainHeight)
-////            let ssb = SCNVector3(sb)
-////            let cd = ssb.distance(to: camera)
-////            if cd < d {
-////                return true
-////            }
+//            let sb = patchCalculator.sphericalBase(c, plus: planet.mountainHeight)
+//            let ssb = SCNVector3(sb)
+//            let cd = ssb.distance(to: camera)
+//            if cd < d {
+//                return true
+//            }
 //            let highest = patchCalculator.sphericalBase(c, plus: planet.mountainHeight)
 //            if isUnderHorizon(vertex: SCNVector3(highest), camera: camera) {
 //                return true
 //            }
 //        }
 //        return false
-//    }
-//
+    }
+
 //    private func isUnderHorizon(vertex: SCNVector3, camera: SCNVector3) -> Bool {
 //        let v = SCNVector3()
 ////        if camera.distance(to: vertex) < camera.distance(to: v) {
@@ -294,6 +302,13 @@ class MarbleViewController: NSViewController {
 
         if !isIntersecting(normalisedScreenTriangle, width: screenWidth, height: screenHeight, inset: inset) {
 
+//            if !isUnderHorizon(triangle: crinklyWorldTriangle) {
+
+            let camera = cameraPosition
+//            let facingFactor = crinklyWorldTriangle.facingFactor(to: camera)
+
+            if crinklyWorldTriangle.distance(from: camera) > crinklyWorldTriangle.longestEdge {//} && facingFactor < 0.9 {
+
 //            let maxWorldA = patchCalculator.sphericalBase(crinklyCorners.a, plus: planet.mountainHeight)
 //            let maxWorldB = patchCalculator.sphericalBase(crinklyCorners.b, plus: planet.mountainHeight)
 //            let maxWorldC = patchCalculator.sphericalBase(crinklyCorners.c, plus: planet.mountainHeight)
@@ -328,7 +343,7 @@ class MarbleViewController: NSViewController {
                     return patchCache.read(name)
                         ?? patchCalculator.subdivide(triangle: crinklyCorners, subdivisionLevels: 0)
                 }
-//            }
+            }
         }
 
 //        if screenA.z < 0.0 || screenA.z > 1.0 || screenB.z < 0.0 || screenB.z > 1.0 || screenC.z < 0.0 || screenC.z > 1.0 {
