@@ -7,10 +7,10 @@ class MarbleViewController: NSViewController {
 
     let planet = earthConfig
     let detailSubdivisions: UInt32 = 5
-    lazy var maxEdgeLength: FP = FP(pow(2, detailSubdivisions + 2))
+    lazy var maxEdgeLength: FP = 160.0//FP(pow(2, detailSubdivisions + 2))
     let adaptivePatchMaxDepth: UInt32 = 20
     let updateInterval = 0.1
-    let hasDays = false
+    let dayDuration: FP = 300
     var wireframe: Bool = false {
         didSet {
             let scnView = view as? SCNView
@@ -49,8 +49,8 @@ class MarbleViewController: NSViewController {
         let lightNode = SCNNode()
         lightNode.light = light
         lightNode.rotation = SCNVector4(-1, 1, 0, 3.14/3.0)
-        if hasDays {
-            lightNode.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: 100)))
+        if dayDuration > 0.0 {
+            lightNode.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: dayDuration)))
         }
         scene.rootNode.addChildNode(lightNode)
 
@@ -64,7 +64,7 @@ class MarbleViewController: NSViewController {
         let camera = SCNCamera()
         camera.automaticallyAdjustsZRange = true
         let cameraNode = SCNNode()
-        cameraNode.position = SCNVector3(x: 0.0, y: 0.0, z: CGFloat(planet.radius * 2.5))
+        cameraNode.position = SCNVector3(x: 0.0, y: 0.0, z: CGFloat(planet.radius * 2.2))
         cameraNode.camera = camera
         cameraNode.look(at: SCNVector3())
         scene.rootNode.addChildNode(cameraNode)
