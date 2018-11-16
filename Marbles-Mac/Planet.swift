@@ -75,7 +75,7 @@ struct PlanetConfig {
             let sourceNoise = GradientNoise3D(amplitude: amplitude,
                                               frequency: frequency,
                                               seed: seed)
-            fractalNoise = FBM(sourceNoise,
+            fractalNoise = UnFBM(sourceNoise,
                                octaves: octaves,
                                persistence: persistence,
                                lacunarity: lacunarity)
@@ -97,7 +97,7 @@ struct PlanetConfig {
 
         // TODO
         let snowNoiseSource = GradientNoise3D(amplitude: 800, frequency: 0.001, seed: seed+1)
-        self.snowNoise = FBM(snowNoiseSource, octaves: 5, persistence: 0.4, lacunarity: 2.5)
+        self.snowNoise = UnFBM(snowNoiseSource, octaves: 5, persistence: 0.4, lacunarity: 2.5)
     }
 }
 
