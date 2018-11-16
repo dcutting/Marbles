@@ -16,7 +16,7 @@ struct RGBColourScale {
 
 enum NoiseType {
     case gradient
-    case cellular
+//    case cellular
 }
 
 struct PlanetConfig {
@@ -35,8 +35,8 @@ struct PlanetConfig {
     let frequency: Double
     let amplitude: Double
     let oceanDepth: Double
-    let noise: Noise
-    let snowNoise: Noise
+    let noise: UnFBM
+    let snowNoise: UnFBM
 
     init(seed: Int,
          radius: Double,
@@ -69,7 +69,7 @@ struct PlanetConfig {
 
         self.minimumRadius = hasWater ? (radius - oceanDepth) : (radius - mountainHeight)
 
-        let fractalNoise: Noise
+        let fractalNoise: UnFBM
         switch noiseType {
         case .gradient:
             let sourceNoise = GradientNoise3D(amplitude: amplitude,
@@ -79,21 +79,21 @@ struct PlanetConfig {
                                octaves: octaves,
                                persistence: persistence,
                                lacunarity: lacunarity)
-        case .cellular:
-            let sourceNoise = CellNoise3D(amplitude: amplitude,
-                                          frequency: frequency,
-                                          seed: seed)
-            fractalNoise = FBM(sourceNoise,
-                               octaves: octaves,
-                               persistence: persistence,
-                               lacunarity: lacunarity)
+//        case .cellular:
+//            let sourceNoise = CellNoise3D(amplitude: amplitude,
+//                                          frequency: frequency,
+//                                          seed: seed)
+//            fractalNoise = FBM(sourceNoise,
+//                               octaves: octaves,
+//                               persistence: persistence,
+//                               lacunarity: lacunarity)
         }
 
-        if ridged {
-            self.noise = RidgedNoise(noise: fractalNoise, amplitude: amplitude)
-        } else {
+//        if ridged {
+//            self.noise = RidgedNoise(noise: fractalNoise, amplitude: amplitude)
+//        } else {
             self.noise = fractalNoise
-        }
+//        }
 
         // TODO
         let snowNoiseSource = GradientNoise3D(amplitude: 800, frequency: 0.001, seed: seed+1)
@@ -224,27 +224,27 @@ let earthConfig = PlanetConfig(seed: 12891,
 //                                blue: ColourScale(min: 0.0, max: 0.0))
 //)
 
-let vestaConfig = PlanetConfig(seed: 719134,
-                               radius: 1000.0,
-                               frequency: 2.0,
-                               amplitude: 0.6,
-                               octaves: 12,
-                               persistence: 0.3,
-                               lacunarity: 3.0,
-                               noiseType: .cellular,
-                               levels: 0,
-                               iciness: 0.0,
-                               hasWater: false,
-                               ridged: false,
-                               groundColourScale: RGBColourScale(
-                                red: ColourScale(0.2, 0.7),
-                                green: ColourScale(0.2, 0.7),
-                                blue: ColourScale(0.2, 0.7)),
-                               waterColourScale: RGBColourScale(
-                                red: ColourScale(0x0/0xff, 0x0/0xff),
-                                green: ColourScale(0x0/0xff, 0x0/0xff),
-                                blue: ColourScale(0x26/0xff, 0xc8/0xff))
-)
+//let vestaConfig = PlanetConfig(seed: 719134,
+//                               radius: 1000.0,
+//                               frequency: 2.0,
+//                               amplitude: 0.6,
+//                               octaves: 12,
+//                               persistence: 0.3,
+//                               lacunarity: 3.0,
+//                               noiseType: .cellular,
+//                               levels: 0,
+//                               iciness: 0.0,
+//                               hasWater: false,
+//                               ridged: false,
+//                               groundColourScale: RGBColourScale(
+//                                red: ColourScale(0.2, 0.7),
+//                                green: ColourScale(0.2, 0.7),
+//                                blue: ColourScale(0.2, 0.7)),
+//                               waterColourScale: RGBColourScale(
+//                                red: ColourScale(0x0/0xff, 0x0/0xff),
+//                                green: ColourScale(0x0/0xff, 0x0/0xff),
+//                                blue: ColourScale(0x26/0xff, 0xc8/0xff))
+//)
 
 //let marsConfig = PlanetConfig(seed: 729134,
 //                               radius: 1000.0,

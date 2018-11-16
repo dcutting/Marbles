@@ -1,5 +1,5 @@
 public
-struct UnFBM: Noise
+struct UnFBM
 {
     private
     let generators:[GradientNoise3D]
