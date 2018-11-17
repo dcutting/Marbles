@@ -1,6 +1,5 @@
 import SceneKit
 
-public typealias FP = Double
 public typealias FP3 = double3
 
 extension Patch.Vertex {
@@ -13,7 +12,7 @@ extension Patch.Vertex {
         return simd.length_squared(self)
     }
 
-    func normalised() -> FP3 {
+    func normalised() -> Patch.Vertex {
         return simd.normalize(self)
     }
 
@@ -35,20 +34,4 @@ extension Patch.Vertex {
         let abz = (z + to.z) / 2.0
         return [abx, aby, abz]
     }
-}
-
-public func unitClamp(_ v: FP) -> FP {
-    guard v > 0.0 else { return 0.0 }
-    guard v < 1.0 else { return 1.0 }
-    return v
-}
-
-func interpolated(_ t: FP, v0: FP, v1: FP) -> FP {
-    return (1 - t) * v0 + t * v1
-}
-
-func pow(_ base: UInt32, _ power: UInt32) -> UInt32 {
-    var answer: UInt32 = 1
-    for _ in 0..<power { answer *= base }
-    return answer
 }

@@ -1,6 +1,6 @@
 let phi: FP = 1.6180339887498948482
 
-let positions: [FP3] = [
+let positions: [Patch.Vertex] = [
     [1, phi, 0],
     [-1, phi, 0],
     [1, -phi, 0],

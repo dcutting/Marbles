@@ -1,10 +1,14 @@
 struct ColourScale {
-    let a: Double
-    let b: Double
+    let a: Float
+    let b: Float
 
-    init(_ a: Double, _ b: Double) {
+    init(_ a: Float, _ b: Float) {
         self.a = a
         self.b = b
+    }
+
+    func interpolated(by t: Float) -> Float {
+        return a.interpolated(to: b, by: t)
     }
 }
 
@@ -12,6 +16,12 @@ struct RGBColourScale {
     let red: ColourScale
     let green: ColourScale
     let blue: ColourScale
+
+    func interpolated(by t: Float) -> Patch.Colour {
+        return Patch.Colour(red.interpolated(by: t),
+                            green.interpolated(by: t),
+                            blue.interpolated(by: t))
+    }
 }
 
 enum NoiseType {

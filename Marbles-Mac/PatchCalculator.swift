@@ -112,7 +112,7 @@ class PatchCalculator {
 
         var next: UInt32 = 0
         var indices = [Patch.Index]()
-        var points = [FP3]()
+        var points = [Patch.Vertex]()
         points.append(a)
         for j in 1...segments {
             let p = a + (vab * FP(j))
@@ -198,30 +198,26 @@ class PatchCalculator {
             let distanceFromEquator: FP = abs(p.y)/config.radius
             let dryness: FP = 1 - config.iciness
             let snowLine = FP(config.mountainHeight * 1.5) * (1 - distanceFromEquator * config.iciness) * dryness
-            let rawHeightColour: FP
+            let rawHeightColour: Float
             if config.hasWater {
-                rawHeightColour = FP(delta) / config.mountainHeight
+                rawHeightColour = Float(delta) / Float(config.mountainHeight)
             } else {
-                rawHeightColour = FP(delta + config.mountainHeight) / (config.mountainHeight * 2.0)
+                rawHeightColour = (Float(delta) + Float(config.mountainHeight)) / Float(config.mountainHeight * 2.0)
             }
             let oceanDepth = config.oceanDepth == 0.0 ? 0.01 : config.oceanDepth
-            let rawDepthColour = 1 + (FP(delta) / oceanDepth)
+            let rawDepthColour = 1 + (Float(delta) / Float(oceanDepth))
             let snowNoiseValue = config.snowNoise.evaluate(p.x, p.y, p.z)
             if FP(delta + snowNoiseValue) > snowLine {
                 // Ice
                 colours.append([1.0, 1.0, 1.0])
             } else if config.hasWater && FP(delta) <= 0.0 {
                 // Water
-                let r = interpolated(rawDepthColour, v0: config.waterColourScale.red.a, v1: config.waterColourScale.red.b)
-                let g = interpolated(rawDepthColour, v0: config.waterColourScale.green.a, v1: config.waterColourScale.green.b)
-                let b = interpolated(rawDepthColour, v0: config.waterColourScale.blue.a, v1: config.waterColourScale.blue.b)
-                colours.append([Float(r), Float(g), Float(b)])
+                let colour = config.waterColourScale.interpolated(by: rawDepthColour)
+                colours.append(colour)
             } else {
                 // Ground
-                let r = interpolated(rawHeightColour, v0: config.groundColourScale.red.a, v1: config.groundColourScale.red.b)
-                let g = interpolated(rawHeightColour, v0: config.groundColourScale.green.a, v1: config.groundColourScale.green.b)
-                let b = interpolated(rawHeightColour, v0: config.groundColourScale.blue.a, v1: config.groundColourScale.blue.b)
-                colours.append([Float(r), Float(g), Float(b)])
+                let colour = config.groundColourScale.interpolated(by: rawHeightColour)
+                colours.append(colour)
             }
         }
         return colours
