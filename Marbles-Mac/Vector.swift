@@ -3,12 +3,6 @@ import SceneKit
 public typealias FP = Double
 public typealias FP3 = double3
 
-public func unitClamp(_ v: FP) -> FP {
-    guard v > 0.0 else { return 0.0 }
-    guard v < 1.0 else { return 1.0 }
-    return v
-}
-
 extension Patch.Vertex {
 
     func length() -> FP {
@@ -36,24 +30,13 @@ extension Patch.Vertex {
     }
 }
 
-extension Triangle {
-
-    var centroid: Patch.Vertex {
-        return (a + b + c) / 3.0
-    }
-
-    func facingFactor(to position: Patch.Vertex) -> FP {
-        let normal = centroid.normalised()
-        let normalisedPosition = position.normalised()
-        return normalisedPosition.dot(of: normal)
-    }
+public func unitClamp(_ v: FP) -> FP {
+    guard v > 0.0 else { return 0.0 }
+    guard v < 1.0 else { return 1.0 }
+    return v
 }
 
-public func times(left: FP3, scalar: FP) -> FP3 {
-    return [left[0] * scalar, left[1] * scalar, left[2] * scalar]
-}
-
-func scaledUnitClamp(_ t: FP, v0: FP, v1: FP) -> FP {
+func interpolated(_ t: FP, v0: FP, v1: FP) -> FP {
     return (1 - t) * v0 + t * v1
 }
 
@@ -80,16 +63,4 @@ func isIntersecting(_ triangle: Triangle, width: FP, height: FP, inset: FP) -> B
     let overlapsX = minX <= width - inset && maxX >= inset
     let overlapsY = minY <= height - inset && maxY >= inset
     return overlapsX && overlapsY
-}
-
-func allZsUnclipped(_ triangle: Triangle) -> Bool {
-    return triangle.a.z >= 0.0 && triangle.a.z <= 1.0 &&
-        triangle.b.z >= 0.0 && triangle.b.z <= 1.0 &&
-        triangle.c.z >= 0.0 && triangle.c.z <= 1.0
-}
-
-func isStraddlingZ(_ triangle: Triangle) -> Bool {
-    let allBeforeNear = triangle.a.z < 0.0 && triangle.b.z < 0.0 && triangle.c.z < 0.0
-    let allAfterFar = triangle.a.z > 1.0 && triangle.b.z > 1.0 && triangle.c.z > 1.0
-    return !allBeforeNear && !allAfterFar && !allZsUnclipped(triangle)
 }

@@ -1,6 +1,7 @@
 import SceneKit
 
 struct Triangle: Equatable {
+
     let a: Patch.Vertex
     let b: Patch.Vertex
     let c: Patch.Vertex
@@ -17,10 +18,12 @@ struct Triangle: Equatable {
     }
 
     func normalised() -> Triangle {
-        return Triangle(a: normalise(a), b: normalise(b), c: normalise(c))
+        return Triangle(a: normalised(vertex: a),
+                        b: normalised(vertex: b),
+                        c: normalised(vertex: c))
     }
 
-    private func normalise(_ vertex: Patch.Vertex) -> Patch.Vertex {
+    private func normalised(vertex: Patch.Vertex) -> Patch.Vertex {
         if vertex.z > 1.0 {
             return Patch.Vertex(-vertex.x, -vertex.y, vertex.z)
         }
@@ -32,6 +35,16 @@ struct Triangle: Equatable {
         let pb = (p-b).lengthSq()
         let pc = (p-c).lengthSq()
         return min(pa, pb, pc)
+    }
+
+    var centroid: Patch.Vertex {
+        return (a + b + c) / 3.0
+    }
+
+    func facingFactor(to position: Patch.Vertex) -> FP {
+        let normal = centroid.normalised()
+        let normalisedPosition = position.normalised()
+        return normalisedPosition.dot(of: normal)
     }
 }
 

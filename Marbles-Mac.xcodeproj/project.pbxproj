@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C8023EFC21A0514F00722CEF /* RidgedNoise.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8023EFB21A0514F00722CEF /* RidgedNoise.swift */; };
+		C8023EFE21A0517700722CEF /* Icosahedron.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8023EFD21A0517700722CEF /* Icosahedron.swift */; };
+		C8023F0021A0519500722CEF /* Marbles.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8023EFF21A0519500722CEF /* Marbles.swift */; };
 		C8027ED2218A631200A99020 /* Geometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8027ED1218A631200A99020 /* Geometry.swift */; };
 		C80E460B216177440029A3A0 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80E460A216177440029A3A0 /* AppDelegate.swift */; };
 		C80E460D216177440029A3A0 /* MarbleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80E460C216177440029A3A0 /* MarbleViewController.swift */; };
@@ -47,6 +50,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		C8023EFB21A0514F00722CEF /* RidgedNoise.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RidgedNoise.swift; sourceTree = "<group>"; };
+		C8023EFD21A0517700722CEF /* Icosahedron.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Icosahedron.swift; sourceTree = "<group>"; };
+		C8023EFF21A0519500722CEF /* Marbles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Marbles.swift; sourceTree = "<group>"; };
 		C8027ED1218A631200A99020 /* Geometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Geometry.swift; sourceTree = "<group>"; };
 		C80E4607216177440029A3A0 /* Marbles-Mac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Marbles-Mac.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C80E460A216177440029A3A0 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -132,12 +138,15 @@
 				C80E460A216177440029A3A0 /* AppDelegate.swift */,
 				C80E460C216177440029A3A0 /* MarbleViewController.swift */,
 				C8AF7C35218DB97E0027B7E8 /* PlanetConfig.swift */,
+				C8023EFD21A0517700722CEF /* Icosahedron.swift */,
+				C8023EFF21A0519500722CEF /* Marbles.swift */,
 				C8837A55218A16F100ABE455 /* Patch.swift */,
 				C8837A5A218A172700ABE455 /* PatchCalculator.swift */,
 				C8837A5C218A173F00ABE455 /* PatchCache.swift */,
 				C816FAD8218CAA9400839795 /* RingBuffer.swift */,
 				C8027ED1218A631200A99020 /* Geometry.swift */,
 				C85EB59A216AB39D00B670B2 /* Vector.swift */,
+				C8023EFB21A0514F00722CEF /* RidgedNoise.swift */,
 				C85EB5832168F62D00B670B2 /* noise */,
 				C8027ED8218A7F7700A99020 /* Resources */,
 			);
@@ -301,7 +310,9 @@
 				C816FAD9218CAA9400839795 /* RingBuffer.swift in Sources */,
 				C8AF7C36218DB97E0027B7E8 /* PlanetConfig.swift in Sources */,
 				C8837A56218A16F100ABE455 /* Patch.swift in Sources */,
+				C8023EFE21A0517700722CEF /* Icosahedron.swift in Sources */,
 				C8837A5B218A172700ABE455 /* PatchCalculator.swift in Sources */,
+				C8023F0021A0519500722CEF /* Marbles.swift in Sources */,
 				C85EB58F2168F62D00B670B2 /* disk.swift in Sources */,
 				C85EB5922168F62D00B670B2 /* noise.swift in Sources */,
 				C85EB5932168F62D00B670B2 /* gradient.swift in Sources */,
@@ -310,6 +321,7 @@
 				C85EB5912168F62D00B670B2 /* cell.swift in Sources */,
 				C80E460D216177440029A3A0 /* MarbleViewController.swift in Sources */,
 				C81EC314219F2BF70060F905 /* UnFBM.swift in Sources */,
+				C8023EFC21A0514F00722CEF /* RidgedNoise.swift in Sources */,
 				C80E460B216177440029A3A0 /* AppDelegate.swift in Sources */,
 				C8837A5D218A173F00ABE455 /* PatchCache.swift in Sources */,
 			);

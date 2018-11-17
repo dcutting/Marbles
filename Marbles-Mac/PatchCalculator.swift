@@ -212,15 +212,15 @@ class PatchCalculator {
                 colours.append([1.0, 1.0, 1.0])
             } else if config.hasWater && FP(delta) <= 0.0 {
                 // Water
-                let r = scaledUnitClamp(rawDepthColour, v0: config.waterColourScale.red.a, v1: config.waterColourScale.red.b)
-                let g = scaledUnitClamp(rawDepthColour, v0: config.waterColourScale.green.a, v1: config.waterColourScale.green.b)
-                let b = scaledUnitClamp(rawDepthColour, v0: config.waterColourScale.blue.a, v1: config.waterColourScale.blue.b)
+                let r = interpolated(rawDepthColour, v0: config.waterColourScale.red.a, v1: config.waterColourScale.red.b)
+                let g = interpolated(rawDepthColour, v0: config.waterColourScale.green.a, v1: config.waterColourScale.green.b)
+                let b = interpolated(rawDepthColour, v0: config.waterColourScale.blue.a, v1: config.waterColourScale.blue.b)
                 colours.append([Float(r), Float(g), Float(b)])
             } else {
                 // Ground
-                let r = scaledUnitClamp(rawHeightColour, v0: config.groundColourScale.red.a, v1: config.groundColourScale.red.b)
-                let g = scaledUnitClamp(rawHeightColour, v0: config.groundColourScale.green.a, v1: config.groundColourScale.green.b)
-                let b = scaledUnitClamp(rawHeightColour, v0: config.groundColourScale.blue.a, v1: config.groundColourScale.blue.b)
+                let r = interpolated(rawHeightColour, v0: config.groundColourScale.red.a, v1: config.groundColourScale.red.b)
+                let g = interpolated(rawHeightColour, v0: config.groundColourScale.green.a, v1: config.groundColourScale.green.b)
+                let b = interpolated(rawHeightColour, v0: config.groundColourScale.blue.a, v1: config.groundColourScale.blue.b)
                 colours.append([Float(r), Float(g), Float(b)])
             }
         }
