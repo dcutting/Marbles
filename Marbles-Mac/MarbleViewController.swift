@@ -7,11 +7,11 @@ class MarbleViewController: NSViewController {
 
     let planet = earthConfig
     let detailSubdivisions: UInt32 = 5
-    lazy var maxEdgeLength: FP = 160.0
+    lazy var maxEdgeLength: FP = pow(2, FP(detailSubdivisions + 2))
     let adaptivePatchMaxDepth: UInt32 = 20
     let updateInterval = 0.1
     let dayDuration: FP = 1000
-    var wireframe: Bool = true {
+    var wireframe: Bool = false {
         didSet {
             updateDebugOptions()
         }
@@ -77,16 +77,15 @@ class MarbleViewController: NSViewController {
         let camera = SCNCamera()
         camera.automaticallyAdjustsZRange = true
         let cameraNode = SCNNode()
-        cameraNode.position = SCNVector3(x: 0.0, y: 0.0, z: CGFloat(planet.radius * 2.2))
+        cameraNode.position = SCNVector3(x: 5000.0, y: 5000.0, z: CGFloat(planet.radius * 2.2))
         cameraNode.camera = camera
         cameraNode.look(at: SCNVector3())
         scene.rootNode.addChildNode(cameraNode)
 
-        let scnView = self.view as! SCNView
         scnView.scene = scene
         scnView.allowsCameraControl = true
         scnView.backgroundColor = .black
-        scnView.showsStatistics = true
+        scnView.defaultCameraController.interactionMode = .fly
 
         let originMarker = SCNBox(width: 100.0, height: 100.0, length: 100.0, chamferRadius: 0.0)
         scene.rootNode.addChildNode(SCNNode(geometry: originMarker))
@@ -159,7 +158,6 @@ class MarbleViewController: NSViewController {
             nodes.append(node)
             self.terrainNode.addChildNode(node)
         }
-        terrainNode.position = SCNVector3(x: -10000.0, y: 0.0, z: 0.0)
         self.scene.rootNode.addChildNode(terrainNode)
         self.refreshGeometry()
     }
