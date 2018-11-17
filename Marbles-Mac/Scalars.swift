@@ -1,9 +1,11 @@
+import SceneKit
+
 public typealias FP = Double
 
-public func unitClamp(_ v: FP) -> FP {
-    guard v > 0.0 else { return 0.0 }
-    guard v < 1.0 else { return 1.0 }
-    return v
+extension FP {
+    func unitClamped() -> FP {
+        return simd_clamp(self, 0.0, 1.0)
+    }
 }
 
 extension Float {

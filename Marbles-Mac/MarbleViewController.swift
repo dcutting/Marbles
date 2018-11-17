@@ -312,7 +312,8 @@ class MarbleViewController: NSViewController {
         return nil
     }
 
-    private func prioritise(world: Triangle, screen: Triangle, delta: [FP], depth: UInt32) -> Double {
-        return unitClamp(Double((screen.centroid - screenCenter).lengthSq() / halfScreenWidthSq))
+    private func prioritise(world: Triangle, screen: Triangle, delta: [FP], depth: UInt32) -> FP {
+        let distance = (screen.centroid - screenCenter).lengthSq() / halfScreenWidthSq
+        return distance.unitClamped()
     }
 }
