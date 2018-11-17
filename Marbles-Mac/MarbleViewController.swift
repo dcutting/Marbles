@@ -5,7 +5,7 @@ let debug = false
 
 class MarbleViewController: NSViewController {
 
-    let planet = earthConfig
+    let planet = marsConfig
     let detailSubdivisions: UInt32 = 5
     lazy var maxEdgeLength: FP = 160.0
     let adaptivePatchMaxDepth: UInt32 = 20

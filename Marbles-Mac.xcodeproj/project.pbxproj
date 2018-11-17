@@ -141,12 +141,12 @@
 			children = (
 				C80E460A216177440029A3A0 /* AppDelegate.swift */,
 				C80E460C216177440029A3A0 /* MarbleViewController.swift */,
+				C8837A5A218A172700ABE455 /* PatchCalculator.swift */,
 				C8AF7C35218DB97E0027B7E8 /* PlanetConfig.swift */,
 				C8023EFD21A0517700722CEF /* Icosahedron.swift */,
 				C8023EFF21A0519500722CEF /* Marbles.swift */,
 				C8023F0121A052F500722CEF /* Triangle.swift */,
 				C8837A55218A16F100ABE455 /* Patch.swift */,
-				C8837A5A218A172700ABE455 /* PatchCalculator.swift */,
 				C8837A5C218A173F00ABE455 /* PatchCache.swift */,
 				C816FAD8218CAA9400839795 /* RingBuffer.swift */,
 				C8027ED1218A631200A99020 /* Geometry.swift */,

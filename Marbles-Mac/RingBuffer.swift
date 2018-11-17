@@ -18,7 +18,6 @@ class RingBuffer<T> {
             guard let op = buffer[head] else { return nil }
             buffer[head] = nil
             head = (head + 1) % size
-//            print("read: \(head), \(tail), \(_count)")
             return op
         }
     }
@@ -32,7 +31,6 @@ class RingBuffer<T> {
                 self.head = (self.head + 1) % self.size
                 bumped = self.buffer[self.tail]
             }
-//            print("append: \(head), \(tail), \(_count)")
             return bumped
         }
     }

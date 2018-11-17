@@ -10,6 +10,8 @@ struct ColourScale {
     func interpolated(by t: Float) -> Float {
         return a.interpolated(to: b, by: t)
     }
+
+    static var all = ColourScale(0.0, 1.0)
 }
 
 struct RGBColourScale {
@@ -22,6 +24,8 @@ struct RGBColourScale {
                             green.interpolated(by: t),
                             blue.interpolated(by: t))
     }
+
+    static var grey = RGBColourScale(red: .all, green: .all, blue: .all)
 }
 
 enum NoiseType {
@@ -61,7 +65,7 @@ struct PlanetConfig {
          hasWater: Bool,
          ridged: Bool,
          groundColourScale: RGBColourScale,
-         waterColourScale: RGBColourScale) {
+         waterColourScale: RGBColourScale = .grey) {
 
         self.radius = radius
         self.diameterSq = (radius * 2) * (radius * 2)
