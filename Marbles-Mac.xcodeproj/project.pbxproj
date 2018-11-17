@@ -150,6 +150,7 @@
 				C8027ED1218A631200A99020 /* Geometry.swift */,
 				C85EB59A216AB39D00B670B2 /* Vector.swift */,
 				C8023EFB21A0514F00722CEF /* RidgedNoise.swift */,
+				C81EC313219F2BF70060F905 /* UnFBM.swift */,
 				C85EB5832168F62D00B670B2 /* noise */,
 				C8027ED8218A7F7700A99020 /* Resources */,
 			);
@@ -182,7 +183,6 @@
 				C85EB58A2168F62D00B670B2 /* cell.swift */,
 				C85EB58B2168F62D00B670B2 /* noise.swift */,
 				C85EB58C2168F62D00B670B2 /* gradient.swift */,
-				C81EC313219F2BF70060F905 /* UnFBM.swift */,
 			);
 			path = noise;
 			sourceTree = "<group>";
