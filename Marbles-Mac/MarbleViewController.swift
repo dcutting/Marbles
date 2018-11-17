@@ -299,7 +299,7 @@ class MarbleViewController: NSViewController {
             return patch
         }
 
-        let priority = prioritise(world: crinklyWorldTriangle, screen: normalisedScreenTriangle, delta: [crinklyWorldDeltas[0], crinklyWorldDeltas[1], crinklyWorldDeltas[2]], depth: depth)
+        let priority = prioritise(screen: normalisedScreenTriangle)
 
         patchCalculator.calculate(name, triangle: crinklyCorners, subdivisions: detailSubdivisions, priority: priority) { patch in
             self.patchCache.write(name, patch: patch)
@@ -312,7 +312,7 @@ class MarbleViewController: NSViewController {
         return nil
     }
 
-    private func prioritise(world: Triangle, screen: Triangle, delta: [FP], depth: UInt32) -> FP {
+    private func prioritise(screen: Triangle) -> FP {
         let distance = (screen.centroid - screenCenter).lengthSq() / halfScreenWidthSq
         return distance.unitClamped()
     }
