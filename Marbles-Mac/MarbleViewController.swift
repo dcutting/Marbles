@@ -5,20 +5,15 @@ let debug = false
 
 class MarbleViewController: NSViewController {
 
-    let planet = marsConfig
+    let planet = earthConfig
     let detailSubdivisions: UInt32 = 5
     lazy var maxEdgeLength: FP = 160.0
     let adaptivePatchMaxDepth: UInt32 = 20
     let updateInterval = 0.1
     let dayDuration: FP = 1000
-    var wireframe: Bool = false {
+    var wireframe: Bool = true {
         didSet {
-            let scnView = view as? SCNView
-            if wireframe {
-                scnView?.debugOptions.insert(.renderAsWireframe)
-            } else {
-                scnView?.debugOptions.remove(.renderAsWireframe)
-            }
+            updateDebugOptions()
         }
     }
 
@@ -36,9 +31,18 @@ class MarbleViewController: NSViewController {
         return view as! SCNView
     }
 
+    private func updateDebugOptions() {
+        if wireframe {
+            scnView.debugOptions.insert(.renderAsWireframe)
+        } else {
+            scnView.debugOptions.remove(.renderAsWireframe)
+        }
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         updateBounds()
+        updateDebugOptions()
 
         patchCalculator = PatchCalculator(config: planet)
 
