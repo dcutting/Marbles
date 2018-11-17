@@ -236,9 +236,13 @@ class MarbleViewController: NSViewController {
             return makePatch(triangle: crinklyWorldTriangle, colour: red)
         }
 
-        let screenA = Patch.Vertex(scnView.projectPoint(sWorldA))
-        let screenB = Patch.Vertex(scnView.projectPoint(sWorldB))
-        let screenC = Patch.Vertex(scnView.projectPoint(sWorldC))
+        let translatedWorldA = terrainNode.convertPosition(SCNVector3(crinklyWorldA), to: nil)
+        let translatedWorldB = terrainNode.convertPosition(SCNVector3(crinklyWorldB), to: nil)
+        let translatedWorldC = terrainNode.convertPosition(SCNVector3(crinklyWorldC), to: nil)
+
+        let screenA = Patch.Vertex(scnView.projectPoint(translatedWorldA))
+        let screenB = Patch.Vertex(scnView.projectPoint(translatedWorldB))
+        let screenC = Patch.Vertex(scnView.projectPoint(translatedWorldC))
 
         let screenTriangle = Triangle(a: screenA, b: screenB, c: screenC)
 
@@ -248,8 +252,12 @@ class MarbleViewController: NSViewController {
 
         if !normalisedScreenTriangle.isIntersecting(width: screenWidth, height: screenHeight, inset: inset) {
 
+            let translatedWorldTriangle = Triangle(a: Patch.Vertex(translatedWorldA),
+                                                   b: Patch.Vertex(translatedWorldB),
+                                                   c: Patch.Vertex(translatedWorldC))
+
             let camera = cameraPosition
-            if crinklyWorldTriangle.distanceSq(from: camera) > crinklyWorldTriangle.longestEdgeSq {
+            if translatedWorldTriangle.distanceSq(from: camera) > crinklyWorldTriangle.longestEdgeSq {
 
                 if debug {
                     return makePatch(triangle: crinklyWorldTriangle, colour: yellow)
