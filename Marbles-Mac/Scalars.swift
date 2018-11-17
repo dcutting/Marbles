@@ -13,9 +13,3 @@ extension Float {
         return (1 - t) * self + t * v1
     }
 }
-
-func pow(_ base: UInt32, _ power: UInt32) -> UInt32 {
-    var answer: UInt32 = 1
-    for _ in 0..<power { answer *= base }
-    return answer
-}

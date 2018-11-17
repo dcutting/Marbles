@@ -98,7 +98,7 @@ class PatchCalculator {
         let (b, _) = spherical(triangle.b)
         let (c, _) = spherical(triangle.c)
 
-        let segments = pow(2, subdivisionLevels)
+        let segments = UInt32(pow(2.0, FP(subdivisionLevels)))
 
         let dab = b - a
         let lab = length(dab)
