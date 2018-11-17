@@ -24,7 +24,7 @@
 		C8673C132196557900EC7CDD /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8673C122196557900EC7CDD /* AppDelegate.swift */; };
 		C8673C182196557900EC7CDD /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C8673C162196557900EC7CDD /* Main.storyboard */; };
 		C8673C1D2196557A00EC7CDD /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C8673C1B2196557A00EC7CDD /* LaunchScreen.storyboard */; };
-		C8673C222196560300EC7CDD /* Planet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8AF7C35218DB97E0027B7E8 /* Planet.swift */; };
+		C8673C222196560300EC7CDD /* PlanetConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8AF7C35218DB97E0027B7E8 /* PlanetConfig.swift */; };
 		C8673C232196560300EC7CDD /* Patch.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8837A55218A16F100ABE455 /* Patch.swift */; };
 		C8673C242196560300EC7CDD /* PatchCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8837A5A218A172700ABE455 /* PatchCalculator.swift */; };
 		C8673C252196560300EC7CDD /* PatchCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8837A5C218A173F00ABE455 /* PatchCache.swift */; };
@@ -43,7 +43,7 @@
 		C8837A56218A16F100ABE455 /* Patch.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8837A55218A16F100ABE455 /* Patch.swift */; };
 		C8837A5B218A172700ABE455 /* PatchCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8837A5A218A172700ABE455 /* PatchCalculator.swift */; };
 		C8837A5D218A173F00ABE455 /* PatchCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8837A5C218A173F00ABE455 /* PatchCache.swift */; };
-		C8AF7C36218DB97E0027B7E8 /* Planet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8AF7C35218DB97E0027B7E8 /* Planet.swift */; };
+		C8AF7C36218DB97E0027B7E8 /* PlanetConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8AF7C35218DB97E0027B7E8 /* PlanetConfig.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -74,7 +74,7 @@
 		C8837A55218A16F100ABE455 /* Patch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Patch.swift; sourceTree = "<group>"; };
 		C8837A5A218A172700ABE455 /* PatchCalculator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PatchCalculator.swift; sourceTree = "<group>"; };
 		C8837A5C218A173F00ABE455 /* PatchCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchCache.swift; sourceTree = "<group>"; };
-		C8AF7C35218DB97E0027B7E8 /* Planet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Planet.swift; sourceTree = "<group>"; };
+		C8AF7C35218DB97E0027B7E8 /* PlanetConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanetConfig.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -131,7 +131,7 @@
 			children = (
 				C80E460A216177440029A3A0 /* AppDelegate.swift */,
 				C80E460C216177440029A3A0 /* MarbleViewController.swift */,
-				C8AF7C35218DB97E0027B7E8 /* Planet.swift */,
+				C8AF7C35218DB97E0027B7E8 /* PlanetConfig.swift */,
 				C8837A55218A16F100ABE455 /* Patch.swift */,
 				C8837A5A218A172700ABE455 /* PatchCalculator.swift */,
 				C8837A5C218A173F00ABE455 /* PatchCache.swift */,
@@ -299,7 +299,7 @@
 				C85EB58E2168F62D00B670B2 /* compounds.swift in Sources */,
 				C8757C71216BB88C00CDEC74 /* Vector.swift in Sources */,
 				C816FAD9218CAA9400839795 /* RingBuffer.swift in Sources */,
-				C8AF7C36218DB97E0027B7E8 /* Planet.swift in Sources */,
+				C8AF7C36218DB97E0027B7E8 /* PlanetConfig.swift in Sources */,
 				C8837A56218A16F100ABE455 /* Patch.swift in Sources */,
 				C8837A5B218A172700ABE455 /* PatchCalculator.swift in Sources */,
 				C85EB58F2168F62D00B670B2 /* disk.swift in Sources */,
@@ -322,7 +322,7 @@
 				C8673C242196560300EC7CDD /* PatchCalculator.swift in Sources */,
 				C8673C252196560300EC7CDD /* PatchCache.swift in Sources */,
 				C8673C292196561100EC7CDD /* cell_meta.swift in Sources */,
-				C8673C222196560300EC7CDD /* Planet.swift in Sources */,
+				C8673C222196560300EC7CDD /* PlanetConfig.swift in Sources */,
 				C8673C2D2196561100EC7CDD /* cell.swift in Sources */,
 				C8673C2A2196561100EC7CDD /* compounds.swift in Sources */,
 				C8673C2F2196561100EC7CDD /* gradient.swift in Sources */,
