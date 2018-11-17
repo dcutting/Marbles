@@ -242,7 +242,7 @@ class MarbleViewController: NSViewController {
 
         let inset: FP = debug ? 100.0 : 0.0
 
-        if !isIntersecting(normalisedScreenTriangle, width: screenWidth, height: screenHeight, inset: inset) {
+        if !normalisedScreenTriangle.isIntersecting(width: screenWidth, height: screenHeight, inset: inset) {
 
             let camera = cameraPosition
             if crinklyWorldTriangle.distanceSq(from: camera) > crinklyWorldTriangle.longestEdgeSq {
