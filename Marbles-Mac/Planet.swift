@@ -224,27 +224,27 @@ let earthConfig = PlanetConfig(seed: 12891,
 //                                blue: ColourScale(min: 0.0, max: 0.0))
 //)
 
-//let vestaConfig = PlanetConfig(seed: 719134,
-//                               radius: 1000.0,
-//                               frequency: 2.0,
-//                               amplitude: 0.6,
-//                               octaves: 12,
-//                               persistence: 0.3,
-//                               lacunarity: 3.0,
-//                               noiseType: .cellular,
-//                               levels: 0,
-//                               iciness: 0.0,
-//                               hasWater: false,
-//                               ridged: false,
-//                               groundColourScale: RGBColourScale(
-//                                red: ColourScale(0.2, 0.7),
-//                                green: ColourScale(0.2, 0.7),
-//                                blue: ColourScale(0.2, 0.7)),
-//                               waterColourScale: RGBColourScale(
-//                                red: ColourScale(0x0/0xff, 0x0/0xff),
-//                                green: ColourScale(0x0/0xff, 0x0/0xff),
-//                                blue: ColourScale(0x26/0xff, 0xc8/0xff))
-//)
+let vestaConfig = PlanetConfig(seed: 71134,
+                               radius: 1000.0,
+                               frequency: 0.1,
+                               amplitude: 2.5,
+                               octaves: 10,
+                               persistence: 0.3,
+                               lacunarity: 3.1,
+                               noiseType: .gradient,
+                               levels: 0,
+                               iciness: 0.0,
+                               hasWater: false,
+                               ridged: false,
+                               groundColourScale: RGBColourScale(
+                                red: ColourScale(0.2, 0.7),
+                                green: ColourScale(0.2, 0.7),
+                                blue: ColourScale(0.2, 0.7)),
+                               waterColourScale: RGBColourScale(
+                                red: ColourScale(0x0/0xff, 0x0/0xff),
+                                green: ColourScale(0x0/0xff, 0x0/0xff),
+                                blue: ColourScale(0x26/0xff, 0xc8/0xff))
+)
 
 //let marsConfig = PlanetConfig(seed: 729134,
 //                               radius: 1000.0,

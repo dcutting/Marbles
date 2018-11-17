@@ -5,7 +5,7 @@ let debug = false
 
 class MarbleViewController: NSViewController {
 
-    let planet = earthConfig
+    let planet = vestaConfig
     let detailSubdivisions: UInt32 = 5
     lazy var maxEdgeLength: FP = 160.0
     let adaptivePatchMaxDepth: UInt32 = 20
@@ -132,7 +132,11 @@ class MarbleViewController: NSViewController {
 
     private func adaptFlyingSpeed() {
         let distance = self.cameraPosition.length()
-        let zeroHeight = self.planet.radius * 1.0
+        var radius = self.planet.radius
+        if !self.planet.hasWater {
+            radius -= self.planet.mountainHeight
+        }
+        let zeroHeight = radius * 1.0
         let newVelocity = ((FP(distance) - zeroHeight) / zeroHeight) * zeroHeight / 4.0
         self.scnView.cameraControlConfiguration.flyModeVelocity = CGFloat(newVelocity)
     }
