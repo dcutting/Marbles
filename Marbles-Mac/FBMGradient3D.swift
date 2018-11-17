@@ -1,24 +1,24 @@
 public
-struct UnFBM
+struct FBMGradient3D
 {
     private
     let generators:[GradientNoise3D]
 
     // UNDOCUMENTED
     public
-    func amplitude_scaled(by factor:Double) -> UnFBM
+    func amplitude_scaled(by factor:Double) -> FBMGradient3D
     {
-        return UnFBM(generators: self.generators.map{ $0.amplitude_scaled(by: factor) })
+        return FBMGradient3D(generators: self.generators.map{ $0.amplitude_scaled(by: factor) })
     }
     public
-    func frequency_scaled(by factor:Double) -> UnFBM
+    func frequency_scaled(by factor:Double) -> FBMGradient3D
     {
-        return UnFBM(generators: self.generators.map{ $0.frequency_scaled(by: factor) })
+        return FBMGradient3D(generators: self.generators.map{ $0.frequency_scaled(by: factor) })
     }
     public
-    func reseeded() -> UnFBM
+    func reseeded() -> FBMGradient3D
     {
-        return UnFBM(generators: self.generators.map{ $0.reseeded() })
+        return FBMGradient3D(generators: self.generators.map{ $0.reseeded() })
     }
 
     private

@@ -35,8 +35,8 @@ struct PlanetConfig {
     let frequency: Double
     let amplitude: Double
     let oceanDepth: Double
-    let noise: UnFBM
-    let snowNoise: UnFBM
+    let noise: FBMGradient3D
+    let snowNoise: FBMGradient3D
 
     init(seed: Int,
          radius: Double,
@@ -69,13 +69,13 @@ struct PlanetConfig {
 
         self.minimumRadius = hasWater ? (radius - oceanDepth) : (radius - mountainHeight)
 
-        let fractalNoise: UnFBM
+        let fractalNoise: FBMGradient3D
         switch noiseType {
         case .gradient:
             let sourceNoise = GradientNoise3D(amplitude: amplitude,
                                               frequency: frequency,
                                               seed: seed)
-            fractalNoise = UnFBM(sourceNoise,
+            fractalNoise = FBMGradient3D(sourceNoise,
                                octaves: octaves,
                                persistence: persistence,
                                lacunarity: lacunarity)
@@ -97,6 +97,6 @@ struct PlanetConfig {
 
         // TODO: make snow noise depend on planet radius, etc.
         let snowNoiseSource = GradientNoise3D(amplitude: 800, frequency: 0.001, seed: seed+1)
-        self.snowNoise = UnFBM(snowNoiseSource, octaves: 5, persistence: 0.4, lacunarity: 2.5)
+        self.snowNoise = FBMGradient3D(snowNoiseSource, octaves: 5, persistence: 0.4, lacunarity: 2.5)
     }
 }
