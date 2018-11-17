@@ -171,9 +171,9 @@ class PatchCalculator {
         let b = triangle.b
         let c = triangle.c
 
-        let ab = midway(a, b)
-        let bc = midway(b, c)
-        let ca = midway(c, a)
+        let ab = a.midway(to: b)
+        let bc = b.midway(to: c)
+        let ca = c.midway(to: a)
 
         let (`as`, asd) = spherical(a)
         let (bs, bsd) = spherical(b)

@@ -28,6 +28,13 @@ extension Patch.Vertex {
     func distance(to point: Patch.Vertex) -> FP {
         return simd.distance(self, point)
     }
+
+    func midway(to: Patch.Vertex) -> Patch.Vertex {
+        let abx = (x + to.x) / 2.0
+        let aby = (y + to.y) / 2.0
+        let abz = (z + to.z) / 2.0
+        return [abx, aby, abz]
+    }
 }
 
 public func unitClamp(_ v: FP) -> FP {
@@ -44,13 +51,4 @@ func pow(_ base: UInt32, _ power: UInt32) -> UInt32 {
     var answer: UInt32 = 1
     for _ in 0..<power { answer *= base }
     return answer
-}
-
-func midway(_ a: FP3, _ b: FP3) -> FP3 {
-
-    let abx = (a.x + b.x) / 2.0
-    let aby = (a.y + b.y) / 2.0
-    let abz = (a.z + b.z) / 2.0
-
-    return [abx, aby, abz]
 }
