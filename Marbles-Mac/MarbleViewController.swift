@@ -146,15 +146,14 @@ class MarbleViewController: NSViewController, PlanetDelegate {
 
     private func makeTerrain() {
 
-        earth.makeTerrain()
+        let earthNode = earth.makeTerrain()
+        scene.rootNode.addChildNode(earthNode)
 
-        moon.makeTerrain()
-        moon.terrainNode.position = SCNVector3(x: 30000, y: 0, z: 0)
+        let moonNode = moon.makeTerrain()
+        moonNode.position = SCNVector3(x: 30000, y: 0, z: 0)
         let moonFrame = SCNNode()
-        moonFrame.addChildNode(moon.terrainNode)
+        moonFrame.addChildNode(moonNode)
         moonFrame.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: moonDayDuration)))
-
-        scene.rootNode.addChildNode(earth.terrainNode)
         scene.rootNode.addChildNode(moonFrame)
 
         self.refreshGeometry()
