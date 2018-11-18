@@ -26,7 +26,7 @@ class Planet {
 
     init(config: PlanetConfig) {
         patchCalculator = PatchCalculator(config: config)
-        patchBuffer = PatchBuffer(calculator: patchCalculator)
+        patchBuffer = PatchBuffer()
     }
 
     func makeTerrain() -> SCNNode {
@@ -177,7 +177,7 @@ class Planet {
 
         let priority = prioritise(screen: normalisedScreenTriangle)
 
-        patchBuffer.calculate(name, triangle: crinklyCorners, subdivisions: detailSubdivisions, priority: priority) { patch in
+        patchBuffer.calculate(name, triangle: crinklyCorners, subdivisions: detailSubdivisions, priority: priority, calculator: patchCalculator) { patch in
             self.patchCache.write(name, patch: patch)
         }
 

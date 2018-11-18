@@ -12,7 +12,6 @@ struct PrioritisedOp {
 
 class PatchBuffer {
 
-    private var calculator: PatchCalculator
     private var priorityBuffer = [PrioritisedOp]()
     private let reader: DispatchQueue
     private let fast: DispatchQueue
@@ -20,8 +19,7 @@ class PatchBuffer {
     private let wip = PatchCache<Bool>()
     private let concurrentPatches = 12
 
-    init(calculator: PatchCalculator) {
-        self.calculator = calculator
+    init() {
         self.reader = DispatchQueue(label: "reader", qos: .userInitiated, attributes: [])
         self.fast = DispatchQueue(label: "fast", qos: .default, attributes: .concurrent)
         pollRingBuffer()
@@ -49,7 +47,7 @@ class PatchBuffer {
         }
     }
 
-    func calculate(_ name: String, triangle: Triangle, subdivisions: UInt32, priority: Double, completion: @escaping (Patch) -> Void) {
+    func calculate(_ name: String, triangle: Triangle, subdivisions: UInt32, priority: Double, calculator: PatchCalculator, completion: @escaping (Patch) -> Void) {
 
         guard !isCalculating(name, subdivisions: subdivisions) else { return }
 
@@ -61,7 +59,7 @@ class PatchBuffer {
                 _ = self.queued.remove(opName)
                 self.wip.write(opName, patch: true)
             }
-            let patch = self.calculator.subdivide(triangle: triangle, subdivisionLevels: subdivisions)
+            let patch = calculator.subdivide(triangle: triangle, subdivisionLevels: subdivisions)
             completion(patch)
             self.reader.sync {
                 _ = self.wip.remove(opName)
