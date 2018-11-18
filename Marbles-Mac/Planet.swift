@@ -12,6 +12,8 @@ class Planet {
     weak var delegate: PlanetDelegate!
     var wireframe: Bool = false
 
+    let name: String
+
     private let detailSubdivisions: UInt32 = 5
     private lazy var maxEdgeLength: FP = pow(2, FP(detailSubdivisions + 2))
     private let adaptivePatchMaxDepth: UInt32 = 20
@@ -24,9 +26,10 @@ class Planet {
     private var nodes = [SCNNode]()
     private var geometries = [SCNGeometry]()
 
-    init(config: PlanetConfig) {
+    init(name: String, config: PlanetConfig, patchBuffer: PatchBuffer) {
         patchCalculator = PatchCalculator(config: config)
-        patchBuffer = PatchBuffer()
+        self.name = name
+        self.patchBuffer = patchBuffer
     }
 
     func makeTerrain() -> SCNNode {
@@ -34,7 +37,7 @@ class Planet {
             let face = faces[faceIndex]
             let triangle = Triangle(a: positions[Int(face[0])], b: positions[Int(face[1])], c: positions[Int(face[2])])
             let patch = patchCalculator.subdivide(triangle: triangle, subdivisionLevels: detailSubdivisions)
-            patchCache.write("\(faceIndex)-", patch: patch)
+            patchCache.write("\(name)-\(faceIndex)-", patch: patch)
             let geometry = makeGeometry(patch: patch, asWireframe: wireframe)
             let node = SCNNode(geometry: geometry)
             geometries.append(geometry)
@@ -45,7 +48,6 @@ class Planet {
     }
 
     func refreshGeometry() {
-        patchBuffer.clearBuffer()
         for faceIndex in 0..<faces.count {
             let face = faces[faceIndex]
             let triangle = Triangle(a: positions[Int(face[0])], b: positions[Int(face[1])], c: positions[Int(face[2])])
@@ -62,7 +64,7 @@ class Planet {
 
     private func makeAdaptiveGeometry(faceIndex: Int, corners: Triangle, maxEdgeLength: FP) -> SCNGeometry {
         let start = DispatchTime.now()
-        let patch = makeAdaptivePatch(name: "\(faceIndex)-",
+        let patch = makeAdaptivePatch(name: "\(name)-\(faceIndex)-",
             crinklyCorners: corners,
             maxEdgeLengthSq: maxEdgeLength * maxEdgeLength,
             patchCache: patchCache,

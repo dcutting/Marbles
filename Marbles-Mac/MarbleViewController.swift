@@ -5,8 +5,9 @@ let debug = false
 
 class MarbleViewController: NSViewController, PlanetDelegate {
 
-    let earth = Planet(config: earthConfig)
-    let moon = Planet(config: vestaConfig)
+    let patchBuffer = PatchBuffer()
+    lazy var earth = Planet(name: "Earth", config: earthConfig, patchBuffer: patchBuffer)
+    lazy var moon = Planet(name: "Moon", config: vestaConfig, patchBuffer: patchBuffer)
     lazy var planets = [earth, moon]
     let updateInterval = 0.1
     let sunDayDuration: FP = 1000
@@ -165,6 +166,7 @@ class MarbleViewController: NSViewController, PlanetDelegate {
                 // TODO
 //                print("* Refreshing geometry at altitude \(self.altitude)")
             }
+            self.patchBuffer.clearBuffer()
             for planet in self.planets {
                 planet.refreshGeometry()
             }
