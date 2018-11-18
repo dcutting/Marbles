@@ -10,35 +10,36 @@ protocol PlanetDelegate: class {
 class Planet {
 
     weak var delegate: PlanetDelegate!
-
-    let detailSubdivisions: UInt32 = 5
-    lazy var maxEdgeLength: FP = pow(2, FP(detailSubdivisions + 2))
-    let adaptivePatchMaxDepth: UInt32 = 20
-
-    var patchCache = PatchCache<Patch>()
-    let patchCalculator: PatchCalculator
     var wireframe: Bool = false
 
+    private let detailSubdivisions: UInt32 = 5
+    private lazy var maxEdgeLength: FP = pow(2, FP(detailSubdivisions + 2))
+    private let adaptivePatchMaxDepth: UInt32 = 20
+
+    private var patchCache = PatchCache<Patch>()
+    private let patchCalculator: PatchCalculator
+
     let terrainNode = SCNNode()
-    var nodes = [SCNNode]()
-    var geometries = [SCNGeometry]()
+    private var nodes = [SCNNode]()
+    private var geometries = [SCNGeometry]()
 
     init(config: PlanetConfig) {
         patchCalculator = PatchCalculator(config: config)
     }
 
-    func makeTerrain() {
+    func makeTerrain() -> SCNNode {
         for faceIndex in 0..<faces.count {
             let face = faces[faceIndex]
             let triangle = Triangle(a: positions[Int(face[0])], b: positions[Int(face[1])], c: positions[Int(face[2])])
             let patch = patchCalculator.subdivide(triangle: triangle, subdivisionLevels: detailSubdivisions)
             patchCache.write("\(faceIndex)-", patch: patch)
-            let geometry = makeGeometry(patch: patch, asWireframe: self.wireframe)
+            let geometry = makeGeometry(patch: patch, asWireframe: wireframe)
             let node = SCNNode(geometry: geometry)
             geometries.append(geometry)
             nodes.append(node)
-            self.terrainNode.addChildNode(node)
+            terrainNode.addChildNode(node)
         }
+        return terrainNode
     }
 
     func refreshGeometry() {
@@ -71,13 +72,6 @@ class Planet {
         }
         return makeGeometry(patch: patch, asWireframe: wireframe)
     }
-
-    let white: Patch.Colour = [1.0, 1.0, 1.0]
-    let red: Patch.Colour = [1.0, 0.0, 0.0]
-    let yellow: Patch.Colour = [1.0, 1.0, 0.0]
-    let cyan: Patch.Colour = [0.0, 1.0, 1.0]
-    let magenta: Patch.Colour = [1.0, 0.0, 1.0]
-    let grey: Patch.Colour = [0.4, 0.4, 0.4]
 
     private func makePatch(triangle: Triangle, colour: Patch.Colour) -> Patch {
         return Patch(vertices: triangle.vertices,

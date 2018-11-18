@@ -5,9 +5,12 @@ let debug = false
 
 class MarbleViewController: NSViewController, PlanetDelegate {
 
-    let planets = [Planet(config: earthConfig)]
+    let earth = Planet(config: earthConfig)
+    let moon = Planet(config: vestaConfig)
+    lazy var planets = [earth, moon]
     let updateInterval = 0.1
-    let dayDuration: FP = 1000
+    let sunDayDuration: FP = 1000
+    let moonDayDuration: FP = 300
     var wireframe: Bool = false {
         didSet {
             updateDebugOptions()
@@ -60,7 +63,7 @@ class MarbleViewController: NSViewController, PlanetDelegate {
         sun.light = light
         let sunParent = SCNNode()
         sunParent.addChildNode(sun)
-        sunParent.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: dayDuration)))
+        sunParent.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: sunDayDuration)))
         scene.rootNode.addChildNode(sunParent)
 
         let ambientLight = SCNLight()
@@ -82,6 +85,7 @@ class MarbleViewController: NSViewController, PlanetDelegate {
         scnView.allowsCameraControl = true
         scnView.backgroundColor = .black
         scnView.defaultCameraController.interactionMode = .fly
+        scnView.cameraControlConfiguration.flyModeVelocity = 600.0  // TODO
 
         let originMarker = SCNBox(width: 100.0, height: 100.0, length: 100.0, chamferRadius: 0.0)
         scene.rootNode.addChildNode(SCNNode(geometry: originMarker))
@@ -141,11 +145,18 @@ class MarbleViewController: NSViewController, PlanetDelegate {
     }
 
     private func makeTerrain() {
-        for planet in planets {
-            planet.makeTerrain()
-            // TODO: put planet in right place
-            scene.rootNode.addChildNode(planet.terrainNode)
-        }
+
+        earth.makeTerrain()
+
+        moon.makeTerrain()
+        moon.terrainNode.position = SCNVector3(x: 30000, y: 0, z: 0)
+        let moonFrame = SCNNode()
+        moonFrame.addChildNode(moon.terrainNode)
+        moonFrame.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: moonDayDuration)))
+
+        scene.rootNode.addChildNode(earth.terrainNode)
+        scene.rootNode.addChildNode(moonFrame)
+
         self.refreshGeometry()
     }
 
