@@ -18,6 +18,7 @@ class Planet {
 
     private var patchCache = PatchCache<Patch>()
     private let patchCalculator: PatchCalculator
+    private let patchBuffer: PatchBuffer
 
     let terrainNode = SCNNode()
     private var nodes = [SCNNode]()
@@ -25,6 +26,7 @@ class Planet {
 
     init(config: PlanetConfig) {
         patchCalculator = PatchCalculator(config: config)
+        patchBuffer = PatchBuffer(calculator: patchCalculator)
     }
 
     func makeTerrain() -> SCNNode {
@@ -43,7 +45,7 @@ class Planet {
     }
 
     func refreshGeometry() {
-        patchCalculator.clearBuffer()
+        patchBuffer.clearBuffer()
         for faceIndex in 0..<faces.count {
             let face = faces[faceIndex]
             let triangle = Triangle(a: positions[Int(face[0])], b: positions[Int(face[1])], c: positions[Int(face[2])])
@@ -175,7 +177,7 @@ class Planet {
 
         let priority = prioritise(screen: normalisedScreenTriangle)
 
-        patchCalculator.calculate(name, triangle: crinklyCorners, subdivisions: detailSubdivisions, priority: priority) { patch in
+        patchBuffer.calculate(name, triangle: crinklyCorners, subdivisions: detailSubdivisions, priority: priority) { patch in
             self.patchCache.write(name, patch: patch)
         }
 

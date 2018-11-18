@@ -20,6 +20,7 @@
 		C816FAD9218CAA9400839795 /* RingBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C816FAD8218CAA9400839795 /* RingBuffer.swift */; };
 		C81EC314219F2BF70060F905 /* FBMGradient3D.swift in Sources */ = {isa = PBXBuildFile; fileRef = C81EC313219F2BF70060F905 /* FBMGradient3D.swift */; };
 		C85B120221A2010900B4369C /* Planet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85B120121A2010900B4369C /* Planet.swift */; };
+		C85B120421A22C3800B4369C /* PatchBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85B120321A22C3800B4369C /* PatchBuffer.swift */; };
 		C85EB58E2168F62D00B670B2 /* compounds.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB5872168F62D00B670B2 /* compounds.swift */; };
 		C85EB58F2168F62D00B670B2 /* disk.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB5882168F62D00B670B2 /* disk.swift */; };
 		C85EB5902168F62D00B670B2 /* hash.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85EB5892168F62D00B670B2 /* hash.swift */; };
@@ -69,6 +70,7 @@
 		C816FAD8218CAA9400839795 /* RingBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RingBuffer.swift; sourceTree = "<group>"; };
 		C81EC313219F2BF70060F905 /* FBMGradient3D.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FBMGradient3D.swift; sourceTree = "<group>"; };
 		C85B120121A2010900B4369C /* Planet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Planet.swift; sourceTree = "<group>"; };
+		C85B120321A22C3800B4369C /* PatchBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchBuffer.swift; sourceTree = "<group>"; };
 		C85EB5852168F62D00B670B2 /* cell_meta.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = cell_meta.swift; sourceTree = "<group>"; };
 		C85EB5872168F62D00B670B2 /* compounds.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = compounds.swift; sourceTree = "<group>"; };
 		C85EB5882168F62D00B670B2 /* disk.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = disk.swift; sourceTree = "<group>"; };
@@ -144,6 +146,7 @@
 				C80E460A216177440029A3A0 /* AppDelegate.swift */,
 				C80E460C216177440029A3A0 /* MarbleViewController.swift */,
 				C85B120121A2010900B4369C /* Planet.swift */,
+				C85B120321A22C3800B4369C /* PatchBuffer.swift */,
 				C8837A5A218A172700ABE455 /* PatchCalculator.swift */,
 				C8AF7C35218DB97E0027B7E8 /* PlanetConfig.swift */,
 				C8023EFD21A0517700722CEF /* Icosahedron.swift */,
@@ -319,6 +322,7 @@
 				C816FAD9218CAA9400839795 /* RingBuffer.swift in Sources */,
 				C8AF7C36218DB97E0027B7E8 /* PlanetConfig.swift in Sources */,
 				C8023F0421A0557A00722CEF /* Scalars.swift in Sources */,
+				C85B120421A22C3800B4369C /* PatchBuffer.swift in Sources */,
 				C85B120221A2010900B4369C /* Planet.swift in Sources */,
 				C8837A56218A16F100ABE455 /* Patch.swift in Sources */,
 				C8023EFE21A0517700722CEF /* Icosahedron.swift in Sources */,
