@@ -3,7 +3,7 @@ import SceneKit
 
 let debug = false
 
-class MarbleViewController: NSViewController, PlanetDelegate {
+class MarbleViewController: NSViewController, SCNSceneRendererDelegate, PlanetDelegate {
 
     let patchBuffer = PatchBuffer()
     lazy var earth = Planet(name: "Earth", config: earthConfig, patchBuffer: patchBuffer)
@@ -31,6 +31,13 @@ class MarbleViewController: NSViewController, PlanetDelegate {
         return view as! SCNView
     }
 
+    func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
+        for planet in self.planets {
+            planet.updateNode()
+        }
+        adaptFlyingSpeed()
+    }
+
     private func updateDebugOptions() {
         if wireframe {
             scnView.debugOptions.insert(.renderAsWireframe)
@@ -42,6 +49,8 @@ class MarbleViewController: NSViewController, PlanetDelegate {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+
+        scnView.delegate = self
 
         planets.forEach { $0.delegate = self }
 
@@ -92,10 +101,6 @@ class MarbleViewController: NSViewController, PlanetDelegate {
         let originMarker = SCNBox(width: 100.0, height: 100.0, length: 100.0, chamferRadius: 0.0)
         scene.rootNode.addChildNode(SCNNode(geometry: originMarker))
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            self.makeTerrain()
-        }
-
         let clickGesture = NSClickGestureRecognizer(target: self, action: #selector(handleClick(_:)))
         let doubleClickGesture = NSClickGestureRecognizer(target: self, action: #selector(handleDoubleClick(_:)))
         doubleClickGesture.numberOfClicksRequired = 2
@@ -103,6 +108,8 @@ class MarbleViewController: NSViewController, PlanetDelegate {
         gestureRecognizers.insert(clickGesture, at: 0)
         gestureRecognizers.insert(doubleClickGesture, at: 1)
         scnView.gestureRecognizers = gestureRecognizers
+
+        self.makeTerrain()
     }
 
     override func viewDidLayout() {
@@ -165,10 +172,6 @@ class MarbleViewController: NSViewController, PlanetDelegate {
             self.patchBuffer.clearBuffer()
             for planet in self.planets {
                 planet.refreshGeometry()
-                planet.updateNode()
-            }
-            DispatchQueue.main.sync {
-                self.adaptFlyingSpeed()
             }
             self.refreshGeometry()
         }
