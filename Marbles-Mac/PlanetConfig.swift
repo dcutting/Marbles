@@ -38,6 +38,12 @@ enum NoiseType {
 struct PlanetConfig {
 
     let radius: FP
+    let frequency: FP
+    let amplitude: FP
+    let octaves: Int
+    let persistence: FP
+    let lacunarity: FP
+    let noiseType: NoiseType
     let levels: Int
     let iciness: FP
     let hasWater: Bool
@@ -51,14 +57,9 @@ struct PlanetConfig {
     let radiusSqrt: FP
     let minimumRadius: FP
     let mountainHeight: FP
-    let frequency: FP
-    let amplitude: FP
     let oceanDepth: FP
-    let noise: Noise
-    let snowNoise: FBMGradient3D
 
-    init(seed: Int,
-         radius: Double,
+    init(radius: Double,
          frequency unscaledFrequency: Double,
          amplitude unscaledAmplitude: Double,
          octaves: Int,
@@ -75,6 +76,10 @@ struct PlanetConfig {
         self.radius = radius
         self.frequency = unscaledFrequency / radius
         self.amplitude = radius * unscaledAmplitude
+        self.octaves = octaves
+        self.persistence = persistence
+        self.lacunarity = lacunarity
+        self.noiseType = noiseType
         self.levels = levels
         self.iciness = iciness
         self.hasWater = hasWater
@@ -90,34 +95,5 @@ struct PlanetConfig {
         self.radiusSq = radius * radius
         self.radiusSqrt = sqrt(radius)
         self.minimumRadius = hasWater ? (radius - oceanDepth) : (radius - mountainHeight)
-
-        let fractalNoise: Noise
-        switch noiseType {
-        case .gradient:
-            let sourceNoise = GradientNoise3D(amplitude: amplitude,
-                                              frequency: frequency,
-                                              seed: seed)
-            fractalNoise = FBMGradient3D(sourceNoise,
-                                         octaves: octaves,
-                                         persistence: persistence,
-                                         lacunarity: lacunarity)
-        case .cellular:
-            let sourceNoise = CellNoise3D(amplitude: amplitude,
-                                          frequency: frequency,
-                                          seed: seed)
-            fractalNoise = FBMCellular3D(sourceNoise,
-                                         octaves: octaves,
-                                         persistence: persistence,
-                                         lacunarity: lacunarity)
-        }
-
-//        if ridged {
-//            self.noise = RidgedNoise(noise: fractalNoise, amplitude: amplitude)
-//        } else {
-            self.noise = fractalNoise
-//        }
-
-        let snowNoiseSource = GradientNoise3D(amplitude: amplitude / 5, frequency: frequency * 20, seed: seed+1)
-        self.snowNoise = FBMGradient3D(snowNoiseSource, octaves: 5, persistence: 0.5, lacunarity: 2.0)
     }
 }

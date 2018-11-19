@@ -27,8 +27,8 @@ class Planet {
     private var nodes = [SCNNode]()
     private var geometries = [SCNGeometry]()
 
-    init(name: String, config: PlanetConfig, patchBuffer: PatchBuffer) {
-        patchCalculator = PatchCalculator(config: config)
+    init(name: String, seed: Int, config: PlanetConfig, patchBuffer: PatchBuffer) {
+        patchCalculator = PatchCalculator(config: config, seed: seed)
         self.config = config
         self.name = name
         self.patchBuffer = patchBuffer

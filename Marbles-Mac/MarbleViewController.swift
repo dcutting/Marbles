@@ -6,13 +6,13 @@ let debug = false
 class MarbleViewController: NSViewController, SCNSceneRendererDelegate, PlanetDelegate {
 
     let patchBuffer = PatchBuffer()
-    lazy var earth = Planet(name: "Earth", config: earthConfig, patchBuffer: patchBuffer)
-    lazy var moon = Planet(name: "Moon", config: vestaConfig, patchBuffer: patchBuffer)
-    lazy var planets = [earth, moon]
+    lazy var earth = Planet(name: "Earth", seed: 1234, config: earthConfig, patchBuffer: patchBuffer)
+    lazy var moon = Planet(name: "Moon", seed: 4910, config: moonConfig, patchBuffer: patchBuffer)
+    lazy var vesta = Planet(name: "Vesta", seed: 3178, config: vestaConfig, patchBuffer: patchBuffer)
+    lazy var planets = [earth, moon, vesta]
     let updateInterval = 0.1
-    let sunDayDuration: FP = 1000
-    let moonDayDuration: FP = 30
-    let moonMonthDuration: FP = 300
+    let sunDayDuration: FP = 10000
+    let moonMonthDuration: FP = 3000
     let flyingSpeed: FP = 200.0
     var wireframe: Bool = false {
         didSet {
@@ -71,11 +71,11 @@ class MarbleViewController: NSViewController, SCNSceneRendererDelegate, PlanetDe
         bloom.setValue(40.0, forKey: kCIInputRadiusKey)
         bloom.setValue(1.0, forKey: kCIInputIntensityKey)
         sun.filters = [bloom]
-        sun.position = SCNVector3(x: 1000000, y: 0, z: 0)
+        sun.position = SCNVector3(x: 0, y: 1000000, z: 0)
         sun.light = light
         let sunParent = SCNNode()
         sunParent.addChildNode(sun)
-        sunParent.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: sunDayDuration)))
+        sunParent.runAction(.repeatForever(.rotateBy(x: 20, y: 0, z: 0, duration: sunDayDuration)))
         scene.rootNode.addChildNode(sunParent)
 
         let ambientLight = SCNLight()
@@ -156,15 +156,24 @@ class MarbleViewController: NSViewController, SCNSceneRendererDelegate, PlanetDe
         let earthNode = earth.makeTerrain()
         scene.rootNode.addChildNode(earthNode)
 
-        let moonNode = moon.makeTerrain()
-        moonNode.position = SCNVector3(x: 30000, y: 0, z: 0)
-        moonNode.runAction(.repeatForever(.rotateBy(x: 10, y: 20, z: -40, duration: moonDayDuration)))
-        let moonFrame = SCNNode()
-        moonFrame.addChildNode(moonNode)
-        moonFrame.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: moonMonthDuration)))
-        scene.rootNode.addChildNode(moonFrame)
+        let (moonNode, moonFrame) = make(orbiter: moon, position: SCNVector3(x: 0, y: -80000, z: 0))
+        moonNode.runAction(.repeatForever(.rotateBy(x: 20, y: 0, z: 0, duration: moonMonthDuration)))
+        moonFrame.runAction(.repeatForever(.rotateBy(x: 20, y: 0, z: 0, duration: moonMonthDuration)))
+
+        let (vestaNode, vestaFrame) = make(orbiter: vesta, position: SCNVector3(x: 20000, y: 20000, z: 0))
+        vestaNode.runAction(.repeatForever(.rotateBy(x: -60, y: 20, z: 10, duration: 50)))
+        vestaFrame.runAction(.repeatForever(.rotateBy(x: -20, y: 10, z: -4, duration: 300)))
 
         self.refreshGeometry()
+    }
+
+    private func make(orbiter: Planet, position: SCNVector3) -> (SCNNode, SCNNode) {
+        let node = orbiter.makeTerrain()
+        node.position = position
+        let frame = SCNNode()
+        frame.addChildNode(node)
+        scene.rootNode.addChildNode(frame)
+        return (node, frame)
     }
 
     private func refreshGeometry() {

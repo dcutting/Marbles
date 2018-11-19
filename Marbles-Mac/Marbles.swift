@@ -1,5 +1,4 @@
-let earthConfig = PlanetConfig(seed: 1297,
-                               radius: 10000.0,
+let earthConfig = PlanetConfig(radius: 12742.0,
                                frequency: 1.1,
                                amplitude: 0.2,
                                octaves: 20,
@@ -20,8 +19,7 @@ let earthConfig = PlanetConfig(seed: 1297,
                                 blue: ColourScale(0x16/0xff, 0xf8/0xff))
 )
 
-let vestaConfig = PlanetConfig(seed: 71134,
-                               radius: 1000.0,
+let vestaConfig = PlanetConfig(radius: 1000.0,
                                frequency: 0.8,
                                amplitude: 2.5,
                                octaves: 10,
@@ -42,8 +40,7 @@ let vestaConfig = PlanetConfig(seed: 71134,
                                 blue: ColourScale(0x26/0xff, 0xc8/0xff))
 )
 
-let marsConfig = PlanetConfig(seed: 729134,
-                              radius: 1000.0,
+let marsConfig = PlanetConfig(radius: 1000.0,
                               frequency: 1.2,
                               amplitude: 0.05,
                               octaves: 12,
@@ -58,4 +55,21 @@ let marsConfig = PlanetConfig(seed: 729134,
                                red: ColourScale(0.3, 1.0),
                                green: ColourScale(0.05, 0.05),
                                blue: ColourScale(0.05, 0.05))
+)
+
+let moonConfig = PlanetConfig(radius: 3474,
+                              frequency: 2.4,
+                              amplitude: 0.15,
+                              octaves: 8,
+                              persistence: 0.6,
+                              lacunarity: 2.5,
+                              noiseType: .cellular,
+                              levels: 0,
+                              iciness: 0.1,
+                              hasWater: false,
+                              ridged: false,
+                              groundColourScale: RGBColourScale(
+                                red: ColourScale(0.2, 0.7),
+                                green: ColourScale(0.2, 0.7),
+                                blue: ColourScale(0.2, 0.7))
 )

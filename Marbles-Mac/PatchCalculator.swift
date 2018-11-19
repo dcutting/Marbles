@@ -3,9 +3,40 @@ import SceneKit
 class PatchCalculator {
 
     private var config: PlanetConfig
+    let noise: Noise
+    let snowNoise: FBMGradient3D
 
-    init(config: PlanetConfig) {
+    init(config: PlanetConfig, seed: Int) {
         self.config = config
+
+        let fractalNoise: Noise
+        switch config.noiseType {
+        case .gradient:
+            let sourceNoise = GradientNoise3D(amplitude: config.amplitude,
+                                              frequency: config.frequency,
+                                              seed: seed)
+            fractalNoise = FBMGradient3D(sourceNoise,
+                                         octaves: config.octaves,
+                                         persistence: config.persistence,
+                                         lacunarity: config.lacunarity)
+        case .cellular:
+            let sourceNoise = CellNoise3D(amplitude: config.amplitude,
+                                          frequency: config.frequency,
+                                          seed: seed)
+            fractalNoise = FBMCellular3D(sourceNoise,
+                                         octaves: config.octaves,
+                                         persistence: config.persistence,
+                                         lacunarity: config.lacunarity)
+        }
+
+        //        if ridged {
+        //            self.noise = RidgedNoise(noise: fractalNoise, amplitude: amplitude)
+        //        } else {
+        self.noise = fractalNoise
+        //        }
+
+        let snowNoiseSource = GradientNoise3D(amplitude: config.amplitude / 5, frequency: config.frequency * 20, seed: seed+1)
+        self.snowNoise = FBMGradient3D(snowNoiseSource, octaves: 5, persistence: 0.5, lacunarity: 2.0)
     }
 
     func subdivide(triangle: Triangle, subdivisionLevels: UInt32) -> Patch {
@@ -60,7 +91,7 @@ class PatchCalculator {
     private func spherical(_ a: Patch.Vertex) -> (Patch.Vertex, FP) {
         let an = normalize(a)
         let ans = an * config.radius
-        var delta = config.noise.evaluate(Double(ans.x), Double(ans.y), Double(ans.z))
+        var delta = noise.evaluate(Double(ans.x), Double(ans.y), Double(ans.z))
         if config.levels > 0 {
             let ratio = Double(config.amplitude) / Double(config.levels)
             delta = ratio * round(delta / ratio)
@@ -122,7 +153,7 @@ class PatchCalculator {
             }
             let oceanDepth = config.oceanDepth == 0.0 ? 0.01 : config.oceanDepth
             let rawDepthColour = 1 + (Float(delta) / Float(oceanDepth))
-            let snowNoiseValue = config.snowNoise.evaluate(p.x, p.y, p.z)
+            let snowNoiseValue = snowNoise.evaluate(p.x, p.y, p.z)
             if FP(delta + snowNoiseValue) > snowLine {
                 // Ice
                 colours.append([1.0, 1.0, 1.0])
