@@ -13,12 +13,12 @@ class Planet {
     var wireframe: Bool = false
 
     let name: String
+    let config: PlanetConfig
 
     private let detailSubdivisions: UInt32 = 5
     private lazy var maxEdgeLength: FP = pow(2, FP(detailSubdivisions + 2))
     private let adaptivePatchMaxDepth: UInt32 = 20
 
-    private let planetConfig: PlanetConfig
     private var patchCache = PatchCache<Patch>()
     private let patchCalculator: PatchCalculator
     private let patchBuffer: PatchBuffer
@@ -29,7 +29,7 @@ class Planet {
 
     init(name: String, config: PlanetConfig, patchBuffer: PatchBuffer) {
         patchCalculator = PatchCalculator(config: config)
-        self.planetConfig = config
+        self.config = config
         self.name = name
         self.patchBuffer = patchBuffer
     }
@@ -164,7 +164,7 @@ class Planet {
                 subIndices[i] = subPatch.indices
             }
             if hasAllSubpatches {
-                // TODO: pass pointers to recursive function so we don't have to copy arrays around later
+                // OPTIMISATION: pass pointers to recursive function so we don't have to copy arrays around later
                 let vertices = subVertices[0] + subVertices[1] + subVertices[2] + subVertices[3]
                 let colours = subColours[0] + subColours[1] + subColours[2] + subColours[3]
                 var offset: UInt32 = 0

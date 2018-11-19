@@ -131,19 +131,17 @@ class MarbleViewController: NSViewController, PlanetDelegate {
         return Patch.Vertex(self.scnView.defaultCameraController.pointOfView!.position)
     }
 
-//    var altitude: FP {
-//        return (cameraPosition - Patch.Vertex(terrainNode.position)).length()
-//    }
+    private func altitude(from planet: Planet) -> FP {
+        let d = (cameraPosition - Patch.Vertex(planet.terrainNode.position)).length() - planet.config.radius
+        if d < 0.0 { return 0.0 }
+        return d
+    }
 
     private func adaptFlyingSpeed() {
-        // TODO: adapt based on proximity of all planets
-//        var radius = self.planet.radius
-//        if !self.planet.hasWater {
-//            radius -= self.planet.mountainHeight
-//        }
-//        let zeroHeight = radius * 1.0
-//        let newVelocity = ((altitude - zeroHeight) / zeroHeight) * zeroHeight / 4.0
-//        self.scnView.cameraControlConfiguration.flyModeVelocity = CGFloat(newVelocity)
+        let altitudes = planets.map { altitude(from: $0) }
+        let closest = altitudes.sorted().first!
+        let newVelocity = max(sqrt(closest * 50.0), 1.0)
+        self.scnView.cameraControlConfiguration.flyModeVelocity = CGFloat(newVelocity)
     }
 
     private func makeTerrain() {
@@ -164,10 +162,6 @@ class MarbleViewController: NSViewController, PlanetDelegate {
 
     private func refreshGeometry() {
         self.terrainQueue.asyncAfter(deadline: .now() + self.updateInterval) {
-            if debug {
-                // TODO
-//                print("* Refreshing geometry at altitude \(self.altitude)")
-            }
             self.patchBuffer.clearBuffer()
             for planet in self.planets {
                 planet.refreshGeometry()

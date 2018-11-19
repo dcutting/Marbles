@@ -1,3 +1,5 @@
+import Foundation
+
 struct ColourScale {
     let a: Float
     let b: Float
@@ -35,20 +37,23 @@ enum NoiseType {
 
 struct PlanetConfig {
 
-    let radius: Double
-    let diameterSq: Double
+    let radius: FP
     let levels: Int
-    let iciness: Double
+    let iciness: FP
     let hasWater: Bool
     let ridged: Bool
     let groundColourScale: RGBColourScale
     let waterColourScale: RGBColourScale
 
-    let minimumRadius: Double
-    let mountainHeight: Double
-    let frequency: Double
-    let amplitude: Double
-    let oceanDepth: Double
+    let diameter: FP
+    let diameterSq: FP
+    let radiusSq: FP
+    let radiusSqrt: FP
+    let minimumRadius: FP
+    let mountainHeight: FP
+    let frequency: FP
+    let amplitude: FP
+    let oceanDepth: FP
     let noise: Noise
     let snowNoise: FBMGradient3D
 
@@ -68,7 +73,6 @@ struct PlanetConfig {
          waterColourScale: RGBColourScale = .grey) {
 
         self.radius = radius
-        self.diameterSq = (radius * 2) * (radius * 2)
         self.frequency = unscaledFrequency / radius
         self.amplitude = radius * unscaledAmplitude
         self.levels = levels
@@ -81,6 +85,10 @@ struct PlanetConfig {
         self.mountainHeight = amplitude / 2.0
         self.oceanDepth = amplitude / 20.0
 
+        self.diameter = radius * 2
+        self.diameterSq = diameter * diameter
+        self.radiusSq = radius * radius
+        self.radiusSqrt = sqrt(radius)
         self.minimumRadius = hasWater ? (radius - oceanDepth) : (radius - mountainHeight)
 
         let fractalNoise: Noise
