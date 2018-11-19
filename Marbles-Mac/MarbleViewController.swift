@@ -13,6 +13,7 @@ class MarbleViewController: NSViewController, PlanetDelegate {
     let sunDayDuration: FP = 1000
     let moonDayDuration: FP = 30
     let moonMonthDuration: FP = 300
+    let flyingSpeed: FP = 200.0
     var wireframe: Bool = false {
         didSet {
             updateDebugOptions()
@@ -139,7 +140,7 @@ class MarbleViewController: NSViewController, PlanetDelegate {
     private func adaptFlyingSpeed() {
         let altitudes = planets.map { altitude(from: $0) }
         let closest = altitudes.sorted().first!
-        let newVelocity = max(sqrt(closest * 80.0), 1.0)
+        let newVelocity = max(sqrt(closest * flyingSpeed), 1.0)
         self.scnView.cameraControlConfiguration.flyModeVelocity = CGFloat(newVelocity)
     }
 
@@ -164,14 +165,12 @@ class MarbleViewController: NSViewController, PlanetDelegate {
             self.patchBuffer.clearBuffer()
             for planet in self.planets {
                 planet.refreshGeometry()
+                planet.updateNode()
             }
             DispatchQueue.main.sync {
-                for planet in self.planets {
-                    planet.updateNode()
-                }
                 self.adaptFlyingSpeed()
-                self.refreshGeometry()
             }
+            self.refreshGeometry()
         }
     }
 
