@@ -140,7 +140,7 @@ class MarbleViewController: NSViewController, PlanetDelegate {
     private func adaptFlyingSpeed() {
         let altitudes = planets.map { altitude(from: $0) }
         let closest = altitudes.sorted().first!
-        let newVelocity = max(sqrt(closest * 50.0), 1.0)
+        let newVelocity = max(sqrt(closest * 80.0), 1.0)
         self.scnView.cameraControlConfiguration.flyModeVelocity = CGFloat(newVelocity)
     }
 
