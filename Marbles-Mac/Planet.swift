@@ -18,6 +18,7 @@ class Planet {
     private lazy var maxEdgeLength: FP = pow(2, FP(detailSubdivisions + 2))
     private let adaptivePatchMaxDepth: UInt32 = 20
 
+    private let planetConfig: PlanetConfig
     private var patchCache = PatchCache<Patch>()
     private let patchCalculator: PatchCalculator
     private let patchBuffer: PatchBuffer
@@ -28,6 +29,7 @@ class Planet {
 
     init(name: String, config: PlanetConfig, patchBuffer: PatchBuffer) {
         patchCalculator = PatchCalculator(config: config)
+        self.planetConfig = config
         self.name = name
         self.patchBuffer = patchBuffer
     }
@@ -117,13 +119,15 @@ class Planet {
 
         let normalisedScreenTriangle = screenTriangle.normalised()
 
+        let translatedWorldTriangle = Triangle(a: Patch.Vertex(translatedWorldA),
+                                               b: Patch.Vertex(translatedWorldB),
+                                               c: Patch.Vertex(translatedWorldC))
+
+        let distanceFromCamera = delegate.distanceSqFromCamera(triangle: translatedWorldTriangle)
+
         if !delegate.isIntersectingScreen(triangle: normalisedScreenTriangle) {
 
-            let translatedWorldTriangle = Triangle(a: Patch.Vertex(translatedWorldA),
-                                                   b: Patch.Vertex(translatedWorldB),
-                                                   c: Patch.Vertex(translatedWorldC))
-
-            if delegate.distanceSqFromCamera(triangle: translatedWorldTriangle) > crinklyWorldTriangle.longestEdgeSq {
+            if distanceFromCamera > crinklyWorldTriangle.longestEdgeSq {
 
                 if debug {
                     return makePatch(triangle: crinklyWorldTriangle, colour: yellow)
@@ -177,7 +181,7 @@ class Planet {
             return patch
         }
 
-        let priority = prioritise(screen: normalisedScreenTriangle)
+        let priority = prioritise(screen: normalisedScreenTriangle, depth: depth, distance: distanceFromCamera)
 
         patchBuffer.calculate(name, triangle: crinklyCorners, subdivisions: detailSubdivisions, priority: priority, calculator: patchCalculator) { patch in
             self.patchCache.write(name, patch: patch)
@@ -190,7 +194,10 @@ class Planet {
         return nil
     }
 
-    private func prioritise(screen: Triangle) -> FP {
-        return delegate.distanceSqFromScreenCenter(triangle: screen).unitClamped()
+    private func prioritise(screen: Triangle, depth: UInt32, distance: FP) -> FP {
+        let centerFactor = 1 - (delegate.distanceSqFromScreenCenter(triangle: screen).unitClamped())
+//        let depthFactor = FP(depth) / FP(adaptivePatchMaxDepth)
+        let distanceFactor = 1 - (distance / 100).unitClamped()
+        return 1 - (centerFactor + distanceFactor) // depthFactor
     }
 }
