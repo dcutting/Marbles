@@ -87,7 +87,6 @@ class MarbleViewController: NSViewController, PlanetDelegate {
         scnView.allowsCameraControl = true
         scnView.backgroundColor = .black
         scnView.defaultCameraController.interactionMode = .fly
-        scnView.cameraControlConfiguration.flyModeVelocity = 600.0  // TODO
 
         let originMarker = SCNBox(width: 100.0, height: 100.0, length: 100.0, chamferRadius: 0.0)
         scene.rootNode.addChildNode(SCNNode(geometry: originMarker))

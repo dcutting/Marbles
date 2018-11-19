@@ -117,8 +117,7 @@ struct PlanetConfig {
             self.noise = fractalNoise
 //        }
 
-        // TODO: make snow noise depend on planet radius, etc.
-        let snowNoiseSource = GradientNoise3D(amplitude: 800, frequency: 0.001, seed: seed+1)
-        self.snowNoise = FBMGradient3D(snowNoiseSource, octaves: 5, persistence: 0.4, lacunarity: 2.5)
+        let snowNoiseSource = GradientNoise3D(amplitude: amplitude / 5, frequency: frequency * 20, seed: seed+1)
+        self.snowNoise = FBMGradient3D(snowNoiseSource, octaves: 5, persistence: 0.5, lacunarity: 2.0)
     }
 }

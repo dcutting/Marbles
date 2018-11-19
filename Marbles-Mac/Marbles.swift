@@ -7,7 +7,7 @@ let earthConfig = PlanetConfig(seed: 12891,
                                lacunarity: 2.2,
                                noiseType: .gradient,
                                levels: 0,
-                               iciness: 0.5,
+                               iciness: 0.4,
                                hasWater: true,
                                ridged: false,
                                groundColourScale: RGBColourScale(
