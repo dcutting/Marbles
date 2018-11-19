@@ -196,8 +196,8 @@ class Planet {
 
     private func prioritise(screen: Triangle, depth: UInt32, distance: FP) -> FP {
         let centerFactor = 1 - (delegate.distanceSqFromScreenCenter(triangle: screen).unitClamped())
-//        let depthFactor = FP(depth) / FP(adaptivePatchMaxDepth)
+        let depthFactor = 1 - (FP(depth) / FP(adaptivePatchMaxDepth)).unitClamped()
         let distanceFactor = 1 - (distance / 100).unitClamped()
-        return 1 - (centerFactor + distanceFactor) // depthFactor
+        return 1 - (centerFactor * 0.4 + distanceFactor * 0.3 + depthFactor * 0.3)
     }
 }
