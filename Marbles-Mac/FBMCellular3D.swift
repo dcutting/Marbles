@@ -1,28 +1,28 @@
 public
-struct FBMGradient3D: Noise
+struct FBMCellular3D: Noise
 {
     private
-    let generators:[GradientNoise3D]
+    let generators:[CellNoise3D]
 
     // UNDOCUMENTED
     public
-    func amplitude_scaled(by factor:Double) -> FBMGradient3D
+    func amplitude_scaled(by factor:Double) -> FBMCellular3D
     {
-        return FBMGradient3D(generators: self.generators.map{ $0.amplitude_scaled(by: factor) })
+        return FBMCellular3D(generators: self.generators.map{ $0.amplitude_scaled(by: factor) })
     }
     public
-    func frequency_scaled(by factor:Double) -> FBMGradient3D
+    func frequency_scaled(by factor:Double) -> FBMCellular3D
     {
-        return FBMGradient3D(generators: self.generators.map{ $0.frequency_scaled(by: factor) })
+        return FBMCellular3D(generators: self.generators.map{ $0.frequency_scaled(by: factor) })
     }
     public
-    func reseeded() -> FBMGradient3D
+    func reseeded() -> FBMCellular3D
     {
-        return FBMGradient3D(generators: self.generators.map{ $0.reseeded() })
+        return FBMCellular3D(generators: self.generators.map{ $0.reseeded() })
     }
 
     private
-    init(generators:[GradientNoise3D])
+    init(generators:[CellNoise3D])
     {
         self.generators = generators
     }
@@ -43,7 +43,7 @@ struct FBMGradient3D: Noise
 
     // UNDOCUMENTED, default was changed from 0.75 to 0.5
     public
-    init(_ source:GradientNoise3D, octaves:Int, persistence:Double = 0.5, lacunarity:Double = 2)
+    init(_ source:CellNoise3D, octaves:Int, persistence:Double = 0.5, lacunarity:Double = 2)
     {
         // calculate maximum range
         let range_inverse:Double
@@ -64,7 +64,7 @@ struct FBMGradient3D: Noise
             range_inverse = 1 / accumulation
         }
 
-        var generators:[GradientNoise3D] = [source.amplitude_scaled(by: range_inverse)]
+        var generators:[CellNoise3D] = [source.amplitude_scaled(by: range_inverse)]
         generators.reserveCapacity(octaves)
         for i in (0 ..< octaves - 1)
         {

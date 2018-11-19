@@ -30,7 +30,7 @@ struct RGBColourScale {
 
 enum NoiseType {
     case gradient
-//    case cellular
+    case cellular
 }
 
 struct PlanetConfig {
@@ -49,7 +49,7 @@ struct PlanetConfig {
     let frequency: Double
     let amplitude: Double
     let oceanDepth: Double
-    let noise: FBMGradient3D
+    let noise: Noise
     let snowNoise: FBMGradient3D
 
     init(seed: Int,
@@ -83,24 +83,24 @@ struct PlanetConfig {
 
         self.minimumRadius = hasWater ? (radius - oceanDepth) : (radius - mountainHeight)
 
-        let fractalNoise: FBMGradient3D
+        let fractalNoise: Noise
         switch noiseType {
         case .gradient:
             let sourceNoise = GradientNoise3D(amplitude: amplitude,
                                               frequency: frequency,
                                               seed: seed)
             fractalNoise = FBMGradient3D(sourceNoise,
-                               octaves: octaves,
-                               persistence: persistence,
-                               lacunarity: lacunarity)
-//        case .cellular:
-//            let sourceNoise = CellNoise3D(amplitude: amplitude,
-//                                          frequency: frequency,
-//                                          seed: seed)
-//            fractalNoise = FBM(sourceNoise,
-//                               octaves: octaves,
-//                               persistence: persistence,
-//                               lacunarity: lacunarity)
+                                         octaves: octaves,
+                                         persistence: persistence,
+                                         lacunarity: lacunarity)
+        case .cellular:
+            let sourceNoise = CellNoise3D(amplitude: amplitude,
+                                          frequency: frequency,
+                                          seed: seed)
+            fractalNoise = FBMCellular3D(sourceNoise,
+                                         octaves: octaves,
+                                         persistence: persistence,
+                                         lacunarity: lacunarity)
         }
 
 //        if ridged {

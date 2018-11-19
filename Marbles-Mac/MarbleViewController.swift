@@ -11,7 +11,8 @@ class MarbleViewController: NSViewController, PlanetDelegate {
     lazy var planets = [earth, moon]
     let updateInterval = 0.1
     let sunDayDuration: FP = 1000
-    let moonDayDuration: FP = 300
+    let moonDayDuration: FP = 30
+    let moonMonthDuration: FP = 300
     var wireframe: Bool = false {
         didSet {
             updateDebugOptions()
@@ -152,9 +153,10 @@ class MarbleViewController: NSViewController, PlanetDelegate {
 
         let moonNode = moon.makeTerrain()
         moonNode.position = SCNVector3(x: 30000, y: 0, z: 0)
+        moonNode.runAction(.repeatForever(.rotateBy(x: 10, y: 20, z: -40, duration: moonDayDuration)))
         let moonFrame = SCNNode()
         moonFrame.addChildNode(moonNode)
-        moonFrame.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: moonDayDuration)))
+        moonFrame.runAction(.repeatForever(.rotateBy(x: 0, y: 20, z: 0, duration: moonMonthDuration)))
         scene.rootNode.addChildNode(moonFrame)
 
         self.refreshGeometry()
