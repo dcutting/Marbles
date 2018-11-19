@@ -29,12 +29,12 @@ class PatchBuffer {
         reader.asyncAfter(deadline: .now() + 0.08) {
             let queuedCount = self.queued.count()
             let wipCount = self.wip.count()
-            let toDo = max(0, self.concurrentPatches - wipCount)
+            let pending = max(0, self.concurrentPatches - wipCount)
             self.priorityBuffer.sort { a, b in
                 a.priority < b.priority
             }
             let bufferCount = self.priorityBuffer.count
-            let willDo = min(toDo, bufferCount)
+            let willDo = min(pending, bufferCount)
             let ops = self.priorityBuffer.prefix(willDo)
             self.priorityBuffer.removeFirst(willDo)
             ops.forEach { op in
