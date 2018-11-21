@@ -1,15 +1,8 @@
 import SceneKit
 
-protocol PlanetDelegate: class {
-    func project(point: SCNVector3) -> Patch.Vertex
-    func isIntersectingScreen(triangle: Triangle) -> Bool
-    func distanceSqFromCamera(triangle: Triangle) -> FP
-    func distanceSqFromScreenCenter(triangle: Triangle) -> FP
-}
-
 class Planet {
 
-    weak var delegate: PlanetDelegate!
+    weak var delegate: MarbleViewController!
     var wireframe: Bool = false
 
     let name: String

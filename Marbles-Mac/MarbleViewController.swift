@@ -3,7 +3,7 @@ import SceneKit
 
 let debug = false
 
-class MarbleViewController: NSViewController, SCNSceneRendererDelegate, PlanetDelegate {
+class MarbleViewController: NSViewController, SCNSceneRendererDelegate {
 
     let patchBuffer = PatchBuffer()
     lazy var earth = Planet(name: "Earth", seed: 1234, config: earthConfig, patchBuffer: patchBuffer)
