@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		C8023EFC21A0514F00722CEF /* RidgedNoise.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8023EFB21A0514F00722CEF /* RidgedNoise.swift */; };
 		C8023EFE21A0517700722CEF /* Icosahedron.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8023EFD21A0517700722CEF /* Icosahedron.swift */; };
 		C8023F0021A0519500722CEF /* Marbles.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8023EFF21A0519500722CEF /* Marbles.swift */; };
 		C8023F0221A052F500722CEF /* Triangle.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8023F0121A052F500722CEF /* Triangle.swift */; };
@@ -55,7 +54,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		C8023EFB21A0514F00722CEF /* RidgedNoise.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RidgedNoise.swift; sourceTree = "<group>"; };
 		C8023EFD21A0517700722CEF /* Icosahedron.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Icosahedron.swift; sourceTree = "<group>"; };
 		C8023EFF21A0519500722CEF /* Marbles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Marbles.swift; sourceTree = "<group>"; };
 		C8023F0121A052F500722CEF /* Triangle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Triangle.swift; sourceTree = "<group>"; };
@@ -160,7 +158,6 @@
 				C8027ED1218A631200A99020 /* Geometry.swift */,
 				C85EB59A216AB39D00B670B2 /* Vector.swift */,
 				C8023F0321A0557A00722CEF /* Scalars.swift */,
-				C8023EFB21A0514F00722CEF /* RidgedNoise.swift */,
 				C81EC313219F2BF70060F905 /* FBMGradient3D.swift */,
 				C85B120521A2337000B4369C /* FBMCellular3D.swift */,
 				C85EB5832168F62D00B670B2 /* noise */,
@@ -341,7 +338,6 @@
 				C85EB5912168F62D00B670B2 /* cell.swift in Sources */,
 				C80E460D216177440029A3A0 /* MarbleViewController.swift in Sources */,
 				C81EC314219F2BF70060F905 /* FBMGradient3D.swift in Sources */,
-				C8023EFC21A0514F00722CEF /* RidgedNoise.swift in Sources */,
 				C80E460B216177440029A3A0 /* AppDelegate.swift in Sources */,
 				C8837A5D218A173F00ABE455 /* PatchCache.swift in Sources */,
 			);

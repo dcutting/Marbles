@@ -47,7 +47,6 @@ struct PlanetConfig {
     let levels: Int
     let iciness: FP
     let hasWater: Bool
-    let ridged: Bool
     let groundColourScale: RGBColourScale
     let waterColourScale: RGBColourScale
 
@@ -69,7 +68,6 @@ struct PlanetConfig {
          levels: Int,
          iciness: FP,
          hasWater: Bool,
-         ridged: Bool,
          groundColourScale: RGBColourScale,
          waterColourScale: RGBColourScale = .grey) {
 
@@ -83,7 +81,6 @@ struct PlanetConfig {
         self.levels = levels
         self.iciness = iciness
         self.hasWater = hasWater
-        self.ridged = ridged
         self.groundColourScale = groundColourScale
         self.waterColourScale = waterColourScale
 

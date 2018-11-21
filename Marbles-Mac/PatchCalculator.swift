@@ -25,12 +25,6 @@ class PatchCalculator {
                                       persistence: Double(config.persistence),
                                       lacunarity: Double(config.lacunarity))
 
-        //        if config.ridged {
-        //            self.noise = RidgedNoise(noise: fractalNoise, amplitude: Double(config.amplitude))
-        //        } else {
-//        self.gradientNoise = gradientNoise
-//        }
-
         let snowNoiseSource = GradientNoise3D(amplitude: Double(config.amplitude) / 5, frequency: Double(config.frequency) * 20, seed: seed+1)
         self.snowNoise = FBMGradient3D(snowNoiseSource, octaves: 5, persistence: 0.5, lacunarity: 2.0)
     }
