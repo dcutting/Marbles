@@ -9,7 +9,7 @@ class MarbleViewController: NSViewController, SCNSceneRendererDelegate {
     lazy var earth = Planet(name: "Earth", seed: 1234, config: earthConfig, patchBuffer: patchBuffer)
     lazy var moon = Planet(name: "Moon", seed: 4910, config: moonConfig, patchBuffer: patchBuffer)
     lazy var vesta = Planet(name: "Vesta", seed: 3178, config: vestaConfig, patchBuffer: patchBuffer)
-    lazy var planets = [earth, moon, vesta]
+    lazy var planets = [earth]//, moon, vesta]
     let updateInterval = 0.1
     let sunDayDuration: FP = 10000
     let moonMonthDuration: FP = 3000
@@ -32,9 +32,6 @@ class MarbleViewController: NSViewController, SCNSceneRendererDelegate {
     }
 
     func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
-//        for planet in self.planets {
-//            planet.updateNode()
-//        }
         adaptFlyingSpeed()
     }
 
@@ -141,14 +138,14 @@ class MarbleViewController: NSViewController, SCNSceneRendererDelegate {
 
     private func altitude(from planet: Planet) -> FP {
         let d = (cameraPosition - Patch.Vertex(planet.terrainNode.position)).length() - planet.config.radius
-        if d < 0.0 { return 0.0 }
+        if d < 1.0 { return 1.0 }
         return d
     }
 
     private func adaptFlyingSpeed() {
         let altitudes = planets.map { altitude(from: $0) }
         let closest = altitudes.sorted().first!
-        let newVelocity = max(sqrt(closest * flyingSpeed), 1.0)
+        let newVelocity = closest//max(sqrt(closest * flyingSpeed), 1.0)
         self.scnView.cameraControlConfiguration.flyModeVelocity = CGFloat(newVelocity)
     }
 
@@ -157,15 +154,15 @@ class MarbleViewController: NSViewController, SCNSceneRendererDelegate {
         let earthNode = earth.makeTerrain()
         scene.rootNode.addChildNode(earthNode)
 
-        let (moonNode, moonFrame) = make(orbiter: moon, position: SCNVector3(x: 0, y: -80000, z: 0))
-        moonNode.runAction(.repeatForever(.rotateBy(x: 20, y: 0, z: 0, duration: TimeInterval(moonMonthDuration))))
-        moonFrame.runAction(.repeatForever(.rotateBy(x: 20, y: 0, z: 0, duration: TimeInterval(moonMonthDuration))))
+//        let (moonNode, moonFrame) = make(orbiter: moon, position: SCNVector3(x: 0, y: -80000, z: 0))
+//        moonNode.runAction(.repeatForever(.rotateBy(x: 20, y: 0, z: 0, duration: TimeInterval(moonMonthDuration))))
+//        moonFrame.runAction(.repeatForever(.rotateBy(x: 20, y: 0, z: 0, duration: TimeInterval(moonMonthDuration))))
+//
+//        let (vestaNode, vestaFrame) = make(orbiter: vesta, position: SCNVector3(x: 20000, y: 20000, z: 0))
+//        vestaNode.runAction(.repeatForever(.rotateBy(x: -60, y: 20, z: 10, duration: 50)))
+//        vestaFrame.runAction(.repeatForever(.rotateBy(x: -20, y: 10, z: -4, duration: 300)))
 
-        let (vestaNode, vestaFrame) = make(orbiter: vesta, position: SCNVector3(x: 20000, y: 20000, z: 0))
-        vestaNode.runAction(.repeatForever(.rotateBy(x: -60, y: 20, z: 10, duration: 50)))
-        vestaFrame.runAction(.repeatForever(.rotateBy(x: -20, y: 10, z: -4, duration: 300)))
-
-//        self.refreshGeometry()
+        self.refreshGeometry()
     }
 
     private func make(orbiter: Planet, position: SCNVector3) -> (SCNNode, SCNNode) {
@@ -177,15 +174,16 @@ class MarbleViewController: NSViewController, SCNSceneRendererDelegate {
         return (node, frame)
     }
 
-//    private func refreshGeometry() {
-//        self.terrainQueue.asyncAfter(deadline: .now() + self.updateInterval) {
+    private func refreshGeometry() {
+        self.terrainQueue.asyncAfter(deadline: .now() + self.updateInterval) {
 //            self.patchBuffer.clearBuffer()
-//            for planet in self.planets {
-//                planet.refreshGeometry()
-//            }
-//            self.refreshGeometry()
-//        }
-//    }
+            for planet in self.planets {
+                planet.refreshGeometry()
+                planet.updateNode()
+            }
+            self.refreshGeometry()
+        }
+    }
 
     func project(point: SCNVector3) -> Patch.Vertex {
         return Patch.Vertex(scnView.projectPoint(point))

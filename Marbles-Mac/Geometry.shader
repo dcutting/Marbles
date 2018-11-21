@@ -100,11 +100,11 @@ float noise3D(float unscaledX, float unscaledY, float unscaledZ)
 float offset = 0;
 vec4 p = _geometry.position;
 float noise = noise3D(p.x+offset, p.y+offset, p.z+offset);
-float delta = 10000.0 + noise * 1.0;//rand(p.x, p.y, p.z);
+float delta = 10000.0 + noise / 10.0;//rand(p.x, p.y, p.z);
 vec4 n = normalize(p);// - vec4(-100.0, 0.0, 0.0, 0.0);
 //vec4 s = vec4(n[0] * delta, n[1] * delta, n[2] * delta, n[3] * delta);
 _geometry.position = vec4(n[0] * delta, n[1] * delta, n[2] * delta, 1.0);//vec4(0.0, 0.0, 0.0, 1.0);//rand(_geometry.position.x, _geometry.position.y, _geometry.position.z);//noise;
 //_geometry.normal *= noise;
-_geometry.color = float4(0.0, noise / 100.0, 0.0, 1.0);
+_geometry.color = float4(0.0, noise / 100.0, 1.0, 1.0);
 
 //_geometry.position += vec4(_geometry.normal, 1.0) * (Amplitude*_geometry.position.y*_geometry.position.x) * sin(1.0 * u_time);

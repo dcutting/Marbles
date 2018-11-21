@@ -1,5 +1,7 @@
 import SceneKit
 
+let tessellationFactor: CGFloat = 16.0
+
 class Planet {
 
     weak var delegate: MarbleViewController!
@@ -9,7 +11,7 @@ class Planet {
     let config: PlanetConfig
 
     private let detailSubdivisions: UInt32 = 5
-    private lazy var maxEdgeLength: FP = pow(2, FP(detailSubdivisions + 2))
+    private lazy var maxEdgeLength: FP = 256//pow(2, FP(detailSubdivisions + 2))
     private let adaptivePatchMaxDepth: UInt32 = 20
 
     private var patchCache = PatchCache<Patch>()
@@ -17,8 +19,8 @@ class Planet {
     private let patchBuffer: PatchBuffer
 
     let terrainNode = SCNNode()
-//    private var nodes = [SCNNode]()
-//    private var geometries = [SCNGeometry]()
+    private var nodes = [SCNNode]()
+    private var geometries = [SCNGeometry]()
 
     init(name: String, seed: Int, config: PlanetConfig, patchBuffer: PatchBuffer) {
         patchCalculator = PatchCalculator(config: config, seed: seed)
@@ -42,49 +44,28 @@ class Planet {
 //            let element = SCNGeometryElement(indices: indices, primitiveType: .triangles)
 //            let geometry = SCNGeometry(sources: [vertexSource], elements: [element])
             let geometry = makeGeometry(patch: patch, asWireframe: false)
-            let material = SCNMaterial()
-            material.diffuse.contents = NSColor.green
-//            geometry.materials = [material]
-
-            let tessellator = SCNGeometryTessellator()
-//            tessellator.isAdaptive = true
-//            tessellator.isScreenSpace = true
-//            tessellator.maximumEdgeLength = 50.0
-            tessellator.insideTessellationFactor = 32.0
-            tessellator.edgeTessellationFactor = 32.0
-//            tessellator.smoothingMode = .none
-//            geometry.wantsAdaptiveSubdivision = true
-//            geometry.subdivisionLevel = 10
-            geometry.tessellator = tessellator
-
-            let fragmentShader = try! String(contentsOfFile: Bundle.main.path(forResource: "Fragment", ofType: "shader")!, encoding: String.Encoding.utf8)
-            let geometryShader = try! String(contentsOfFile: Bundle.main.path(forResource: "Geometry", ofType: "shader")!, encoding: String.Encoding.utf8)
-
-            geometry.shaderModifiers = [
-//                SCNShaderModifierEntryPoint.fragment: fragmentShader,
-                SCNShaderModifierEntryPoint.geometry: geometryShader
-            ]
-
+            geometries.append(geometry)
             let node = SCNNode(geometry: geometry)
+            nodes.append(node)
             terrainNode.addChildNode(node)
         }
         return terrainNode
     }
 
-//    func refreshGeometry() {
-//        for faceIndex in 0..<faces.count {
-//            let face = faces[faceIndex]
-//            let triangle = Triangle(a: positions[Int(face[0])], b: positions[Int(face[1])], c: positions[Int(face[2])])
-//            let geom = makeAdaptiveGeometry(faceIndex: faceIndex, corners: triangle, maxEdgeLength: maxEdgeLength)
-//            geometries[faceIndex] = geom
-//        }
-//    }
+    func refreshGeometry() {
+        for faceIndex in 0..<faces.count {
+            let face = faces[faceIndex]
+            let triangle = Triangle(a: positions[Int(face[0])], b: positions[Int(face[1])], c: positions[Int(face[2])])
+            let geom = makeAdaptiveGeometry(faceIndex: faceIndex, corners: triangle, maxEdgeLength: maxEdgeLength)
+            geometries[faceIndex] = geom
+        }
+    }
 
-//    func updateNode() {
-//        for faceIndex in 0..<self.nodes.count {
-//            self.nodes[faceIndex].geometry = self.geometries[faceIndex]
-//        }
-//    }
+    func updateNode() {
+        for faceIndex in 0..<self.nodes.count {
+            self.nodes[faceIndex].geometry = self.geometries[faceIndex]
+        }
+    }
 
     private func makeAdaptiveGeometry(faceIndex: Int, corners: Triangle, maxEdgeLength: FP) -> SCNGeometry {
         let start = DispatchTime.now()
@@ -108,12 +89,15 @@ class Planet {
     }
 
     private func shouldSubdivide(_ triangle: Triangle, maxEdgeLengthSq: FP) -> Bool {
+//        print(triangle, triangle.longestEdgeSq, maxEdgeLengthSq)
         return triangle.longestEdgeSq > maxEdgeLengthSq
     }
 
     private func makeAdaptivePatch(name: String, crinklyCorners: Triangle, maxEdgeLengthSq: FP, patchCache: PatchCache<Patch>, depth: UInt32) -> Patch? {
 
-        let (crinklyWorldVertices, crinklyWorldEdges, crinklyWorldDeltas) = patchCalculator.sphericallySubdivide(triangle: crinklyCorners)
+//        let (crinklyWorldVertices, crinklyWorldEdges, crinklyWorldDeltas) = patchCalculator.sphericallySubdivide(triangle: crinklyCorners)
+
+        let (crinklyWorldVertices, crinklyWorldEdges) = patchCalculator.split(triangle: crinklyCorners)
 
         let crinklyWorldA = crinklyWorldVertices[0]
         let crinklyWorldB = crinklyWorldVertices[1]
@@ -151,12 +135,12 @@ class Planet {
 
             if distanceFromCamera > crinklyWorldTriangle.longestEdgeSq {
 
-                if debug {
+//                if debug {
                     return makePatch(triangle: crinklyWorldTriangle, colour: yellow)
-                } else {
-                    return patchCache.read(name)
-                        ?? patchCalculator.subdivide(triangle: crinklyCorners, subdivisionLevels: 0)
-                }
+//                } else {
+//                    return patchCache.read(name)
+//                        ?? patchCalculator.subdivide(triangle: crinklyCorners, subdivisionLevels: 0)
+//                }
             }
         }
 
@@ -164,7 +148,7 @@ class Planet {
             var subVertices = [[Patch.Vertex]](repeating: [], count: 4)
             var subColours = [[Patch.Colour]](repeating: [], count: 4)
             var subIndices = [[Patch.Index]](repeating: [], count: 4)
-            var hasAllSubpatches = true
+//            var hasAllSubpatches = true
             for i in 0..<crinklyWorldEdges.count {
                 let index = crinklyWorldEdges[i]
                 let vx = crinklyWorldVertices[Int(index[0])]
@@ -178,14 +162,14 @@ class Planet {
                                                        patchCache: patchCache,
                                                        depth: depth + 1)
                     else {
-                        hasAllSubpatches = false
+//                        hasAllSubpatches = false
                         break
                 }
                 subVertices[i] = subPatch.vertices
                 subColours[i] = subPatch.colours
                 subIndices[i] = subPatch.indices
             }
-            if hasAllSubpatches {
+//            if hasAllSubpatches {
                 // OPTIMISATION: pass pointers to recursive function so we don't have to copy arrays around later
                 let vertices = subVertices[0] + subVertices[1] + subVertices[2] + subVertices[3]
                 let colours = subColours[0] + subColours[1] + subColours[2] + subColours[3]
@@ -195,25 +179,25 @@ class Planet {
                     return s.map { index in index + offset }
                 }
                 let indices = offsetIndices[0] + offsetIndices[1] + offsetIndices[2] + offsetIndices[3]
-                return Patch(vertices: vertices, colours: colours, indices: indices)
-            }
+            return Patch(vertices: vertices, colours: colours, indices: indices)
+//            }
         }
 
-        if let patch = patchCache.read(name) {
-            return patch
-        }
+//        if let patch = patchCache.read(name) {
+//            return patch
+//        }
 
-        let priority = prioritise(screen: normalisedScreenTriangle, depth: depth, distance: distanceFromCamera)
+//        let priority = prioritise(screen: normalisedScreenTriangle, depth: depth, distance: distanceFromCamera)
 
-        patchBuffer.calculate(name, triangle: crinklyCorners, subdivisions: detailSubdivisions, priority: Double(priority), calculator: patchCalculator) { patch in
-            self.patchCache.write(name, patch: patch)
-        }
+//        patchBuffer.calculate(name, triangle: crinklyCorners, subdivisions: detailSubdivisions, priority: Double(priority), calculator: patchCalculator) { patch in
+//            self.patchCache.write(name, patch: patch)
+//        }
 
-        if debug {
+//        if debug {
             return makePatch(triangle: crinklyWorldTriangle, colour: magenta)
-        }
-
-        return nil
+//        }
+//
+//        return nil
     }
 
     private func prioritise(screen: Triangle, depth: UInt32, distance: FP) -> FP {

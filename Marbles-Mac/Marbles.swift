@@ -1,4 +1,4 @@
-let earthConfig = PlanetConfig(radius: 12742.0,
+let earthConfig = PlanetConfig(radius: 10000.0,
                                frequency: 1.1,
                                amplitude: 0.2,
                                octaves: 20,

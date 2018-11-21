@@ -108,6 +108,24 @@ class PatchCalculator {
         return [`as`, bs, cs]
     }
 
+    func split(triangle: Triangle) -> ([Patch.Vertex], [[Patch.Index]]) {
+
+        let a = sphericalBase(triangle.a)
+        let b = sphericalBase(triangle.b)
+        let c = sphericalBase(triangle.c)
+
+        let ab = a.midway(to: b)
+        let bc = b.midway(to: c)
+        let ca = c.midway(to: a)
+
+        let subdividedTriangleEdges: [[Patch.Index]] = [[0, 3, 5],
+                                                        [3, 1, 4],
+                                                        [3, 4, 5],
+                                                        [5, 4, 2]]
+
+        return ([a, b, c, ab, bc, ca], subdividedTriangleEdges)
+    }
+
     func sphericallySubdivide(triangle: Triangle) -> ([Patch.Vertex], [[Patch.Index]], [FP]) {
 
         let a = triangle.a
