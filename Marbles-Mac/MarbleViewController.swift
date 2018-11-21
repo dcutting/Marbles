@@ -75,7 +75,7 @@ class MarbleViewController: NSViewController, SCNSceneRendererDelegate, PlanetDe
         sun.light = light
         let sunParent = SCNNode()
         sunParent.addChildNode(sun)
-        sunParent.runAction(.repeatForever(.rotateBy(x: 20, y: 0, z: 0, duration: sunDayDuration)))
+        sunParent.runAction(.repeatForever(.rotateBy(x: 20, y: 0, z: 0, duration: TimeInterval(sunDayDuration))))
         scene.rootNode.addChildNode(sunParent)
 
         let ambientLight = SCNLight()
@@ -157,8 +157,8 @@ class MarbleViewController: NSViewController, SCNSceneRendererDelegate, PlanetDe
         scene.rootNode.addChildNode(earthNode)
 
         let (moonNode, moonFrame) = make(orbiter: moon, position: SCNVector3(x: 0, y: -80000, z: 0))
-        moonNode.runAction(.repeatForever(.rotateBy(x: 20, y: 0, z: 0, duration: moonMonthDuration)))
-        moonFrame.runAction(.repeatForever(.rotateBy(x: 20, y: 0, z: 0, duration: moonMonthDuration)))
+        moonNode.runAction(.repeatForever(.rotateBy(x: 20, y: 0, z: 0, duration: TimeInterval(moonMonthDuration))))
+        moonFrame.runAction(.repeatForever(.rotateBy(x: 20, y: 0, z: 0, duration: TimeInterval(moonMonthDuration))))
 
         let (vestaNode, vestaFrame) = make(orbiter: vesta, position: SCNVector3(x: 20000, y: 20000, z: 0))
         vestaNode.runAction(.repeatForever(.rotateBy(x: -60, y: 20, z: 10, duration: 50)))

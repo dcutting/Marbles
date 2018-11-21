@@ -183,7 +183,7 @@ class Planet {
 
         let priority = prioritise(screen: normalisedScreenTriangle, depth: depth, distance: distanceFromCamera)
 
-        patchBuffer.calculate(name, triangle: crinklyCorners, subdivisions: detailSubdivisions, priority: priority, calculator: patchCalculator) { patch in
+        patchBuffer.calculate(name, triangle: crinklyCorners, subdivisions: detailSubdivisions, priority: Double(priority), calculator: patchCalculator) { patch in
             self.patchCache.write(name, patch: patch)
         }
 
