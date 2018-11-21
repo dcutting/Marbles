@@ -191,6 +191,6 @@ class Planet {
         let centerFactor = 1 - (delegate.distanceSqFromScreenCenter(triangle: screen).unitClamped())
         let depthFactor = 1 - (FP(depth) / FP(adaptivePatchMaxDepth)).unitClamped()
         let distanceFactor = 1 - (distance / 100).unitClamped()
-        return 1 - (centerFactor * 0.4 + distanceFactor * 0.3 + depthFactor * 0.3)
+        return 1 - (centerFactor * 0.2 + distanceFactor * 0.1 + depthFactor * 0.7)
     }
 }
