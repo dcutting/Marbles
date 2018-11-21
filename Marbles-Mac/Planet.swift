@@ -17,8 +17,8 @@ class Planet {
     private let patchBuffer: PatchBuffer
 
     let terrainNode = SCNNode()
-    private var nodes = [SCNNode]()
-    private var geometries = [SCNGeometry]()
+//    private var nodes = [SCNNode]()
+//    private var geometries = [SCNGeometry]()
 
     init(name: String, seed: Int, config: PlanetConfig, patchBuffer: PatchBuffer) {
         patchCalculator = PatchCalculator(config: config, seed: seed)
@@ -30,32 +30,61 @@ class Planet {
     func makeTerrain() -> SCNNode {
         for faceIndex in 0..<faces.count {
             let face = faces[faceIndex]
-            let triangle = Triangle(a: positions[Int(face[0])], b: positions[Int(face[1])], c: positions[Int(face[2])])
-            let patch = patchCalculator.subdivide(triangle: triangle, subdivisionLevels: detailSubdivisions)
-            patchCache.write("\(name)-\(faceIndex)-", patch: patch)
-            let geometry = makeGeometry(patch: patch, asWireframe: wireframe)
+            let vertices = (0...2).map { i -> Patch.Vertex in
+                let p = positions[Int(face[i])]
+                let pr = p.normalised() * config.radius
+                return pr
+            }
+//            let vertexSource = SCNGeometrySource(vertices: vertices)
+            let colours = [float3(1.0, 0.0, 0.0), float3(1.0, 0.0, 0.0), float3(1.0, 0.0, 0.0)]
+            let indices: [UInt32] = [0, 1, 2]
+            let patch = Patch(vertices: vertices, colours: colours, indices: indices)
+//            let element = SCNGeometryElement(indices: indices, primitiveType: .triangles)
+//            let geometry = SCNGeometry(sources: [vertexSource], elements: [element])
+            let geometry = makeGeometry(patch: patch, asWireframe: false)
+            let material = SCNMaterial()
+            material.diffuse.contents = NSColor.green
+//            geometry.materials = [material]
+
+            let tessellator = SCNGeometryTessellator()
+//            tessellator.isAdaptive = true
+//            tessellator.isScreenSpace = true
+//            tessellator.maximumEdgeLength = 50.0
+            tessellator.insideTessellationFactor = 32.0
+            tessellator.edgeTessellationFactor = 32.0
+//            tessellator.smoothingMode = .none
+//            geometry.wantsAdaptiveSubdivision = true
+//            geometry.subdivisionLevel = 10
+            geometry.tessellator = tessellator
+
+            let fragmentShader = try! String(contentsOfFile: Bundle.main.path(forResource: "Fragment", ofType: "shader")!, encoding: String.Encoding.utf8)
+            let geometryShader = try! String(contentsOfFile: Bundle.main.path(forResource: "Geometry", ofType: "shader")!, encoding: String.Encoding.utf8)
+
+            geometry.shaderModifiers = [
+//                SCNShaderModifierEntryPoint.fragment: fragmentShader,
+                SCNShaderModifierEntryPoint.geometry: geometryShader
+            ]
+
             let node = SCNNode(geometry: geometry)
-            geometries.append(geometry)
-            nodes.append(node)
             terrainNode.addChildNode(node)
         }
         return terrainNode
     }
 
-    func refreshGeometry() {
-        for faceIndex in 0..<faces.count {
-            let face = faces[faceIndex]
-            let triangle = Triangle(a: positions[Int(face[0])], b: positions[Int(face[1])], c: positions[Int(face[2])])
-            let geom = makeAdaptiveGeometry(faceIndex: faceIndex, corners: triangle, maxEdgeLength: maxEdgeLength)
-            geometries[faceIndex] = geom
-        }
-    }
+//    func refreshGeometry() {
+//        for faceIndex in 0..<faces.count {
+//            let face = faces[faceIndex]
+//            let triangle = Triangle(a: positions[Int(face[0])], b: positions[Int(face[1])], c: positions[Int(face[2])])
+//            let geom = makeAdaptiveGeometry(faceIndex: faceIndex, corners: triangle, maxEdgeLength: maxEdgeLength)
+//            geometries[faceIndex] = geom
+//        }
+//    }
 
-    func updateNode() {
-        for faceIndex in 0..<self.nodes.count {
-            self.nodes[faceIndex].geometry = self.geometries[faceIndex]
-        }
-    }
+//    func updateNode() {
+//        for faceIndex in 0..<self.nodes.count {
+//            self.nodes[faceIndex].geometry = self.geometries[faceIndex]
+//        }
+//    }
 
     private func makeAdaptiveGeometry(faceIndex: Int, corners: Triangle, maxEdgeLength: FP) -> SCNGeometry {
         let start = DispatchTime.now()

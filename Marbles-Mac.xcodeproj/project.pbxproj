@@ -51,6 +51,8 @@
 		C8837A5B218A172700ABE455 /* PatchCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8837A5A218A172700ABE455 /* PatchCalculator.swift */; };
 		C8837A5D218A173F00ABE455 /* PatchCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8837A5C218A173F00ABE455 /* PatchCache.swift */; };
 		C8AF7C36218DB97E0027B7E8 /* PlanetConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8AF7C35218DB97E0027B7E8 /* PlanetConfig.swift */; };
+		C8B2EB9421A59D5E00263061 /* Geometry.shader in Resources */ = {isa = PBXBuildFile; fileRef = C8B2EB9121A598C300263061 /* Geometry.shader */; };
+		C8B2EB9621A5C65700263061 /* Fragment.shader in Resources */ = {isa = PBXBuildFile; fileRef = C8B2EB9521A5C65700263061 /* Fragment.shader */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -89,6 +91,8 @@
 		C8837A5A218A172700ABE455 /* PatchCalculator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PatchCalculator.swift; sourceTree = "<group>"; };
 		C8837A5C218A173F00ABE455 /* PatchCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchCache.swift; sourceTree = "<group>"; };
 		C8AF7C35218DB97E0027B7E8 /* PlanetConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanetConfig.swift; sourceTree = "<group>"; };
+		C8B2EB9121A598C300263061 /* Geometry.shader */ = {isa = PBXFileReference; lastKnownFileType = text; path = Geometry.shader; sourceTree = "<group>"; };
+		C8B2EB9521A5C65700263061 /* Fragment.shader */ = {isa = PBXFileReference; lastKnownFileType = text; path = Fragment.shader; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -162,6 +166,8 @@
 				C85B120521A2337000B4369C /* FBMCellular3D.swift */,
 				C85EB5832168F62D00B670B2 /* noise */,
 				C8027ED8218A7F7700A99020 /* Resources */,
+				C8B2EB9121A598C300263061 /* Geometry.shader */,
+				C8B2EB9521A5C65700263061 /* Fragment.shader */,
 			);
 			path = "Marbles-Mac";
 			sourceTree = "<group>";
@@ -297,6 +303,8 @@
 			files = (
 				C80E4614216177440029A3A0 /* Main.storyboard in Resources */,
 				C80E4611216177440029A3A0 /* Assets.xcassets in Resources */,
+				C8B2EB9621A5C65700263061 /* Fragment.shader in Resources */,
+				C8B2EB9421A59D5E00263061 /* Geometry.shader in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

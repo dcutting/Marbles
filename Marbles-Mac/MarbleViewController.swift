@@ -32,9 +32,9 @@ class MarbleViewController: NSViewController, SCNSceneRendererDelegate {
     }
 
     func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
-        for planet in self.planets {
-            planet.updateNode()
-        }
+//        for planet in self.planets {
+//            planet.updateNode()
+//        }
         adaptFlyingSpeed()
     }
 
@@ -96,7 +96,8 @@ class MarbleViewController: NSViewController, SCNSceneRendererDelegate {
         scnView.scene = scene
         scnView.allowsCameraControl = true
         scnView.backgroundColor = .black
-        scnView.defaultCameraController.interactionMode = .fly
+        scnView.showsStatistics = true
+//        scnView.defaultCameraController.interactionMode = .fly
 
         let originMarker = SCNBox(width: 100.0, height: 100.0, length: 100.0, chamferRadius: 0.0)
         scene.rootNode.addChildNode(SCNNode(geometry: originMarker))
@@ -164,7 +165,7 @@ class MarbleViewController: NSViewController, SCNSceneRendererDelegate {
         vestaNode.runAction(.repeatForever(.rotateBy(x: -60, y: 20, z: 10, duration: 50)))
         vestaFrame.runAction(.repeatForever(.rotateBy(x: -20, y: 10, z: -4, duration: 300)))
 
-        self.refreshGeometry()
+//        self.refreshGeometry()
     }
 
     private func make(orbiter: Planet, position: SCNVector3) -> (SCNNode, SCNNode) {
@@ -176,15 +177,15 @@ class MarbleViewController: NSViewController, SCNSceneRendererDelegate {
         return (node, frame)
     }
 
-    private func refreshGeometry() {
-        self.terrainQueue.asyncAfter(deadline: .now() + self.updateInterval) {
-            self.patchBuffer.clearBuffer()
-            for planet in self.planets {
-                planet.refreshGeometry()
-            }
-            self.refreshGeometry()
-        }
-    }
+//    private func refreshGeometry() {
+//        self.terrainQueue.asyncAfter(deadline: .now() + self.updateInterval) {
+//            self.patchBuffer.clearBuffer()
+//            for planet in self.planets {
+//                planet.refreshGeometry()
+//            }
+//            self.refreshGeometry()
+//        }
+//    }
 
     func project(point: SCNVector3) -> Patch.Vertex {
         return Patch.Vertex(scnView.projectPoint(point))
