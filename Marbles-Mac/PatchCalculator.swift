@@ -3,37 +3,33 @@ import SceneKit
 class PatchCalculator {
 
     private var config: PlanetConfig
-    let noise: Noise
+    let gradientNoise: FBMGradient3D
+    let cellularNoise: FBMCellular3D
     let snowNoise: FBMGradient3D
 
     init(config: PlanetConfig, seed: Int) {
         self.config = config
 
-        let fractalNoise: Noise
-        switch config.noiseType {
-        case .gradient:
-            let sourceNoise = GradientNoise3D(amplitude: Double(config.amplitude),
+        let sourceGradientNoise = GradientNoise3D(amplitude: Double(config.amplitude),
+                                                  frequency: Double(config.frequency),
+                                                  seed: seed)
+        gradientNoise = FBMGradient3D(sourceGradientNoise,
+                                      octaves: config.octaves,
+                                      persistence: Double(config.persistence),
+                                      lacunarity: Double(config.lacunarity))
+        let sourceCellularNoise = CellNoise3D(amplitude: Double(config.amplitude),
                                               frequency: Double(config.frequency),
                                               seed: seed)
-            fractalNoise = FBMGradient3D(sourceNoise,
-                                         octaves: config.octaves,
-                                         persistence: Double(config.persistence),
-                                         lacunarity: Double(config.lacunarity))
-        case .cellular:
-            let sourceNoise = CellNoise3D(amplitude: Double(config.amplitude),
-                                          frequency: Double(config.frequency),
-                                          seed: seed)
-            fractalNoise = FBMCellular3D(sourceNoise,
-                                         octaves: config.octaves,
-                                         persistence: Double(config.persistence),
-                                         lacunarity: Double(config.lacunarity))
-        }
+        cellularNoise = FBMCellular3D(sourceCellularNoise,
+                                      octaves: config.octaves,
+                                      persistence: Double(config.persistence),
+                                      lacunarity: Double(config.lacunarity))
 
-        if config.ridged {
-            self.noise = RidgedNoise(noise: fractalNoise, amplitude: Double(config.amplitude))
-        } else {
-            self.noise = fractalNoise
-        }
+        //        if config.ridged {
+        //            self.noise = RidgedNoise(noise: fractalNoise, amplitude: Double(config.amplitude))
+        //        } else {
+//        self.gradientNoise = gradientNoise
+//        }
 
         let snowNoiseSource = GradientNoise3D(amplitude: Double(config.amplitude) / 5, frequency: Double(config.frequency) * 20, seed: seed+1)
         self.snowNoise = FBMGradient3D(snowNoiseSource, octaves: 5, persistence: 0.5, lacunarity: 2.0)
@@ -91,7 +87,13 @@ class PatchCalculator {
     private func spherical(_ a: Patch.Vertex) -> (Patch.Vertex, FP) {
         let an = normalize(a)
         let ans = an * config.radius
-        var delta: FP = FP(noise.evaluate(Double(ans.x), Double(ans.y), Double(ans.z)))
+        var delta: FP
+        switch config.noiseType {
+        case .gradient:
+            delta = FP(gradientNoise.evaluate(Double(ans.x), Double(ans.y), Double(ans.z)))
+        case .cellular:
+            delta = FP(cellularNoise.evaluate(Double(ans.x), Double(ans.y), Double(ans.z)))
+        }
         if config.levels > 0 {
             let ratio = config.amplitude / FP(config.levels)
             delta = ratio * round(delta / ratio)
