@@ -1,6 +1,6 @@
 import SceneKit
 
-public typealias FP3 = double3
+public typealias FP3 = float3
 
 extension Patch.Vertex {
 

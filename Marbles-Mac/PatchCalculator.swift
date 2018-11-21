@@ -12,30 +12,30 @@ class PatchCalculator {
         let fractalNoise: Noise
         switch config.noiseType {
         case .gradient:
-            let sourceNoise = GradientNoise3D(amplitude: config.amplitude,
-                                              frequency: config.frequency,
+            let sourceNoise = GradientNoise3D(amplitude: Double(config.amplitude),
+                                              frequency: Double(config.frequency),
                                               seed: seed)
             fractalNoise = FBMGradient3D(sourceNoise,
                                          octaves: config.octaves,
-                                         persistence: config.persistence,
-                                         lacunarity: config.lacunarity)
+                                         persistence: Double(config.persistence),
+                                         lacunarity: Double(config.lacunarity))
         case .cellular:
-            let sourceNoise = CellNoise3D(amplitude: config.amplitude,
-                                          frequency: config.frequency,
+            let sourceNoise = CellNoise3D(amplitude: Double(config.amplitude),
+                                          frequency: Double(config.frequency),
                                           seed: seed)
             fractalNoise = FBMCellular3D(sourceNoise,
                                          octaves: config.octaves,
-                                         persistence: config.persistence,
-                                         lacunarity: config.lacunarity)
+                                         persistence: Double(config.persistence),
+                                         lacunarity: Double(config.lacunarity))
         }
 
         if config.ridged {
-            self.noise = RidgedNoise(noise: fractalNoise, amplitude: config.amplitude)
+            self.noise = RidgedNoise(noise: fractalNoise, amplitude: Double(config.amplitude))
         } else {
             self.noise = fractalNoise
         }
 
-        let snowNoiseSource = GradientNoise3D(amplitude: config.amplitude / 5, frequency: config.frequency * 20, seed: seed+1)
+        let snowNoiseSource = GradientNoise3D(amplitude: Double(config.amplitude) / 5, frequency: Double(config.frequency) * 20, seed: seed+1)
         self.snowNoise = FBMGradient3D(snowNoiseSource, octaves: 5, persistence: 0.5, lacunarity: 2.0)
     }
 
@@ -91,15 +91,15 @@ class PatchCalculator {
     private func spherical(_ a: Patch.Vertex) -> (Patch.Vertex, FP) {
         let an = normalize(a)
         let ans = an * config.radius
-        var delta = noise.evaluate(Double(ans.x), Double(ans.y), Double(ans.z))
+        var delta: FP = FP(noise.evaluate(Double(ans.x), Double(ans.y), Double(ans.z)))
         if config.levels > 0 {
-            let ratio = Double(config.amplitude) / Double(config.levels)
+            let ratio = config.amplitude / FP(config.levels)
             delta = ratio * round(delta / ratio)
         }
         if config.hasWater && delta < 0.0 {
             delta = (delta / config.mountainHeight) * config.oceanDepth
         }
-        return (an * (config.radius + delta), delta)
+        return (an * (config.radius + FP(delta)), FP(delta))
     }
 
     func sphericalise(vertices: [Patch.Vertex]) -> [Patch.Vertex] {
@@ -153,8 +153,8 @@ class PatchCalculator {
             }
             let oceanDepth = config.oceanDepth == 0.0 ? 0.01 : config.oceanDepth
             let rawDepthColour = 1 + (Float(delta) / Float(oceanDepth))
-            let snowNoiseValue = snowNoise.evaluate(p.x, p.y, p.z)
-            if FP(delta + snowNoiseValue) > snowLine {
+            let snowNoiseValue = FP(snowNoise.evaluate(Double(p.x), Double(p.y), Double(p.z)))
+            if (delta + snowNoiseValue) > snowLine {
                 // Ice
                 colours.append([1.0, 1.0, 1.0])
             } else if config.hasWater && FP(delta) <= 0.0 {

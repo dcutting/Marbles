@@ -1,6 +1,6 @@
 import SceneKit
 
-public typealias FP = Double
+public typealias FP = Float
 
 extension FP {
     func unitClamped() -> FP {

@@ -59,15 +59,15 @@ struct PlanetConfig {
     let mountainHeight: FP
     let oceanDepth: FP
 
-    init(radius: Double,
-         frequency unscaledFrequency: Double,
-         amplitude unscaledAmplitude: Double,
+    init(radius: FP,
+         frequency unscaledFrequency: FP,
+         amplitude unscaledAmplitude: FP,
          octaves: Int,
-         persistence: Double,
-         lacunarity: Double,
+         persistence: FP,
+         lacunarity: FP,
          noiseType: NoiseType,
          levels: Int,
-         iciness: Double,
+         iciness: FP,
          hasWater: Bool,
          ridged: Bool,
          groundColourScale: RGBColourScale,
