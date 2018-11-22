@@ -150,24 +150,37 @@ float fbm(float x, float y, float z, float frequency, float amplitude)
   return total;
 }
 
+float calculateDelta(vec4 p) {
+  float frequency = 0.0001f;
+  float amplitude = 1000.0f;
+  return fbm(p.x, p.y, p.z, frequency, amplitude);
+}
+
+vec4 calculatePosition(vec4 p, float delta) {
+  vec4 n = normalize(p);
+  float radius = 10000.0f;
+  if (delta < 0.0f) {
+    delta = 0.0;
+  }
+  float height = radius + delta;
+//  if (0) {
+    // Weird bouncing terrain.
+//    height = radius + delta * sin(1.0 * u_time);
+//  }
+  return vec4(n[0] * height, n[1] * height, n[2] * height, 1.0);
+}
+
+float4 calculateColour(float delta) {
+  if (delta < 0.0f) {
+    return float4(0.0, 0.0, 1.0, 1.0);
+  } else {
+    return float4(0.0, 1.0, 0.0, 1.0);
+  }
+}
+
 #pragma body
 
 vec4 p = _geometry.position;
-vec4 n = normalize(p);
-float radius = 10000.0f;
-float frequency = 0.0001f;
-float amplitude = 1000.0f;
-float noise = fbm(p.x, p.y, p.z, frequency, amplitude);
-float delta = noise;
-if (delta < 0.0f) {
-  delta = 0.0;
-  _geometry.color = float4(0.0, 0.0, 1.0, 1.0);
-} else {
-  _geometry.color = float4(0.0, 0.2 + noise / amplitude, 0.0, 1.0);
-}
-float height = radius + delta;
-if (0) {
-  // Weird bouncing terrain.
-  height = radius + delta * sin(1.0 * u_time);
-}
-_geometry.position = vec4(n[0] * height, n[1] * height, n[2] * height, 1.0);
+float delta = calculateDelta(p);
+_geometry.position = calculatePosition(p, delta);
+_geometry.color = calculateColour(delta);
