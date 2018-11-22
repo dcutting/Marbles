@@ -1,6 +1,6 @@
 import SceneKit
 
-let tessellationFactor: CGFloat = 16.0
+let tessellationFactor: CGFloat = 10.0
 
 class Planet {
 
@@ -11,7 +11,7 @@ class Planet {
     let config: PlanetConfig
 
     private let detailSubdivisions: UInt32 = 5
-    private lazy var maxEdgeLength: FP = 256//pow(2, FP(detailSubdivisions + 2))
+    private lazy var maxEdgeLength: FP = 100//pow(2, FP(detailSubdivisions + 2))
     private let adaptivePatchMaxDepth: UInt32 = 20
 
     private var patchCache = PatchCache<Patch>()
@@ -133,7 +133,8 @@ class Planet {
 
         if !delegate.isIntersectingScreen(triangle: normalisedScreenTriangle) {
 
-            if distanceFromCamera > crinklyWorldTriangle.longestEdgeSq {
+            // TODO
+            if distanceFromCamera > crinklyWorldTriangle.longestEdgeSq * 10.0 {
 
 //                if debug {
                     return makePatch(triangle: crinklyWorldTriangle, colour: yellow)

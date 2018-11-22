@@ -1,6 +1,6 @@
 import SceneKit
 
-let geometryShader = try! String(contentsOfFile: Bundle.main.path(forResource: "Geometry", ofType: "shader")!, encoding: String.Encoding.utf8)
+let terrainShader = try! String(contentsOfFile: Bundle.main.path(forResource: "Terrain", ofType: "shader")!, encoding: String.Encoding.utf8)
 
 func makeGeometry(patch: Patch, asWireframe: Bool) -> SCNGeometry {
     let vertices = patch.vertices.map { SCNVector3($0[0], $0[1], $0[2]) }
@@ -28,7 +28,7 @@ func makeGeometry(patch: Patch, asWireframe: Bool) -> SCNGeometry {
     geometry.tessellator = tessellator
 
     geometry.shaderModifiers = [
-        SCNShaderModifierEntryPoint.geometry: geometryShader
+        SCNShaderModifierEntryPoint.geometry: terrainShader
     ]
 
     return geometry
