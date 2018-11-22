@@ -18,7 +18,7 @@
 		C80E4614216177440029A3A0 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C80E4612216177440029A3A0 /* Main.storyboard */; };
 		C816FAD9218CAA9400839795 /* RingBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C816FAD8218CAA9400839795 /* RingBuffer.swift */; };
 		C81EC314219F2BF70060F905 /* FBMGradient3D.swift in Sources */ = {isa = PBXBuildFile; fileRef = C81EC313219F2BF70060F905 /* FBMGradient3D.swift */; };
-		C82AEA4C21A6329300B99EE0 /* Terrain.shader in Resources */ = {isa = PBXBuildFile; fileRef = C82AEA4B21A6329300B99EE0 /* Terrain.shader */; };
+		C82AEA4D21A71ADA00B99EE0 /* Terrain.shader in Resources */ = {isa = PBXBuildFile; fileRef = C82AEA4B21A6329300B99EE0 /* Terrain.shader */; };
 		C85B120221A2010900B4369C /* Planet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85B120121A2010900B4369C /* Planet.swift */; };
 		C85B120421A22C3800B4369C /* PatchBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85B120321A22C3800B4369C /* PatchBuffer.swift */; };
 		C85B120621A2337000B4369C /* FBMCellular3D.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85B120521A2337000B4369C /* FBMCellular3D.swift */; };
@@ -69,7 +69,7 @@
 		C80E4616216177440029A3A0 /* Marbles_Mac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Marbles_Mac.entitlements; sourceTree = "<group>"; };
 		C816FAD8218CAA9400839795 /* RingBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RingBuffer.swift; sourceTree = "<group>"; };
 		C81EC313219F2BF70060F905 /* FBMGradient3D.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FBMGradient3D.swift; sourceTree = "<group>"; };
-		C82AEA4B21A6329300B99EE0 /* Terrain.shader */ = {isa = PBXFileReference; lastKnownFileType = text; path = Terrain.shader; sourceTree = "<group>"; };
+		C82AEA4B21A6329300B99EE0 /* Terrain.shader */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = text; path = Terrain.shader; sourceTree = "<group>"; tabWidth = 2; xcLanguageSpecificationIdentifier = xcode.lang.cpp; };
 		C85B120121A2010900B4369C /* Planet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Planet.swift; sourceTree = "<group>"; };
 		C85B120321A22C3800B4369C /* PatchBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchBuffer.swift; sourceTree = "<group>"; };
 		C85B120521A2337000B4369C /* FBMCellular3D.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FBMCellular3D.swift; sourceTree = "<group>"; };
@@ -298,9 +298,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C82AEA4C21A6329300B99EE0 /* Terrain.shader in Resources */,
 				C80E4614216177440029A3A0 /* Main.storyboard in Resources */,
 				C80E4611216177440029A3A0 /* Assets.xcassets in Resources */,
+				C82AEA4D21A71ADA00B99EE0 /* Terrain.shader in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

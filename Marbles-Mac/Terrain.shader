@@ -156,17 +156,28 @@ float calculateDelta(vec4 p) {
   return fbm(p.x, p.y, p.z, frequency, amplitude);
 }
 
-vec4 calculatePosition(vec4 p, float delta) {
-  vec4 n = normalize(p);
+float calculateHeight(float delta) {
   float radius = 10000.0f;
   if (delta < 0.0f) {
     delta = 0.0;
   }
   float height = radius + delta;
-//  if (0) {
-    // Weird bouncing terrain.
-//    height = radius + delta * sin(1.0 * u_time);
-//  }
+  //  if (0) {
+  // Weird bouncing terrain.
+  //    height = radius + delta * sin(1.0 * u_time);
+  //  }
+  return height;
+}
+
+float calculateHeightForPosition(vec4 p) {
+  float delta = calculateDelta(p);
+  float height = calculateHeight(delta);
+  return height;
+}
+
+vec4 calculatePosition(vec4 p, float delta) {
+  vec4 n = normalize(p);
+  float height = calculateHeight(delta);
   return vec4(n[0] * height, n[1] * height, n[2] * height, 1.0);
 }
 
