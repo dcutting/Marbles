@@ -10,7 +10,7 @@ class MarbleViewController: NSViewController, SCNSceneRendererDelegate {
     lazy var moon = Planet(name: "Moon", seed: 4910, config: moonConfig, patchBuffer: patchBuffer)
     lazy var vesta = Planet(name: "Vesta", seed: 3178, config: vestaConfig, patchBuffer: patchBuffer)
     lazy var planets = [earth]//, moon, vesta]
-    let updateInterval = 0.1
+    let updateInterval = 0.05
     let sunDayDuration: FP = 10000
     let moonMonthDuration: FP = 3000
     let flyingSpeed: FP = 200.0
