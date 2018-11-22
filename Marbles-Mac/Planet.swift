@@ -1,6 +1,7 @@
 import SceneKit
 
-let tessellationFactor: CGFloat = 10.0
+let edgeTessellationFactor: CGFloat = 16.0
+let insideTessellationFactor: CGFloat = edgeTessellationFactor
 
 class Planet {
 

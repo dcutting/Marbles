@@ -23,8 +23,8 @@ func makeGeometry(patch: Patch, asWireframe: Bool) -> SCNGeometry {
     let geometry = SCNGeometry(sources: sources, elements: [indicesElement])
 
     let tessellator = SCNGeometryTessellator()
-    tessellator.insideTessellationFactor = tessellationFactor
-    tessellator.edgeTessellationFactor = tessellationFactor
+    tessellator.insideTessellationFactor = insideTessellationFactor
+    tessellator.edgeTessellationFactor = edgeTessellationFactor
     geometry.tessellator = tessellator
 
     geometry.shaderModifiers = [
