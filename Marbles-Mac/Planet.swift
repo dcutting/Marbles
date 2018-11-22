@@ -12,7 +12,7 @@ class Planet {
     let config: PlanetConfig
 
     private let detailSubdivisions: UInt32 = 5
-    private lazy var maxEdgeLength: FP = 100//pow(2, FP(detailSubdivisions + 2))
+    private lazy var maxEdgeLength: FP = 200//pow(2, FP(detailSubdivisions + 2))
     private let adaptivePatchMaxDepth: UInt32 = 20
 
     private var patchCache = PatchCache<Patch>()
