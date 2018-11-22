@@ -132,20 +132,18 @@ float simplex3D(float xin, float yin, float zin)
   return 32.0*(n0 + n1 + n2 + n3);
 }
 
-float fbm(float x, float y, float z)
+float fbm(float x, float y, float z, float frequency, float amplitude)
 {
   float total = 0.0;
-  float amplitude = 0.5;
 
-  int octaves = 8.0f;
-  float freq = 0.0005f;
+  int octaves = 12.0f;
   float lacunarity = 2.0f;
   float persistence = 0.5f;
 
   for (int j = 0; j < octaves; ++j){
-    total += simplex3D(x*freq,y*freq,z*freq) * amplitude;
+    total += simplex3D(x*frequency,y*frequency,z*frequency) * amplitude;
 
-    freq *= lacunarity;
+    frequency *= lacunarity;
     amplitude *= persistence;
   }
 
@@ -157,13 +155,15 @@ float fbm(float x, float y, float z)
 vec4 p = _geometry.position;
 vec4 n = normalize(p);
 float radius = 10000.0f;
-float noise = fbm(p.x, p.y, p.z);
-float delta = noise * 500.0f;
+float frequency = 0.0001f;
+float amplitude = 1000.0f;
+float noise = fbm(p.x, p.y, p.z, frequency, amplitude);
+float delta = noise;
 if (delta < 0.0f) {
   delta = 0.0;
   _geometry.color = float4(0.0, 0.0, 1.0, 1.0);
 } else {
-  _geometry.color = float4(0.0, noise, 0.0, 1.0);
+  _geometry.color = float4(0.0, 0.2 + noise / amplitude, 0.0, 1.0);
 }
 float height = radius + delta;
 if (0) {
