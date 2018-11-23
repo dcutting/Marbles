@@ -165,8 +165,7 @@ float calculateDelta(vec4 p) {
   return fbm(p.x, p.y, p.z, frequency, amplitude);
 }
 
-float calculateHeight(vec4 p, float delta, float time) {
-  float radius = 10000.0f;
+float calculateHeight(vec4 p, float radius, float delta, float time) {
   float height = radius + delta;
   if (delta < 0.0f) {
     vec4 scaled = p * 0.005f;
@@ -176,32 +175,55 @@ float calculateHeight(vec4 p, float delta, float time) {
   return height;
 }
 
-float calculateHeightForPosition(vec4 p, float time) {
+float calculateHeightForPosition(vec4 p, float radius, float time) {
   float delta = calculateDelta(p);
-  float height = calculateHeight(p, delta, time);
+  float height = calculateHeight(p, radius, delta, time);
   return height;
 }
 
-vec4 calculatePosition(vec4 p, float delta, float time) {
+vec4 calculatePosition(vec4 p, float radius, float delta, float time) {
   vec4 n = normalize(p);
-  float height = calculateHeight(p, delta, time);
+  float height = calculateHeight(p, radius, delta, time);
   return vec4(n[0] * height, n[1] * height, n[2] * height, 1.0);
 }
 
-float4 calculateColour(float delta) {
-  if (delta < 0.0f) {
-    return float4(0.0, 0.0, 1.0, 1.0);
+float4 calculateColour(vec4 p, float delta, float radius, float iciness, float mountainHeight, float oceanDepth, bool hasWater) {
+
+  float distanceFromEquator = abs(p.y)/radius;
+  float dryness = 1 - iciness;
+  float snowLine = (mountainHeight * 1.5) * (1 - distanceFromEquator * iciness) * dryness;
+  float rawHeightColour;
+  if (hasWater) {
+    rawHeightColour = delta / mountainHeight;
   } else {
+    rawHeightColour = (delta + mountainHeight) / (mountainHeight * 2.0);
+  }
+  if (oceanDepth == 0.0) {
+    oceanDepth = 0.01;
+  }
+  float rawDepthColour = 1 + (delta / oceanDepth);
+  float snowNoiseValue = fbm(p.x, p.y, p.z, 0.002f, 200.0f);
+  if ((delta + snowNoiseValue) > snowLine) {
+    // Ice
+    return float4(1.0, 1.0, 1.0, 1.0);
+  } else if (hasWater && delta <= 0.0) {
+    // Water
+    return float4(0.0, 0.0, 1.0, 1.0);
+//      let colour = config.waterColourScale.interpolated(by: rawDepthColour)
+  } else {
+      // Ground
     return float4(0.0, 1.0, 0.0, 1.0);
+//      let colour = config.groundColourScale.interpolated(by: rawHeightColour)
   }
 }
 
 #pragma body
 
+float radius = 10000.0f;
 vec4 p = _geometry.position;
 float delta = calculateDelta(p);
-_geometry.position = calculatePosition(p, delta, u_time);
-_geometry.color = calculateColour(delta);
+_geometry.position = calculatePosition(p, radius, delta, u_time);
+_geometry.color = calculateColour(p, delta, radius, 0.4f, 1000.0f, 1000.0f, true);
 
 /*
 // One way to calculate normals.

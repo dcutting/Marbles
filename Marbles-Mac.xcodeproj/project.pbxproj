@@ -69,7 +69,7 @@
 		C80E4616216177440029A3A0 /* Marbles_Mac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Marbles_Mac.entitlements; sourceTree = "<group>"; };
 		C816FAD8218CAA9400839795 /* RingBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RingBuffer.swift; sourceTree = "<group>"; };
 		C81EC313219F2BF70060F905 /* FBMGradient3D.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FBMGradient3D.swift; sourceTree = "<group>"; };
-		C82AEA4B21A6329300B99EE0 /* Terrain.shader */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = text; path = Terrain.shader; sourceTree = "<group>"; tabWidth = 2; xcLanguageSpecificationIdentifier = xcode.lang.cpp; };
+		C82AEA4B21A6329300B99EE0 /* Terrain.shader */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = text; path = Terrain.shader; sourceTree = "<group>"; tabWidth = 2; xcLanguageSpecificationIdentifier = xcode.lang.metal; };
 		C85B120121A2010900B4369C /* Planet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Planet.swift; sourceTree = "<group>"; };
 		C85B120321A22C3800B4369C /* PatchBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchBuffer.swift; sourceTree = "<group>"; };
 		C85B120521A2337000B4369C /* FBMCellular3D.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FBMCellular3D.swift; sourceTree = "<group>"; };
