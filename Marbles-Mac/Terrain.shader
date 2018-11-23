@@ -169,9 +169,9 @@ float calculateHeight(vec4 p, float delta, float time) {
   float radius = 10000.0f;
   float height = radius + delta;
   if (delta < 0.0f) {
-    vec4 scaled = p * 0.001f;
+    vec4 scaled = p * 0.01f;
     float s = sin(scaled.x) + cos(scaled.y) + sin(scaled.z);
-    height = radius + 0.1f * delta * sin(1.0 * (time + s));
+    height = radius + 0.01f * delta * sin(1.0 * (time + s));
   }
   return height;
 }
