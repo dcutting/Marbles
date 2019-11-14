@@ -88,7 +88,7 @@ class MarbleViewController: NSViewController, SCNSceneRendererDelegate {
         let camera = SCNCamera()
         camera.automaticallyAdjustsZRange = true
         let cameraNode = SCNNode()
-        cameraNode.position = SCNVector3(x: 5000.0, y: 5000.0, z: 22000.0)
+        cameraNode.position = SCNVector3(x: 5000.0, y: 5000.0, z: 200000.0)
         cameraNode.camera = camera
         cameraNode.look(at: SCNVector3())
         scene.rootNode.addChildNode(cameraNode)
